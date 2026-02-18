@@ -19,7 +19,7 @@ class DonorCategoryResource extends Resource
 {
     protected static ?string $model = DonorCategory::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Donor Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising / Settings';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 

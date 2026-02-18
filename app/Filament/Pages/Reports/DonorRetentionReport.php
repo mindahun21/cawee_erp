@@ -12,7 +12,7 @@ class DonorRetentionReport extends Page
 
     protected string $view = 'filament.pages.reports.donor-retention-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Donor Retention & Churn';
 

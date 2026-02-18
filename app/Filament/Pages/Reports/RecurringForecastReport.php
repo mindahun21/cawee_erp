@@ -11,7 +11,7 @@ class RecurringForecastReport extends Page
 
     protected string $view = 'filament.pages.reports.recurring-forecast-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Recurring Donation Forecast';
 

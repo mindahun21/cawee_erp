@@ -21,7 +21,7 @@ class DonationsReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.donations-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Donations Report';
 

@@ -14,7 +14,7 @@ class ReportsDashboard extends Page
 
     protected string $view = 'filament.pages.reports.reports-dashboard';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Dashboard & Analytics';
 

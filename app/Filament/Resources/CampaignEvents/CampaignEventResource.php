@@ -23,6 +23,8 @@ class CampaignEventResource extends Resource
     protected static ?string $model = CampaignEvent::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    
+    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising';
 
     protected static ?string $recordTitleAttribute = 'event_name';
 

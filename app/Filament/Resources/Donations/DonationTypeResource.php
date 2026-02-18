@@ -17,7 +17,7 @@ class DonationTypeResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-gift';
 
-    // protected static string | \UnitEnum | null $navigationGroup = 'Donations';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Settings';
 
     protected static ?int $navigationSort = 2;
 

@@ -20,7 +20,7 @@ class CampaignPerformanceReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.campaign-performance-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Campaign Performance';
 

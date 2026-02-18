@@ -27,7 +27,7 @@ class CurrencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financial Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising / Settings';
 
     protected static ?string $recordTitleAttribute = 'name';
 

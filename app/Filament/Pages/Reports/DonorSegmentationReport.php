@@ -17,7 +17,7 @@ class DonorSegmentationReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.donor-segmentation-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Reports';
     
     protected static ?string $title = 'Donor Segmentation';
 
