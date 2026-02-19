@@ -7,6 +7,8 @@ use App\Models\Donation;
 use App\Models\Donor;
 use BackedEnum;
 use App\Services\ReportService;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -234,9 +236,9 @@ class DonationResource extends Resource
                     }),
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('downloadReceipt')
+                EditAction::make(),
+                DeleteAction::make(),
+                Action::make('downloadReceipt')
                     ->label('Download PDF')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('info')
@@ -249,7 +251,7 @@ class DonationResource extends Resource
                             "receipt-{$record->id}.pdf"
                         );
                     }),
-                \Filament\Actions\Action::make('generateReceipt')
+                Action::make('generateReceipt')
                     ->label('Send Receipt')
                     ->icon('heroicon-o-document-text')
                     ->color('success')
@@ -277,12 +279,12 @@ class DonationResource extends Resource
                     }),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('exportExcel')
+                Action::make('exportExcel')
                     ->label('Export Excel')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\DonationsExport(), 'donations.xlsx')),
-                Tables\Actions\Action::make('exportPDF')
+                Action::make('exportPDF')
                     ->label('Export PDF')
                     ->icon('heroicon-o-document-text')
                     ->color('danger')
@@ -298,15 +300,15 @@ class DonationResource extends Resource
                     }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('exportSelected')
+                BulkActionGroup::make([
+                    BulkAction::make('exportSelected')
                         ->label('Export Excel')
                         ->icon('heroicon-o-document-plus')
                         ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => \Maatwebsite\Excel\Facades\Excel::download(
                             new \App\Exports\DonationsExport(['ids' => $records->pluck('id')->toArray()]), 
                             'selected-donations.xlsx'
                         )),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
