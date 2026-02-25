@@ -27,6 +27,14 @@ class HrRolesSeeder extends Seeder
         // Reset cached roles & permissions
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        // Guard: permissions must exist before we can assign them.
+        // If this is a fresh install, run: php artisan shield:generate --all --panel=admin
+        if (Permission::count() === 0) {
+            $this->command->warn('No permissions found. Run: php artisan shield:generate --all --panel=admin');
+            $this->command->warn('Then re-run this seeder.');
+            return;
+        }
+
         // ── Define HR-specific permission groups ─────────────────────
 
         $allHrPermissions = Permission::where('name', 'like', '%employee%')
