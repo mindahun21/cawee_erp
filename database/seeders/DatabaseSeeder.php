@@ -16,11 +16,11 @@ class DatabaseSeeder extends Seeder
         // Seed roles and permissions first
         $this->call(HrRolesSeeder::class);
 
-        // Default test user (kept from original)
-        User::factory()->create([
-            'name'  => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Default test user (kept from original, using firstOrCreate to prevent crash)
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            ['name'  => 'Test User', 'password' => Hash::make('password')]
+        );
 
         // Super admin account
         $admin = User::firstOrCreate(
