@@ -113,6 +113,93 @@
                             <dd class="mt-1.5 truncate text-sm font-semibold font-mono text-gray-950 dark:text-white">{{ $employee->tin ?? '–' }} / {{ $employee->pension_id ?? '–' }}</dd>
                         </dl>
                     </div>
+
+                    {{-- Leave Balance Strip --}}
+                    @if($leaveBalance)
+                        @php
+                            $leaveTypes = [
+                                [
+                                    'label'     => 'Annual',
+                                    'used'      => (float) $leaveBalance->annual_used,
+                                    'entitled'  => (float) $leaveBalance->annual_entitled,
+                                    'balance'   => (float) $leaveBalance->annual_balance,
+                                    'color'     => 'bg-primary-500',
+                                    'textColor' => 'text-primary-600 dark:text-primary-400',
+                                    'bgColor'   => 'bg-primary-50 dark:bg-primary-500/10',
+                                    'icon'      => 'heroicon-m-sun',
+                                ],
+                                [
+                                    'label'     => 'Sick',
+                                    'used'      => (float) $leaveBalance->sick_used,
+                                    'entitled'  => (float) $leaveBalance->sick_entitled,
+                                    'balance'   => (float) $leaveBalance->sick_balance,
+                                    'color'     => 'bg-warning-500',
+                                    'textColor' => 'text-warning-600 dark:text-warning-400',
+                                    'bgColor'   => 'bg-warning-50 dark:bg-warning-500/10',
+                                    'icon'      => 'heroicon-m-heart',
+                                ],
+                                [
+                                    'label'     => 'Maternity',
+                                    'used'      => (float) $leaveBalance->maternity_used,
+                                    'entitled'  => (float) $leaveBalance->maternity_entitled,
+                                    'balance'   => (float) $leaveBalance->maternity_balance,
+                                    'color'     => 'bg-pink-500',
+                                    'textColor' => 'text-pink-600 dark:text-pink-400',
+                                    'bgColor'   => 'bg-pink-50 dark:bg-pink-500/10',
+                                    'icon'      => 'heroicon-m-sparkles',
+                                ],
+                                [
+                                    'label'     => 'Field',
+                                    'used'      => (float) $leaveBalance->field_used,
+                                    'entitled'  => (float) $leaveBalance->field_entitled,
+                                    'balance'   => (float) $leaveBalance->field_balance,
+                                    'color'     => 'bg-success-500',
+                                    'textColor' => 'text-success-600 dark:text-success-400',
+                                    'bgColor'   => 'bg-success-50 dark:bg-success-500/10',
+                                    'icon'      => 'heroicon-m-map-pin',
+                                ],
+                            ];
+                        @endphp
+
+                        <div class="mt-5">
+                            <div class="mb-2.5 flex items-center justify-between">
+                                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                    Leave Balance — {{ now()->year }}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                @foreach($leaveTypes as $lt)
+                                    @php
+                                        $pct = $lt['entitled'] > 0
+                                            ? min(100, round(($lt['used'] / $lt['entitled']) * 100))
+                                            : 0;
+                                        $isLow = $lt['entitled'] > 0 && ($lt['balance'] / $lt['entitled']) < 0.25;
+                                    @endphp
+                                    <div class="rounded-xl {{ $lt['bgColor'] }} p-3.5">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-1.5">
+                                                <x-filament::icon :icon="$lt['icon']" class="h-3.5 w-3.5 {{ $lt['textColor'] }}" />
+                                                <span class="text-[11px] font-semibold uppercase tracking-wider {{ $lt['textColor'] }}">{{ $lt['label'] }}</span>
+                                            </div>
+                                            @if($isLow && $lt['entitled'] > 0)
+                                                <x-filament::icon icon="heroicon-s-exclamation-triangle" class="h-3.5 w-3.5 text-danger-500" title="Low balance" />
+                                            @endif
+                                        </div>
+                                        <div class="mt-2 flex items-baseline gap-1">
+                                            <span class="text-2xl font-bold tracking-tight text-gray-950 dark:text-white leading-none">{{ number_format($lt['balance'], 0) }}</span>
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">/ {{ number_format($lt['entitled'], 0) }} days</span>
+                                        </div>
+                                        {{-- Progress bar --}}
+                                        <div class="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-200/70 dark:bg-white/10">
+                                            <div class="h-full rounded-full {{ $isLow ? 'bg-danger-500' : $lt['color'] }} transition-all"
+                                                 style="width: {{ $pct }}%"></div>
+                                        </div>
+                                        <div class="mt-1 text-[10px] text-gray-400 dark:text-gray-500">{{ $lt['used'] }} used this year</div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -462,40 +549,6 @@
                         </div>
                     </x-filament::section>
 
-                    {{-- QUICK ACCESS ───────────────────────────────── --}}
-                    <x-filament::section>
-                        <x-slot name="heading">
-                            <div class="flex items-center gap-2">
-                                <x-filament::icon icon="heroicon-m-squares-2x2" class="h-5 w-5 text-gray-400" />
-                                <span>Quick Access</span>
-                            </div>
-                        </x-slot>
-
-                        <nav class="-mx-2 space-y-0.5">
-                            @php
-                                $links = [
-                                    ['icon' => 'heroicon-m-banknotes',          'label' => 'My Payslips',        'desc' => 'View payroll history',    'href' => '#', 'color' => 'text-success-600 bg-success-50 dark:bg-success-500/10 dark:text-success-400'],
-                                    ['icon' => 'heroicon-m-briefcase',          'label' => 'My Projects',        'desc' => 'Assigned work',           'href' => '#', 'color' => 'text-primary-600 bg-primary-50 dark:bg-primary-500/10 dark:text-primary-400'],
-                                    ['icon' => 'heroicon-m-computer-desktop',   'label' => 'My Assets',          'desc' => 'Company equipment',       'href' => '#', 'color' => 'text-warning-600 bg-warning-50 dark:bg-warning-500/10 dark:text-warning-400'],
-                                    ['icon' => 'heroicon-m-paper-clip',         'label' => 'File Attachments',   'desc' => 'IDs, checks, documents', 'href' => '#', 'color' => 'text-danger-600 bg-danger-50 dark:bg-danger-500/10 dark:text-danger-400'],
-                                ];
-                            @endphp
-
-                            @foreach($links as $link)
-                                <a href="{{ $link['href'] }}"
-                                   class="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-white/5">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $link['color'] }}">
-                                        <x-filament::icon :icon="$link['icon']" class="h-5 w-5" />
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="text-sm font-medium text-gray-950 dark:text-white">{{ $link['label'] }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $link['desc'] }}</div>
-                                    </div>
-                                    <x-filament::icon icon="heroicon-m-chevron-right" class="h-4 w-4 shrink-0 text-gray-300 transition-colors group-hover:text-gray-400 dark:text-gray-600 dark:group-hover:text-gray-500" />
-                                </a>
-                            @endforeach
-                        </nav>
-                    </x-filament::section>
                 </div>
             </div>
         </div>
