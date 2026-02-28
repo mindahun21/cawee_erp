@@ -23,7 +23,10 @@ class BirthdaysThisMonthWidget extends BaseWidget
                     ->whereNull('date_resigned')
                     ->whereNotNull('date_of_birth')
                     ->whereMonth('date_of_birth', now()->month)
-                    ->orderByRaw('CAST(STRFTIME("%d", date_of_birth) AS INTEGER)')
+                    ->orderByRaw(\DB::connection()->getDriverName() === 'sqlite'
+                        ? 'CAST(STRFTIME("%d", date_of_birth) AS INTEGER)'
+                        : 'DAY(date_of_birth)'
+                    )
             )
             ->columns([
                 TextColumn::make('full_name')
