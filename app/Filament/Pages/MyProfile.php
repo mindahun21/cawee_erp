@@ -2,8 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Delegation;
 use App\Models\Employee;
+use App\Models\LeaveBalance;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 
@@ -64,6 +64,11 @@ class MyProfile extends Page
             'payslips'    => [],
             'assets'      => [],
             'attachments' => [],
+
+            // Current year leave balance
+            'leaveBalance' => LeaveBalance::where('employee_id', $emp->id)
+                ->where('year', now()->year)
+                ->first(),
         ];
     }
 }

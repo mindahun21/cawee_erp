@@ -10,6 +10,7 @@ use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ListEmployees extends ListRecords
@@ -76,13 +77,34 @@ class ListEmployees extends ListRecords
                         ->helperText('Download the template first, fill it in, then upload here.'),
                 ])
                 ->action(function (array $data) {
-                    $path     = storage_path('app/public/' . $data['file']);
+                    // Livewire FileUpload stores files in livewire-tmp/ on the default disk (local = storage/app/)
+                    $relativePath = is_array($data['file']) ? array_values($data['file'])[0] : $data['file'];
+
+                    // Try the local disk first (where livewire-tmp lives), then fall back to public disk
+                    if (Storage::disk('local')->exists('livewire-tmp/' . $relativePath)) {
+                        $path = Storage::disk('local')->path('livewire-tmp/' . $relativePath);
+                    } elseif (Storage::disk('local')->exists($relativePath)) {
+                        $path = Storage::disk('local')->path($relativePath);
+                    } elseif (Storage::disk('public')->exists($relativePath)) {
+                        $path = Storage::disk('public')->path($relativePath);
+                    } else {
+                        Notification::make()
+                            ->title('File Not Found')
+                            ->body('The uploaded file could not be located. Please try uploading again.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
                     $importer = new EmployeeImport();
                     Excel::import($importer, $path);
 
-                    $body = "✅ {$importer->importedCount} imported";
+                    $body = "{$importer->importedCount} imported";
                     if ($importer->skippedCount > 0) {
-                        $body .= ", ⚠️ {$importer->skippedCount} skipped (duplicates or errors)";
+                        $body .= ", {$importer->skippedCount} skipped (duplicates or errors)";
+                    }
+                    if (! empty($importer->errors)) {
+                        $body .= "\n" . implode("\n", array_slice($importer->errors, 0, 5));
                     }
 
                     Notification::make()
@@ -90,6 +112,9 @@ class ListEmployees extends ListRecords
                         ->body($body)
                         ->success()
                         ->send();
+
+                    // Clean up temporary file
+                    @unlink($path);
                 }),
 
             CreateAction::make(),
