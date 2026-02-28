@@ -29,13 +29,21 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
                 'primary' => Color::Amber,
             ])
+            // Full width content — no more scrolling through narrow tables
+            ->maxContentWidth(\Filament\Support\Enums\Width::Full)
+            // Sidebar collapses to icons on desktop for more workspace
+            ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('HR Settings')
+                    ->collapsible()
+                    ->collapsed(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')

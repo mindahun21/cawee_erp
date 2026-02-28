@@ -6,7 +6,12 @@ use App\Filament\Resources\HR\Employees\Pages\CreateEmployee;
 use App\Filament\Resources\HR\Employees\Pages\EditEmployee;
 use App\Filament\Resources\HR\Employees\Pages\ListEmployees;
 use App\Filament\Resources\HR\Employees\Pages\ViewEmployee;
+use App\Models\ContractType;
+use App\Models\Department;
+use App\Models\EducationLevel;
 use App\Models\Employee;
+use App\Models\FieldOfStudy;
+use App\Models\JobPosition;
 use App\Models\Location;
 use App\Models\Project;
 use BackedEnum;
@@ -59,6 +64,13 @@ class EmployeeResource extends Resource
                     ->icon('heroicon-o-user')
                     ->schema([
                         Section::make()->columns(2)->schema([
+                            Select::make('user_id')
+                                ->label('Linked System User')
+                                ->relationship('user', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->helperText('Link this employee to a system user account (for My Profile access).')
+                                ->columnSpanFull(),
                             TextInput::make('first_name')
                                 ->required()
                                 ->maxLength(100),
@@ -86,19 +98,28 @@ class EmployeeResource extends Resource
                                 ->label('Pension ID')
                                 ->maxLength(50),
 
-                            TextInput::make('phone_number')
-                                ->tel()
-                                ->maxLength(20),
+                            \Ysfkaya\FilamentPhoneInput\Forms\PhoneInput::make('phone_number')
+                                ->defaultCountry('ET')
+                                ->nullable(),
 
                             TextInput::make('email')
                                 ->email()
+                                ->required()
                                 ->maxLength(150),
 
-                            TextInput::make('education_level')
-                                ->maxLength(100),
+                            Select::make('education_level_id')
+                                ->label('Education Level')
+                                ->relationship('educationLevel', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
 
-                            TextInput::make('field_of_study')
-                                ->maxLength(100),
+                            Select::make('field_of_study_id')
+                                ->label('Field of Study')
+                                ->relationship('fieldOfStudy', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
                         ]),
                     ]),
 
@@ -106,18 +127,42 @@ class EmployeeResource extends Resource
                     ->icon('heroicon-o-briefcase')
                     ->schema([
                         Section::make()->columns(2)->schema([
-                            TextInput::make('position')
-                                ->required()
-                                ->maxLength(150),
+                            Select::make('department_id')
+                                ->label('Department')
+                                ->relationship('department', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->live()
+                                ->nullable(),
+
+                            Select::make('job_position_id')
+                                ->label('Job Position')
+                                ->relationship('jobPosition', 'title', fn ($query, $get) =>
+                                    $get('department_id')
+                                        ? $query->where('department_id', $get('department_id'))
+                                        : $query
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->helperText('Filter by department above to narrow the list.'),
+
+                            Select::make('contract_type_id')
+                                ->label('Contract Type')
+                                ->relationship('contractType', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
 
                             Select::make('employment_type')
                                 ->options([
+                                    'Permanent'   => 'Permanent',
                                     'Contract'    => 'Contract',
                                     'Temporary'   => 'Temporary',
                                     'Consultancy' => 'Consultancy',
                                     'Other'       => 'Other',
                                 ])
-                                ->required(),
+                                ->nullable(),
 
                             DatePicker::make('date_of_employment')
                                 ->required(),
