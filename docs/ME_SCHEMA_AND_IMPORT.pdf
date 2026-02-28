@@ -1,0 +1,450 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1503 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 742 Td
+(M&E SCHEMA AND IMPORT GUIDE) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(This document explains what the current M&E module stores, how weekly Excel import works, and) Tj
+T*
+(what each major table does.) Tj
+T*
+() Tj
+T*
+(1\) CORE DATA MODEL) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(ME_PROJECTS) Tj
+T*
+() Tj
+T*
+(? Purpose: M&E project master list.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? name) Tj
+T*
+(? project_code \(unique project reference\)) Tj
+T*
+(? description, start_date, end_date) Tj
+T*
+() Tj
+T*
+(ME_REPORTING_PERIODS) Tj
+T*
+() Tj
+T*
+(? Purpose: reporting windows used by weekly/baseline/midline/endline entries.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? project_id) Tj
+T*
+(? type \(weekly, baseline, midline, endline\)) Tj
+T*
+(? start_date, end_date, label) Tj
+T*
+(? is_locked) Tj
+T*
+() Tj
+T*
+(ME_INDICATORS) Tj
+T*
+() Tj
+T*
+(? Purpose: indicator definitions.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? project_id \(nullable\)) Tj
+T*
+(? code \(unique\)) Tj
+T*
+(? name, name_local) Tj
+T*
+(? framework_type \(output, outcome, impact\)) Tj
+T*
+(? unit, frequency) Tj
+T*
+(? direction, data_type) Tj
+T*
+(? alert thresholds \(threshold_warning, threshold_critical\)) Tj
+T*
+() Tj
+T*
+(ME_INDICATOR_TARGETS) Tj
+T*
+() Tj
+T*
+(? Purpose: target values by indicator and period/date scope.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? indicator_id) Tj
+T*
+(? reporting_period_id \(nullable\)) Tj
+T*
+(? period_start, period_end) Tj
+T*
+(? target_value, target_min, target_max) Tj
+T*
+(? scope_location, scope_project) Tj
+T*
+() Tj
+T*
+(ME_INDICATOR_REPORTS) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 1489 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 742 Td
+() Tj
+T*
+(? Purpose: actual values by indicator and period/date scope.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? indicator_id) Tj
+T*
+(? reporting_period_id \(nullable\)) Tj
+T*
+(? period_start, period_end) Tj
+T*
+(? actual_value \(+ actual_text optional\)) Tj
+T*
+(? scope_location, scope_project) Tj
+T*
+(? source \(manual, import, survey, api\)) Tj
+T*
+(? entered_by, entered_at, comment, notes) Tj
+T*
+() Tj
+T*
+(2\) DISAGGREGATION) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(ME_DISAGGREGATION_CATEGORIES) Tj
+T*
+() Tj
+T*
+(? Dimension types \(gender, age, location, disability, custom\).) Tj
+T*
+() Tj
+T*
+(ME_DISAGGREGATION_OPTIONS) Tj
+T*
+() Tj
+T*
+(? Allowed options under each category.) Tj
+T*
+() Tj
+T*
+(ME_INDICATOR_DISAGGREGATION) Tj
+T*
+() Tj
+T*
+(? Which categories are enabled for each indicator.) Tj
+T*
+() Tj
+T*
+(ME_REPORT_DISAGGREGATION_VALUES) Tj
+T*
+() Tj
+T*
+(? Actual values per report/category/option.) Tj
+T*
+() Tj
+T*
+(ME_INDICATOR_TARGET_DISAGGREGATIONS) Tj
+T*
+() Tj
+T*
+(? Target values per target/option.) Tj
+T*
+() Tj
+T*
+(3\) ALERTS) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(ME_ALERT_RULES) Tj
+T*
+() Tj
+T*
+(? Configurable rule thresholds.) Tj
+T*
+(? Supports both old condition style and new rule metadata:) Tj
+T*
+(? condition, warning_threshold, critical_threshold) Tj
+T*
+(? rule_type, threshold, severity, is_active) Tj
+T*
+() Tj
+T*
+(ME_ALERTS) Tj
+T*
+() Tj
+T*
+(? Generated alerts for report performance.) Tj
+T*
+(? Key fields:) Tj
+T*
+(? project_id, indicator_id, report_id, reporting_period_id) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 1483 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 742 Td
+(? severity, status, message) Tj
+T*
+(? resolved_at, resolved_by) Tj
+T*
+() Tj
+T*
+(4\) SURVEYS) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(ME_SURVEYS) Tj
+T*
+() Tj
+T*
+(? Survey definition \(weekly/baseline/midline/endline\).) Tj
+T*
+(? Linked optionally to project_id and reporting_period_id.) Tj
+T*
+() Tj
+T*
+(ME_SURVEY_QUESTIONS) Tj
+T*
+() Tj
+T*
+(? Survey questions and optional mapping to indicators \(maps_to_indicator_id\).) Tj
+T*
+() Tj
+T*
+(ME_SURVEY_RESPONSES) Tj
+T*
+() Tj
+T*
+(? Individual submissions with source and submitter/project/period linkage.) Tj
+T*
+() Tj
+T*
+(ME_SURVEY_ANSWERS) Tj
+T*
+() Tj
+T*
+(? Answers per response/question, including answer_value JSON.) Tj
+T*
+() Tj
+T*
+(5\) AUDIT AND FEEDBACK) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(ME_AUDIT_LOGS) Tj
+T*
+() Tj
+T*
+(? Change history for M&E records.) Tj
+T*
+(? Stores action + payload \(changes, and optional before/after\).) Tj
+T*
+() Tj
+T*
+(ME_BENEFICIARY_FEEDBACK) Tj
+T*
+() Tj
+T*
+(? Feedback entries with optional project/period/location and disaggregation option refs.) Tj
+T*
+() Tj
+T*
+(ME_LOCATIONS) Tj
+T*
+() Tj
+T*
+(? Optional location hierarchy \(parent_id\) with map coordinates \(lat, lng\).) Tj
+T*
+() Tj
+T*
+(6\) WEEKLY EXCEL IMPORT \(CURRENT BEHAVIOR\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Import page: M&E -> Import Weekly Report) Tj
+T*
+() Tj
+T*
+(Service: App\\Services\\ME\\WeeklyReportImportService) Tj
+T*
+() Tj
+T*
+(ACCEPTED FILE SHAPE) Tj
+T*
+() Tj
+T*
+(? Wide Google-Form-like weekly sheet \(Amharic headers supported\).) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 1672 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 742 Td
+(? Header row contains:) Tj
+T*
+(? timestamp) Tj
+T*
+(? project name) Tj
+T*
+(? project code) Tj
+T*
+(? reporting period text) Tj
+T*
+(? many paired metric columns \(plan/actual\)) Tj
+T*
+() Tj
+T*
+(WHAT IMPORTER DOES) Tj
+T*
+() Tj
+T*
+(1. Reads sheet 1 and detects core columns.) Tj
+T*
+(2. Detects metric columns by plan/actual keywords.) Tj
+T*
+(3. Normalizes project codes and period ranges.) Tj
+T*
+(4. Creates missing me_projects and me_reporting_periods \(when table exists\).) Tj
+T*
+(5. Auto-creates missing me_indicators for detected metrics.) Tj
+T*
+(6. Upserts:) Tj
+T*
+(? plan values -> me_indicator_targets) Tj
+T*
+(? actual values -> me_indicator_reports \(source=import\)) Tj
+T*
+(7. Writes debug JSON report to:) Tj
+T*
+(? storage/app/me-import-reports/weekly-import-YYYYMMDD_HHMMSS.json) Tj
+T*
+() Tj
+T*
+(IDEMPOTENCY) Tj
+T*
+() Tj
+T*
+(? Re-importing same file updates existing records \(upsert\) rather than duplicating rows.) Tj
+T*
+() Tj
+T*
+(7\) OBSERVER BEHAVIOR) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Observer: App\\Observers\\ME\\MeIndicatorReportObserver) Tj
+T*
+() Tj
+T*
+(? On report save, it attempts to synchronize alerts through AlertService.) Tj
+T*
+(? It safely skips/ignores sync when alert tables are unavailable during setup/import bootstrap.) Tj
+T*
+() Tj
+T*
+(8\) NOTES FOR FUTURE CHANGES) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(? If headers are renamed later \(for example fully English\), importer still works as long as:) Tj
+T*
+(? project name/code and period columns are present) Tj
+T*
+(? metric columns still include recognizable plan/actual semantics) Tj
+T*
+(? For strict template enforcement, implement a dedicated header map and validation mode.) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000140 00000 n 
+0000000210 00000 n 
+0000001765 00000 n 
+0000001891 00000 n 
+0000003432 00000 n 
+0000003558 00000 n 
+0000005093 00000 n 
+0000005219 00000 n 
+0000006944 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+7072
+%%EOF

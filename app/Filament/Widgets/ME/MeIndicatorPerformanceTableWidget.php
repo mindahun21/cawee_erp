@@ -37,14 +37,19 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
                     ->sortable()
                     ->badge(),
                 TextColumn::make('name')
+                    ->label('Indicator')
                     ->searchable()
+                    ->limit(48)
+                    ->tooltip(fn (MeIndicator $record): string => (string) $record->name)
                     ->wrap(),
                 TextColumn::make('framework_type')
                     ->label('Framework')
                     ->badge(),
                 TextColumn::make('latest_target')
+                    ->label('Target')
                     ->state(fn (MeIndicator $record): string => number_format((float) ($this->rowFor($record->id)['latest_target'] ?? 0), 2)),
                 TextColumn::make('latest_actual')
+                    ->label('Actual')
                     ->state(fn (MeIndicator $record): string => number_format((float) ($this->rowFor($record->id)['latest_actual'] ?? 0), 2)),
                 TextColumn::make('progress_percent')
                     ->label('Progress %')
@@ -76,7 +81,9 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
                     ->state(fn (MeIndicator $record): string => (string) ($this->rowFor($record->id)['last_reported_date'] ?? '-')),
             ])
             ->defaultSort('code')
-            ->paginated(false);
+            ->striped()
+            ->defaultPaginationPageOption(10)
+            ->paginated([10, 25, 50]);
     }
 
     private function getPerformanceRows(): Collection

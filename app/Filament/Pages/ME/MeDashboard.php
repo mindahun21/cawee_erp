@@ -51,12 +51,19 @@ class MeDashboard extends Dashboard
                     ->placeholder('All'),
                 Select::make('location')
                     ->label('Location')
-                    ->options(fn (): array => MeIndicatorReport::query()
+                    ->searchable()
+                    ->getSearchResultsUsing(fn (string $search): array => MeIndicatorReport::query()
                         ->whereNotNull('scope_location')
-                        ->distinct()
+                        ->when(
+                            $search !== '',
+                            fn ($query) => $query->where('scope_location', 'like', '%' . $search . '%')
+                        )
+                        ->groupBy('scope_location')
                         ->orderBy('scope_location')
+                        ->limit(50)
                         ->pluck('scope_location', 'scope_location')
                         ->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => is_string($value) && ($value !== '') ? $value : null)
                     ->placeholder('All'),
             ]);
     }
@@ -67,8 +74,8 @@ class MeDashboard extends Dashboard
             MeKpiStatsWidget::class,
             MeProgressByFrameworkChartWidget::class,
             MePerformanceTrendChartWidget::class,
-            MeIndicatorPerformanceTableWidget::class,
             MeLocationMapPlaceholderWidget::class,
+            MeIndicatorPerformanceTableWidget::class,
         ];
     }
 
@@ -76,7 +83,7 @@ class MeDashboard extends Dashboard
     {
         return [
             'md' => 2,
-            'xl' => 2,
+            'xl' => 3,
         ];
     }
 }

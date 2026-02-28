@@ -21,6 +21,9 @@ class DashboardService
         $rows = $this->indicatorPerformance($filters);
         $total = $rows->count();
         $reported = $rows->whereNotNull('last_reported_date');
+        $reportRowsQuery = MeIndicatorReport::query();
+        $this->applyReportFilters($reportRowsQuery, $filters);
+        $totalReportRows = (int) $reportRowsQuery->count();
 
         $onTrack = $reported->where('status', 'on_track')->count();
         $needsAttention = $reported->where('status', 'needs_attention')->count();
@@ -29,6 +32,7 @@ class DashboardService
         return [
             'total_indicators' => $total,
             'reported_this_period' => $reported->count(),
+            'total_report_rows' => $totalReportRows,
             'on_track' => $onTrack,
             'needs_attention' => $needsAttention,
             'off_track' => $offTrack,

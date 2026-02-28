@@ -24,8 +24,12 @@ class MeKpiStatsWidget extends BaseWidget
         return [
             Stat::make('Total Indicators', number_format((int) $kpis['total_indicators']))
                 ->color('primary'),
-            Stat::make('Reported This Period', number_format((int) $kpis['reported_this_period']))
+            Stat::make('Reported Indicators', number_format((int) $kpis['reported_this_period']))
+                ->description('distinct indicators with at least one report')
                 ->color('info'),
+            Stat::make('Total Report Rows', number_format((int) ($kpis['total_report_rows'] ?? 0)))
+                ->description('rows in me_indicator_reports')
+                ->color('gray'),
             Stat::make('On Track', number_format((int) $kpis['on_track']))
                 ->color('success'),
             Stat::make('Needs Attention', number_format((int) $kpis['needs_attention']))

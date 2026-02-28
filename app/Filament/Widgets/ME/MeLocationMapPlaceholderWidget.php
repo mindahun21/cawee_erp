@@ -18,9 +18,9 @@ class MeLocationMapPlaceholderWidget extends BaseWidget
 
     protected static bool $isDiscovered = false;
 
-    protected static ?string $heading = 'Map View (placeholder)';
+    protected static ?string $heading = 'Location Performance';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int | string | array $columnSpan = 1;
 
     private ?Collection $locationStats = null;
     private ?string $locationStatsCacheKey = null;
@@ -63,7 +63,9 @@ class MeLocationMapPlaceholderWidget extends BaseWidget
                     ->label('Reports')
                     ->state(fn (MeIndicatorReport $record): string => (string) ($this->getLocationStats()->get($record->scope_location)['reports_count'] ?? 0)),
             ])
-            ->paginated(false);
+            ->striped()
+            ->defaultPaginationPageOption(10)
+            ->paginated([10, 25, 50]);
     }
 
     private function getLocationStats(): Collection

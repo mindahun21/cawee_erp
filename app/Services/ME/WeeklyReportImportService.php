@@ -45,6 +45,10 @@ class WeeklyReportImportService
 
     public function import(string $filePath): array
     {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
+
         if (! class_exists(IOFactory::class)) {
             throw new RuntimeException('Spreadsheet import dependency missing: phpoffice/phpspreadsheet.');
         }
@@ -58,7 +62,9 @@ class WeeklyReportImportService
 
         $this->primeCaches($hasProjects, $hasPeriods);
 
-        $spreadsheet = IOFactory::load($filePath);
+        $reader = IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($filePath);
         $sheet = $spreadsheet->getSheet(0);
         $highestDataRow = (int) $sheet->getHighestDataRow();
         $highestDataColumnIndex = Coordinate::columnIndexFromString($sheet->getHighestDataColumn());
@@ -87,111 +93,123 @@ class WeeklyReportImportService
             'generated_at' => now()->toDateTimeString(),
         ];
 
-        for ($row = 2; $row <= $highestDataRow; $row++) {
-            $timestampRaw = $this->stringValue($sheet->getCell([$coreCols['timestamp'], $row])->getFormattedValue());
-            $projectNameRaw = $this->stringValue($sheet->getCell([$coreCols['project_name'], $row])->getFormattedValue());
-            $projectCodeRaw = $this->stringValue($sheet->getCell([$coreCols['project_code'], $row])->getFormattedValue());
-            $periodRaw = $this->stringValue($sheet->getCell([$coreCols['period'], $row])->getFormattedValue());
-            $commentRaw = $coreCols['comment'] !== null
-                ? $this->stringValue($sheet->getCell([$coreCols['comment'], $row])->getFormattedValue())
-                : null;
+        DB::connection()->disableQueryLog();
 
-            if ($this->isRowEmpty([$timestampRaw, $projectNameRaw, $projectCodeRaw, $periodRaw])) {
-                $summary['rows_skipped']++;
+        DB::transaction(function () use (
+            $sheet,
+            $coreCols,
+            $highestDataRow,
+            $metricColumns,
+            $hasProjects,
+            $hasPeriods,
+            &$summary
+        ): void {
+            for ($row = 2; $row <= $highestDataRow; $row++) {
+                $timestampRaw = $this->stringValue($sheet->getCell([$coreCols['timestamp'], $row])->getFormattedValue());
+                $projectNameRaw = $this->stringValue($sheet->getCell([$coreCols['project_name'], $row])->getFormattedValue());
+                $projectCodeRaw = $this->stringValue($sheet->getCell([$coreCols['project_code'], $row])->getFormattedValue());
+                $periodRaw = $this->stringValue($sheet->getCell([$coreCols['period'], $row])->getFormattedValue());
+                $commentRaw = $coreCols['comment'] !== null
+                    ? $this->stringValue($sheet->getCell([$coreCols['comment'], $row])->getFormattedValue())
+                    : null;
 
-                continue;
-            }
+                if ($this->isRowEmpty([$timestampRaw, $projectNameRaw, $projectCodeRaw, $periodRaw])) {
+                    $summary['rows_skipped']++;
 
-            if ($this->looksLikeHeaderNoise($timestampRaw, $projectCodeRaw, $projectNameRaw)) {
-                $summary['rows_skipped']++;
-                $this->addWarning($summary, "Row {$row}: skipped header/noise row.");
-
-                continue;
-            }
-
-            $period = $this->parsePeriodRange($periodRaw, $timestampRaw);
-
-            if ($period === null) {
-                $summary['rows_skipped']++;
-                $this->addWarning($summary, "Row {$row}: failed to parse reporting period '{$periodRaw}'.");
-
-                continue;
-            }
-
-            [$projectId, $projectCodeDisplay, $projectCreated] = $this->resolveProject($projectNameRaw, $projectCodeRaw, $hasProjects);
-
-            if ($projectCreated) {
-                $summary['projects_created']++;
-            }
-
-            $periodId = null;
-            if ($hasPeriods && $projectId !== null) {
-                [$periodId, $periodCreated] = $this->resolvePeriod($projectId, $period['start'], $period['end'], $period['label']);
-                if ($periodCreated) {
-                    $summary['periods_created']++;
-                }
-            }
-
-            $rowHadData = false;
-
-            foreach ($metricColumns as $metric) {
-                $planRaw = $metric['plan_col'] !== null ? $sheet->getCell([$metric['plan_col'], $row])->getFormattedValue() : null;
-                $actualRaw = $metric['actual_col'] !== null ? $sheet->getCell([$metric['actual_col'], $row])->getFormattedValue() : null;
-
-                $planValue = $this->numericValue($planRaw);
-                $actualValue = $this->numericValue($actualRaw);
-
-                if (($planValue === null) && ($actualValue === null)) {
                     continue;
                 }
 
-                $rowHadData = true;
+                if ($this->looksLikeHeaderNoise($timestampRaw, $projectCodeRaw, $projectNameRaw)) {
+                    $summary['rows_skipped']++;
+                    $this->addWarning($summary, "Row {$row}: skipped header/noise row.");
 
-                [$indicatorId, $indicatorCreated] = $this->resolveIndicator(
-                    $metric['label'],
-                    $metric['key'],
-                    $projectId,
-                    $projectCodeDisplay
-                );
-
-                if ($indicatorCreated) {
-                    $summary['indicators_created']++;
+                    continue;
                 }
 
-                if ($planValue !== null) {
-                    $this->upsertTarget(
-                        $indicatorId,
-                        $periodId,
-                        $period['start'],
-                        $period['end'],
-                        $projectCodeDisplay,
-                        $planValue,
-                        $commentRaw
-                    );
-                    $summary['targets_upserted']++;
+                $period = $this->parsePeriodRange($periodRaw, $timestampRaw);
+
+                if ($period === null) {
+                    $summary['rows_skipped']++;
+                    $this->addWarning($summary, "Row {$row}: failed to parse reporting period '{$periodRaw}'.");
+
+                    continue;
                 }
 
-                if ($actualValue !== null) {
-                    $this->upsertReport(
-                        $indicatorId,
-                        $periodId,
-                        $period['start'],
-                        $period['end'],
-                        $projectCodeDisplay,
-                        $actualValue,
-                        $commentRaw
+                [$projectId, $projectCodeDisplay, $projectCreated] = $this->resolveProject($projectNameRaw, $projectCodeRaw, $hasProjects);
+
+                if ($projectCreated) {
+                    $summary['projects_created']++;
+                }
+
+                $periodId = null;
+                if ($hasPeriods && $projectId !== null) {
+                    [$periodId, $periodCreated] = $this->resolvePeriod($projectId, $period['start'], $period['end'], $period['label']);
+                    if ($periodCreated) {
+                        $summary['periods_created']++;
+                    }
+                }
+
+                $rowHadData = false;
+
+                foreach ($metricColumns as $metric) {
+                    $planRaw = $metric['plan_col'] !== null ? $sheet->getCell([$metric['plan_col'], $row])->getFormattedValue() : null;
+                    $actualRaw = $metric['actual_col'] !== null ? $sheet->getCell([$metric['actual_col'], $row])->getFormattedValue() : null;
+
+                    $planValue = $this->numericValue($planRaw);
+                    $actualValue = $this->numericValue($actualRaw);
+
+                    if (($planValue === null) && ($actualValue === null)) {
+                        continue;
+                    }
+
+                    $rowHadData = true;
+
+                    [$indicatorId, $indicatorCreated] = $this->resolveIndicator(
+                        $metric['label'],
+                        $metric['key'],
+                        $projectId,
+                        $projectCodeDisplay
                     );
-                    $summary['reports_upserted']++;
+
+                    if ($indicatorCreated) {
+                        $summary['indicators_created']++;
+                    }
+
+                    if ($planValue !== null) {
+                        $this->upsertTarget(
+                            $indicatorId,
+                            $periodId,
+                            $period['start'],
+                            $period['end'],
+                            $projectCodeDisplay,
+                            $planValue,
+                            $commentRaw
+                        );
+                        $summary['targets_upserted']++;
+                    }
+
+                    if ($actualValue !== null) {
+                        $this->upsertReport(
+                            $indicatorId,
+                            $periodId,
+                            $period['start'],
+                            $period['end'],
+                            $projectCodeDisplay,
+                            $actualValue,
+                            $commentRaw
+                        );
+                        $summary['reports_upserted']++;
+                    }
+                }
+
+                if ($rowHadData) {
+                    $summary['rows_processed']++;
+                } else {
+                    $summary['rows_skipped']++;
+                    $this->addWarning($summary, "Row {$row}: no numeric plan/actual values found.");
                 }
             }
-
-            if ($rowHadData) {
-                $summary['rows_processed']++;
-            } else {
-                $summary['rows_skipped']++;
-                $this->addWarning($summary, "Row {$row}: no numeric plan/actual values found.");
-            }
-        }
+        });
 
         $summary['indicator_samples'] = array_slice($this->indicatorCreated, 0, 20);
         $summary['debug_report'] = $this->storeDebugReport($summary);
@@ -255,6 +273,46 @@ class WeeklyReportImportService
 
     private function detectCoreColumns(array $headers): array
     {
+        $timestampAliases = [
+            'timestamp',
+            'submission time',
+            'submitted at',
+        ];
+
+        $projectNameAliases = [
+            'project name',
+            'project title',
+            'ፕሮጀክቱ ስም',
+            'á•áˆ®áŒ€áŠ­á‰± áˆµáˆ',
+        ];
+
+        $projectCodeAliases = [
+            'project code',
+            'project number',
+            'project no',
+            'project #',
+            'ፕሮጀክቱ ቁጥር',
+            'á•áˆ®áŒ€áŠ­á‰± á‰áŒ¥áˆ­',
+        ];
+
+        $periodAliases = [
+            'reporting period covered',
+            'reporting period',
+            'period covered',
+            'period',
+            'ሪፖርቱ',
+            'áˆªá–áˆ­á‰±',
+        ];
+
+        $commentAliases = [
+            'additional comment',
+            'comment',
+            'remarks',
+            'notes',
+            'አስተያየት',
+            'áŠ áˆµá‰°á‹«á‹¨á‰µ',
+        ];
+
         $timestampCol = null;
         $projectNameCol = null;
         $projectCodeCol = null;
@@ -262,31 +320,31 @@ class WeeklyReportImportService
         $commentCol = null;
 
         foreach ($headers as $col => $header) {
-            $normalized = mb_strtolower($header);
+            $normalized = mb_strtolower($this->cleanHeader($header));
 
-            if (($timestampCol === null) && str_contains($normalized, 'timestamp')) {
+            if (($timestampCol === null) && $this->containsAnyNormalized($normalized, $timestampAliases)) {
                 $timestampCol = $col;
             }
 
-            if (($projectNameCol === null) && (str_contains($normalized, 'ፕሮጀክቱ ስም') || str_contains($normalized, 'project name'))) {
+            if (($projectNameCol === null) && $this->containsAnyNormalized($normalized, $projectNameAliases)) {
                 $projectNameCol = $col;
             }
 
-            if (($projectCodeCol === null) && (str_contains($normalized, 'ፕሮጀክቱ ቁጥር') || str_contains($normalized, 'project code'))) {
+            if (($projectCodeCol === null) && $this->containsAnyNormalized($normalized, $projectCodeAliases)) {
                 $projectCodeCol = $col;
             }
 
-            if (($periodCol === null) && ((str_contains($normalized, 'ሪፖርቱ') && str_contains($normalized, 'ጊዜ')) || str_contains($normalized, 'period'))) {
+            if (($periodCol === null) && $this->containsAnyNormalized($normalized, $periodAliases)) {
                 $periodCol = $col;
             }
 
-            if (($commentCol === null) && (str_contains($normalized, 'አስተያየት') || str_contains($normalized, 'comment'))) {
+            if (($commentCol === null) && $this->containsAnyNormalized($normalized, $commentAliases)) {
                 $commentCol = $col;
             }
         }
 
         if (($projectNameCol === null) || ($projectCodeCol === null) || ($periodCol === null)) {
-            throw new RuntimeException('Missing required columns. Ensure project name, project code, and period columns exist.');
+            throw new RuntimeException('Missing required columns. Ensure project name, project code/project number, and reporting period columns exist.');
         }
 
         return [
@@ -359,16 +417,18 @@ class WeeklyReportImportService
         $label = preg_replace('/^\s*\d+\.\s*/u', '', $header);
         $label = (string) $label;
 
-        foreach (array_merge(self::PLAN_KEYWORDS, self::ACTUAL_KEYWORDS, ['መጠን']) as $keyword) {
+        $keywords = array_merge(self::PLAN_KEYWORDS, self::ACTUAL_KEYWORDS, ['áˆ˜áŒ áŠ•']);
+        usort($keywords, fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
+
+        foreach ($keywords as $keyword) {
             $label = str_ireplace($keyword, '', $label);
         }
 
         $label = preg_replace('/\s+/u', ' ', (string) $label);
-        $label = trim((string) $label, " \t\n\r\0\x0B-:,.،");
+        $label = trim((string) $label, " \t\n\r\0\x0B-:,.ØŒ");
 
         return $label !== '' ? $label : $header;
     }
-
     private function resolveProject(string $projectNameRaw, string $projectCodeRaw, bool $hasProjects): array
     {
         $projectName = $projectNameRaw !== '' ? $projectNameRaw : 'Unnamed Project';
@@ -842,6 +902,18 @@ class WeeklyReportImportService
         return trim((string) $header);
     }
 
+    private function containsAnyNormalized(string $normalizedHeader, array $aliases): bool
+    {
+        foreach ($aliases as $alias) {
+            $needle = mb_strtolower(trim((string) $alias));
+            if (($needle !== '') && str_contains($normalizedHeader, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function normalizeText(string $value): string
     {
         $value = mb_strtolower(trim($value));
@@ -914,3 +986,4 @@ class WeeklyReportImportService
         }
     }
 }
+
