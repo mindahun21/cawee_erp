@@ -12,11 +12,13 @@ class Employee extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'first_name', 'last_name', 'gender', 'date_of_birth',
+        'user_id', 'first_name', 'last_name', 'gender', 'date_of_birth',
         'national_id', 'tin', 'pension_id', 'phone_number', 'email',
         'education_level', 'field_of_study',
         'extra_attributes',
         'position', 'employment_type',
+        'department_id', 'job_position_id', 'contract_type_id',
+        'education_level_id', 'field_of_study_id',
         'date_of_employment', 'date_transferred', 'date_resigned',
         'basic_salary', 'transport_allowance', 'house_allowance',
         'communication_allowance', 'overtime_allowance', 'incentive', 'other_allowances',
@@ -61,9 +63,17 @@ class Employee extends Model
     }
 
     // ── Lookups ────────────────────────────────────────────────────
-    public function location(): BelongsTo   { return $this->belongsTo(Location::class); }
-    public function project(): BelongsTo    { return $this->belongsTo(Project::class); }
+    public function location(): BelongsTo    { return $this->belongsTo(Location::class); }
+    public function project(): BelongsTo     { return $this->belongsTo(Project::class); }
     public function salaryGrade(): BelongsTo { return $this->belongsTo(SalaryGrade::class); }
+
+    // ── HR Settings ────────────────────────────────────────────────
+    public function user(): BelongsTo           { return $this->belongsTo(\Illuminate\Foundation\Auth\User::class); }
+    public function department(): BelongsTo    { return $this->belongsTo(Department::class); }
+    public function jobPosition(): BelongsTo   { return $this->belongsTo(JobPosition::class); }
+    public function contractType(): BelongsTo  { return $this->belongsTo(ContractType::class); }
+    public function educationLevel(): BelongsTo { return $this->belongsTo(EducationLevel::class); }
+    public function fieldOfStudy(): BelongsTo  { return $this->belongsTo(FieldOfStudy::class); }
 
     // ── Leave ──────────────────────────────────────────────────────
     public function leaveRequests(): HasMany { return $this->hasMany(LeaveRequest::class); }
@@ -91,4 +101,16 @@ class Employee extends Model
     public function onboarding(): HasMany     { return $this->hasMany(EmployeeOnboarding::class); }
     public function exitInterview(): HasMany  { return $this->hasMany(ExitInterview::class); }
     public function clearanceForms(): HasMany { return $this->hasMany(ClearanceForm::class); }
+
+    // ── Contracts / Dependents / Trainings ─────────────────────────
+    public function contracts(): HasMany   { return $this->hasMany(EmployeeContract::class); }
+    public function dependents(): HasMany  { return $this->hasMany(Dependent::class); }
+    public function trainings(): HasMany   { return $this->hasMany(Training::class); }
+
+    // ── Movements (Promotion / Demotion / Transfer) ─────────────────
+    public function movements(): HasMany            { return $this->hasMany(EmployeeMovement::class); }
+
+    // ── Delegations ─────────────────────────────────────────────────
+    public function delegationsGiven(): HasMany    { return $this->hasMany(Delegation::class, 'delegator_id'); }
+    public function delegationsReceived(): HasMany { return $this->hasMany(Delegation::class, 'delegate_id'); }
 }

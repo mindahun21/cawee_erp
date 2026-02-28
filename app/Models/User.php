@@ -13,6 +13,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
+    public function employee(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Employee::class);
+    }
+
     // ── HR Role Helpers ────────────────────────────────────────────
     // These methods provide readable, semantic checks across the codebase.
     // Use these instead of hardcoding role name strings everywhere.
