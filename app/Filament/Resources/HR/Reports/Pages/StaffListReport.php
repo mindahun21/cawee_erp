@@ -47,7 +47,8 @@ class StaffListReport extends ListRecords
                 TextColumn::make('full_name')->label('Employee')->searchable(['first_name', 'last_name'])->weight('semibold'),
                 TextColumn::make('department.name')->label('Department')->badge()->color('info'),
                 TextColumn::make('jobPosition.title')->label('Position')->limit(20),
-                TextColumn::make('contractType.name')->label('Contract')->placeholder(fn ($r) => $r->employment_type),
+                TextColumn::make('contractType.name')->label('Contract')
+                    ->getStateUsing(fn ($record) => $record->contractType?->name ?? $record->employment_type ?? '—'),
                 TextColumn::make('date_of_employment')->label('Start Date')->date(),
                 TextColumn::make('basic_salary')->label('Salary (ETB)')->money('ETB', true)->alignRight(),
                 TextColumn::make('date_resigned')->label('Status')->badge()->color(fn ($state) => $state ? 'danger' : 'success')
