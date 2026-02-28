@@ -99,9 +99,9 @@ class ListEmployees extends ListRecords
                     $importer = new EmployeeImport();
                     Excel::import($importer, $path);
 
-                    $body = "✅ {$importer->importedCount} imported";
+                    $body = "{$importer->importedCount} imported";
                     if ($importer->skippedCount > 0) {
-                        $body .= ", ⚠️ {$importer->skippedCount} skipped (duplicates or errors)";
+                        $body .= ", {$importer->skippedCount} skipped (duplicates or errors)";
                     }
                     if (! empty($importer->errors)) {
                         $body .= "\n" . implode("\n", array_slice($importer->errors, 0, 5));
