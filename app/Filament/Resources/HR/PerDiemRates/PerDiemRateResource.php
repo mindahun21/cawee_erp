@@ -24,9 +24,13 @@ class PerDiemRateResource extends Resource
 {
     protected static ?string $model = PerDiemRate::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+
+    protected static ?string $navigationParentItem = 'HR Settings';
 
     protected static ?string $navigationLabel = 'Per Diem Rates';
 

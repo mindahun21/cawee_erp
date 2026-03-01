@@ -9,9 +9,7 @@ use Filament\Support\Icons\Heroicon;
 
 class MyProfile extends Page
 {
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedUserCircle;
-    protected static string|\UnitEnum|null $navigationGroup = 'My Area';
-    protected static ?int $navigationSort = 1;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected string $view = 'filament.pages.my-profile';
 

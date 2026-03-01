@@ -41,7 +41,7 @@ class DelegationResource extends Resource
                 Select::make('delegator_id')
                     ->label('Delegating Employee (Going Away)')
                     ->relationship('delegator', 'first_name')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => $r->full_name)
+                    ->getOptionLabelFromRecordUsing(fn ($r) => $r?->full_name ?? '—')
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -49,7 +49,7 @@ class DelegationResource extends Resource
                 Select::make('delegate_id')
                     ->label('Acting Employee (Covering)')
                     ->relationship('delegate', 'first_name')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => $r->full_name)
+                    ->getOptionLabelFromRecordUsing(fn ($r) => $r?->full_name ?? '—')
                     ->searchable()
                     ->preload()
                     ->required(),
