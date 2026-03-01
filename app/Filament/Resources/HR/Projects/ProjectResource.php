@@ -20,9 +20,13 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolderOpen;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+
+    protected static ?string $navigationParentItem = 'HR Settings';
 
     protected static ?string $navigationLabel = 'Projects';
 

@@ -22,9 +22,13 @@ class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+
+    protected static ?string $navigationParentItem = 'HR Settings';
 
     protected static ?string $navigationLabel = 'Locations';
 

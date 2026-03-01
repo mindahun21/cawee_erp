@@ -21,9 +21,13 @@ class JobPositionResource extends Resource
 {
     protected static ?string $model = JobPosition::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'HR Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+
+    protected static ?string $navigationParentItem = 'HR Settings';
 
     protected static ?string $navigationLabel = 'Job Positions';
 

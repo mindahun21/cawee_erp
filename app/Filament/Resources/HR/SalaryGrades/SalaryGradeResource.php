@@ -23,9 +23,13 @@ class SalaryGradeResource extends Resource
 {
     protected static ?string $model = SalaryGrade::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+
+    protected static ?string $navigationParentItem = 'HR Settings';
 
     protected static ?string $navigationLabel = 'Salary Grades';
 

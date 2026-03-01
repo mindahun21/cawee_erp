@@ -38,12 +38,15 @@ class AdminPanelProvider extends PanelProvider
             // Sidebar collapses to icons on desktop for more workspace
             ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('My Profile')
+                    ->icon('heroicon-o-user-circle')
+                    ->url(fn (): string => \App\Filament\Pages\MyProfile::getUrl()),
+            ])
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('HR Settings')
-                    ->collapsible()
-                    ->collapsed(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
@@ -52,6 +55,13 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
                     ->collapsible(),
+            ])
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('HR Settings')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(90)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl()),
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
