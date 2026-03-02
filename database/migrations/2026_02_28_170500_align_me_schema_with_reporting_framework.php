@@ -70,7 +70,11 @@ return new class extends Migration
         Schema::create('me_indicator_target_disaggregations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('target_id')->constrained('me_indicator_targets')->cascadeOnDelete();
-            $table->foreignId('disaggregation_option_id')->constrained('me_disaggregation_options')->cascadeOnDelete();
+            $table->unsignedBigInteger('disaggregation_option_id');
+            $table->foreign('disaggregation_option_id', 'me_target_disagg_option_fk')
+                ->references('id')
+                ->on('me_disaggregation_options')
+                ->cascadeOnDelete();
             $table->decimal('value', 14, 2);
             $table->timestamps();
 
