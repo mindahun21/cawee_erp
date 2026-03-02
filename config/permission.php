@@ -13,8 +13,7 @@ return [
          * `Spatie\Permission\Contracts\Permission` contract.
          */
 
-        'permission' => \App\Models\Permission::class,
-
+        'permission' => Spatie\Permission\Models\Permission::class,
 
         /*
          * When using the "HasRoles" trait from this package, we need to know which
@@ -25,8 +24,7 @@ return [
          * `Spatie\Permission\Contracts\Role` contract.
          */
 
-        'role' => \App\Models\Role::class,
-
+        'role' => Spatie\Permission\Models\Role::class,
 
     ],
 
@@ -114,10 +112,10 @@ return [
 
     /*
      * Events will fire when a role or permission is assigned/unassigned:
-     * \Spatie\Permission\Events\RoleAttachedEvent
-     * \Spatie\Permission\Events\RoleDetachedEvent
-     * \Spatie\Permission\Events\PermissionAttachedEvent
-     * \Spatie\Permission\Events\PermissionDetachedEvent
+     * \Spatie\Permission\Events\RoleAttached
+     * \Spatie\Permission\Events\RoleDetached
+     * \Spatie\Permission\Events\PermissionAttached
+     * \Spatie\Permission\Events\PermissionDetached
      *
      * To enable, set to true, and then create listeners to watch these events.
      */
@@ -133,7 +131,7 @@ return [
      * (view the latest version of this package's migration file)
      */
 
-    'teams' => true,
+    'teams' => false,
 
     /*
      * The class to use to resolve the permissions team id
