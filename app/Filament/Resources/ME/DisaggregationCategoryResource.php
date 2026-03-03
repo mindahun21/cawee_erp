@@ -24,10 +24,14 @@ use Filament\Tables\Table;
 class DisaggregationCategoryResource extends Resource
 {
     protected static ?string $model = MeDisaggregationCategory::class;
+    
+    protected static ?string $modelLabel = 'Disaggregation Category';
+    
+    protected static ?string $pluralModelLabel = 'Disaggregation Categories';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-view-columns';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Disaggregation';
 

@@ -33,14 +33,18 @@ use Filament\Tables\Table;
 class ReportResource extends Resource
 {
     protected static ?string $model = MeIndicatorReport::class;
+    
+    protected static ?string $modelLabel = 'Report';
+    
+    protected static ?string $pluralModelLabel = 'Reports';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Reports';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 99;
 
     public static function form(Schema $schema): Schema
     {

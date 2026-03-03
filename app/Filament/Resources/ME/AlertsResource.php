@@ -29,10 +29,14 @@ use Filament\Tables\Table;
 class AlertsResource extends Resource
 {
     protected static ?string $model = MeAlert::class;
+    
+    protected static ?string $modelLabel = 'Alert';
+    
+    protected static ?string $pluralModelLabel = 'Alerts';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-exclamation-triangle';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Alerts';
 

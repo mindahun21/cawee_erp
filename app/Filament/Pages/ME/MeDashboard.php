@@ -24,13 +24,13 @@ class MeDashboard extends Dashboard
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
-    protected static ?string $navigationLabel = 'M&E Dashboard';
+    protected static ?string $navigationLabel = 'Dashboard';
 
     protected static ?int $navigationSort = 0;
 
-    protected static ?string $title = 'Monitoring & Evaluation Dashboard';
+    protected static ?string $title = 'Dashboard';
 
     public function filtersForm(Schema $schema): Schema
     {
