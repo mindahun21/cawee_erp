@@ -29,10 +29,14 @@ use Filament\Tables\Table;
 class IndicatorResource extends Resource
 {
     protected static ?string $model = MeIndicator::class;
+    
+    protected static ?string $modelLabel = 'Indicator';
+    
+    protected static ?string $pluralModelLabel = 'Indicators';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Indicators';
 

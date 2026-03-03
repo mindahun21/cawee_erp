@@ -26,10 +26,14 @@ use Filament\Tables\Table;
 class BeneficiaryFeedbackResource extends Resource
 {
     protected static ?string $model = MeBeneficiaryFeedback::class;
+    
+    protected static ?string $modelLabel = 'Beneficiary Feedback';
+    
+    protected static ?string $pluralModelLabel = 'Beneficiary Feedback';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Beneficiary Feedback';
 

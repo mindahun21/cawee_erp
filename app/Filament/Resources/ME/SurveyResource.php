@@ -27,10 +27,14 @@ use Filament\Tables\Table;
 class SurveyResource extends Resource
 {
     protected static ?string $model = MeSurvey::class;
+    
+    protected static ?string $modelLabel = 'Survey';
+    
+    protected static ?string $pluralModelLabel = 'Surveys';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'M&E';
+    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Surveys';
 
