@@ -14,7 +14,9 @@ class MeProgressByFrameworkChartWidget extends ChartWidget
 
     protected static bool $isDiscovered = false;
 
-    protected ?string $heading = 'Progress vs Target by Framework';
+    protected ?string $heading = 'Framework Performance Snapshot';
+
+    protected ?string $description = 'Compares planned totals against actual totals for each framework type.';
 
     protected int | string | array $columnSpan = 1;
 
@@ -42,5 +44,23 @@ class MeProgressByFrameworkChartWidget extends ChartWidget
     protected function getType(): string
     {
         return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => [
+                'legend' => [
+                    'position' => 'bottom',
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                ],
+            ],
+        ];
     }
 }

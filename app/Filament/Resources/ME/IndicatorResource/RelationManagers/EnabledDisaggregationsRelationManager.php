@@ -6,7 +6,6 @@ use App\Models\ME\MeDisaggregationCategory;
 use Filament\Actions\Action;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
-use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -20,6 +19,7 @@ class EnabledDisaggregationsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->inverseRelationship('indicators')
             ->columns([
                 TextColumn::make('key')
                     ->badge(),

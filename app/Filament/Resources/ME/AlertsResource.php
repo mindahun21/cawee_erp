@@ -48,6 +48,7 @@ class AlertsResource extends Resource
             ->components([
                 \Filament\Schemas\Components\Section::make('Alert')
                     ->columns(2)
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('indicator_id')
                             ->label('Indicator')

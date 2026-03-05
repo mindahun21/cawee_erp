@@ -8,6 +8,7 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewReport extends ViewRecord
 {
+    protected \Filament\Support\Enums\Width | string | null $maxContentWidth = \Filament\Support\Enums\Width::Full;
     protected static string $resource = ReportResource::class;
 
     protected function getHeaderActions(): array

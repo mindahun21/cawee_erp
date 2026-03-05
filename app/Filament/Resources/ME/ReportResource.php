@@ -52,6 +52,7 @@ class ReportResource extends Resource
             ->components([
                 \Filament\Schemas\Components\Section::make('Periodic Reporting')
                     ->columns(2)
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('indicator_id')
                             ->label('Indicator')
@@ -101,6 +102,7 @@ class ReportResource extends Resource
                             ->columnSpanFull(),
                     ]),
                 \Filament\Schemas\Components\Section::make('Disaggregation Values')
+                    ->columnSpanFull()
                     ->schema([
                         Repeater::make('disaggregationValues')
                             ->relationship('disaggregationValues')

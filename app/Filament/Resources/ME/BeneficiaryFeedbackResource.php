@@ -45,6 +45,7 @@ class BeneficiaryFeedbackResource extends Resource
             ->components([
                 \Filament\Schemas\Components\Section::make('Feedback')
                     ->columns(2)
+                    ->columnSpanFull()
                     ->schema([
                         DateTimePicker::make('submitted_at')
                             ->default(now())
