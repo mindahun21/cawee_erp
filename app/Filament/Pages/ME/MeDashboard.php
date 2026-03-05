@@ -2,29 +2,21 @@
 
 namespace App\Filament\Pages\ME;
 
-use App\Filament\Widgets\ME\MeIndicatorPerformanceTableWidget;
-use App\Filament\Widgets\ME\MeKpiStatsWidget;
 use App\Filament\Widgets\ME\MeLocationMapPlaceholderWidget;
 use App\Filament\Widgets\ME\MePerformanceTrendChartWidget;
 use App\Filament\Widgets\ME\MeProgressByFrameworkChartWidget;
 use App\Models\ME\MeIndicatorReport;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Pages\Dashboard;
-use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
-use Filament\Schemas\Schema;
+use App\Models\ME\MeProject;
+use App\Services\ME\DashboardService;
+use BackedEnum;
+use Filament\Pages\Page;
+use UnitEnum;
 
-class MeDashboard extends Dashboard
+class MeDashboard extends Page
 {
-    use HasFiltersForm;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
-    protected static bool $isDiscovered = true;
-
-    protected static string $routePath = 'me-dashboard';
-
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
-
-    protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
+    protected static string|UnitEnum|null $navigationGroup = 'Monitoring and Evaluation';
 
     protected static ?string $navigationLabel = 'Dashboard';
 
@@ -32,58 +24,58 @@ class MeDashboard extends Dashboard
 
     protected static ?string $title = 'Dashboard';
 
-    public function filtersForm(Schema $schema): Schema
+    protected string $view = 'filament.pages.me.dashboard';
+
+    public function getHeaderWidgets(): array
     {
-        return $schema
-            ->schema([
-                DatePicker::make('date_from')
-                    ->label('Date From'),
-                DatePicker::make('date_to')
-                    ->label('Date To')
-                    ->afterOrEqual('date_from'),
-                Select::make('framework_type')
-                    ->label('Framework')
-                    ->options([
-                        'output' => 'Output',
-                        'outcome' => 'Outcome',
-                        'impact' => 'Impact',
-                    ])
-                    ->placeholder('All'),
-                Select::make('location')
-                    ->label('Location')
-                    ->searchable()
-                    ->getSearchResultsUsing(fn (string $search): array => MeIndicatorReport::query()
-                        ->whereNotNull('scope_location')
-                        ->when(
-                            $search !== '',
-                            fn ($query) => $query->where('scope_location', 'like', '%' . $search . '%')
-                        )
-                        ->groupBy('scope_location')
-                        ->orderBy('scope_location')
-                        ->limit(50)
-                        ->pluck('scope_location', 'scope_location')
-                        ->toArray())
-                    ->getOptionLabelUsing(fn ($value): ?string => is_string($value) && ($value !== '') ? $value : null)
-                    ->placeholder('All'),
-            ]);
+        return [];
     }
 
-    public function getWidgets(): array
+    protected function getWidgets(): array
     {
         return [
-            MeKpiStatsWidget::class,
             MeProgressByFrameworkChartWidget::class,
             MePerformanceTrendChartWidget::class,
             MeLocationMapPlaceholderWidget::class,
-            MeIndicatorPerformanceTableWidget::class,
         ];
     }
 
     public function getColumns(): int | array
     {
+        return 3;
+    }
+
+    protected function getViewData(): array
+    {
+        $kpis = app(DashboardService::class)->kpis();
+
+        $projectsCount = MeProject::query()->count();
+        $indicatorsCount = (int) ($kpis['total_indicators'] ?? 0);
+        $reportedIndicators = (int) ($kpis['reported_this_period'] ?? 0);
+        $unreportedIndicators = max($indicatorsCount - $reportedIndicators, 0);
+        $reportRows = (int) ($kpis['total_report_rows'] ?? 0);
+        $onTrack = (int) ($kpis['on_track'] ?? 0);
+        $needsAttention = (int) ($kpis['needs_attention'] ?? 0);
+        $offTrack = (int) ($kpis['off_track'] ?? 0);
+        $coverageRate = (float) ($kpis['coverage_rate'] ?? 0);
+        $reportsThisMonth = MeIndicatorReport::query()
+            ->whereMonth('period_end', now()->month)
+            ->whereYear('period_end', now()->year)
+            ->count();
+        $latestReportDate = MeIndicatorReport::query()->max('period_end');
+
         return [
-            'md' => 2,
-            'xl' => 3,
+            'projectsCount' => $projectsCount,
+            'indicatorsCount' => $indicatorsCount,
+            'reportsThisMonth' => $reportsThisMonth,
+            'needsAttention' => $needsAttention,
+            'coverageRate' => number_format($coverageRate, 2),
+            'onTrack' => $onTrack,
+            'offTrack' => $offTrack,
+            'unreportedIndicators' => $unreportedIndicators,
+            'reportRows' => $reportRows,
+            'reportedIndicators' => $reportedIndicators,
+            'latestReportDate' => $latestReportDate,
         ];
     }
 }

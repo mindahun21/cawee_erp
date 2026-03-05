@@ -23,12 +23,13 @@ class MeKpiStatsWidget extends BaseWidget
 
         return [
             Stat::make('Total Indicators', number_format((int) $kpis['total_indicators']))
+                ->description('all active indicators in scope')
                 ->color('primary'),
             Stat::make('Reported Indicators', number_format((int) $kpis['reported_this_period']))
-                ->description('distinct indicators with at least one report')
+                ->description('indicators with at least one submitted report')
                 ->color('info'),
-            Stat::make('Total Report Rows', number_format((int) ($kpis['total_report_rows'] ?? 0)))
-                ->description('rows in me_indicator_reports')
+            Stat::make('Report Entries', number_format((int) ($kpis['total_report_rows'] ?? 0)))
+                ->description('total report rows captured')
                 ->color('gray'),
             Stat::make('On Track', number_format((int) $kpis['on_track']))
                 ->color('success'),
@@ -37,7 +38,7 @@ class MeKpiStatsWidget extends BaseWidget
             Stat::make('Off Track', number_format((int) $kpis['off_track']))
                 ->color('danger'),
             Stat::make('Coverage Rate', number_format((float) $kpis['coverage_rate'], 2) . '%')
-                ->description('reported / total indicators')
+                ->description('reported indicators divided by total indicators')
                 ->color('gray'),
         ];
     }

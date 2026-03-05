@@ -18,7 +18,7 @@ class MeLocationMapPlaceholderWidget extends BaseWidget
 
     protected static bool $isDiscovered = false;
 
-    protected static ?string $heading = 'Location Performance';
+    protected static ?string $heading = 'Location Progress Summary';
 
     protected int | string | array $columnSpan = 1;
 
@@ -60,10 +60,11 @@ class MeLocationMapPlaceholderWidget extends BaseWidget
                         return 'danger';
                     }),
                 TextColumn::make('reports_count')
-                    ->label('Reports')
+                    ->label('Report Count')
                     ->state(fn (MeIndicatorReport $record): string => (string) ($this->getLocationStats()->get($record->scope_location)['reports_count'] ?? 0)),
             ])
             ->striped()
+            ->emptyStateHeading('No location-level reports for the selected filters.')
             ->defaultPaginationPageOption(10)
             ->paginated([10, 25, 50]);
     }

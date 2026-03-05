@@ -18,7 +18,7 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
 
     protected static bool $isDiscovered = false;
 
-    protected static ?string $heading = 'Indicator Performance';
+    protected static ?string $heading = 'Indicator Performance Details';
 
     protected int | string | array $columnSpan = 'full';
 
@@ -29,13 +29,19 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
     {
         return $table
             ->query(
-                MeIndicator::query()->whereIn('id', $this->getPerformanceRows()->keys()->all())
+                MeIndicator::query()
+                    ->with('project')
+                    ->whereIn('id', $this->getPerformanceRows()->keys()->all())
             )
             ->columns([
                 TextColumn::make('code')
+                    ->label('Indicator Code')
                     ->searchable()
                     ->sortable()
                     ->badge(),
+                TextColumn::make('project.project_code')
+                    ->label('Project')
+                    ->sortable(),
                 TextColumn::make('name')
                     ->label('Indicator')
                     ->searchable()
@@ -65,7 +71,12 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
                         };
                     }),
                 TextColumn::make('status')
-                    ->state(fn (MeIndicator $record): string => str_replace('_', ' ', (string) ($this->rowFor($record->id)['status'] ?? 'off_track')))
+                    ->label('Status')
+                    ->state(function (MeIndicator $record): string {
+                        $status = (string) ($this->rowFor($record->id)['status'] ?? 'off_track');
+
+                        return ucwords(str_replace('_', ' ', $status));
+                    })
                     ->badge()
                     ->color(function (MeIndicator $record): string {
                         $status = $this->rowFor($record->id)['status'] ?? 'off_track';
@@ -82,6 +93,7 @@ class MeIndicatorPerformanceTableWidget extends BaseWidget
             ])
             ->defaultSort('code')
             ->striped()
+            ->emptyStateHeading('No indicators match the selected filters.')
             ->defaultPaginationPageOption(10)
             ->paginated([10, 25, 50]);
     }

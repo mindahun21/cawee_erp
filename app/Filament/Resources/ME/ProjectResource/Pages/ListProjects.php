@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\ME\SurveyResource\Pages;
+namespace App\Filament\Resources\ME\ProjectResource\Pages;
 
-use App\Filament\Resources\ME\SurveyResource;
+use App\Filament\Resources\ME\ProjectResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListSurveys extends ListRecords
+class ListProjects extends ListRecords
 {
     protected \Filament\Support\Enums\Width | string | null $maxContentWidth = \Filament\Support\Enums\Width::Full;
-    protected static string $resource = SurveyResource::class;
+
+    protected static string $resource = ProjectResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -18,3 +19,4 @@ class ListSurveys extends ListRecords
         ];
     }
 }
+

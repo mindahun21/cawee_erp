@@ -39,6 +39,11 @@ class MeDisaggregationCategory extends Model
             'indicator_id'
         );
     }
+    public function meIndicators(): BelongsToMany
+    {
+        // Filament attach action resolves inverse relation by model name.
+        return $this->indicators();
+    }
 
     public function reportValues(): HasMany
     {

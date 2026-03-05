@@ -5,6 +5,7 @@ namespace App\Models\ME;
 use App\Models\ME\Concerns\LogsMeAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,6 +18,7 @@ class MeIndicator extends Model
     protected $table = 'me_indicators';
 
     protected $fillable = [
+        'project_id',
         'code',
         'name',
         'framework_type',
@@ -30,11 +32,17 @@ class MeIndicator extends Model
     ];
 
     protected $casts = [
+        'project_id' => 'integer',
         'is_active' => 'boolean',
         'disaggregation_required' => 'boolean',
         'threshold_warning' => 'decimal:2',
         'threshold_critical' => 'decimal:2',
     ];
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(MeProject::class, 'project_id');
+    }
 
     public function targets(): HasMany
     {

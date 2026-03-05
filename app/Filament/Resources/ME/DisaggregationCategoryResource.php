@@ -43,6 +43,7 @@ class DisaggregationCategoryResource extends Resource
             ->components([
                 \Filament\Schemas\Components\Section::make('Category')
                     ->columns(2)
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('key')
                             ->required()

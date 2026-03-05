@@ -35,6 +35,9 @@ class MeIndicatorTarget extends Model
     protected static function booted(): void
     {
         static::saving(function (MeIndicatorTarget $target): void {
+            $target->scope_location = static::normalizeScope($target->scope_location);
+            $target->scope_project = static::normalizeScope($target->scope_project);
+
             $periodStart = Carbon::parse($target->period_start);
             $periodEnd = Carbon::parse($target->period_end);
 
@@ -49,7 +52,39 @@ class MeIndicatorTarget extends Model
                     'target_value' => 'The target value must be greater than 0.',
                 ]);
             }
+
+            $duplicateQuery = static::query()
+                ->where('indicator_id', $target->indicator_id)
+                ->whereDate('period_start', $periodStart->toDateString())
+                ->whereDate('period_end', $periodEnd->toDateString())
+                ->when(
+                    $target->scope_project === null,
+                    fn ($query) => $query->whereNull('scope_project'),
+                    fn ($query) => $query->where('scope_project', $target->scope_project)
+                )
+                ->when(
+                    $target->scope_location === null,
+                    fn ($query) => $query->whereNull('scope_location'),
+                    fn ($query) => $query->where('scope_location', $target->scope_location)
+                );
+
+            if ($target->exists) {
+                $duplicateQuery->whereKeyNot($target->getKey());
+            }
+
+            if ($duplicateQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'period_start' => 'Duplicate target detected for the same indicator, period, project, and location scope.',
+                ]);
+            }
         });
+    }
+
+    private static function normalizeScope(mixed $value): ?string
+    {
+        $normalized = trim((string) ($value ?? ''));
+
+        return $normalized === '' ? null : $normalized;
     }
 
     public function indicator(): BelongsTo

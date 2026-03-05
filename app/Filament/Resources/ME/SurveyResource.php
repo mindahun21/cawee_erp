@@ -46,6 +46,7 @@ class SurveyResource extends Resource
             ->components([
                 \Filament\Schemas\Components\Section::make('Survey')
                     ->columns(2)
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('type')
                             ->required()
