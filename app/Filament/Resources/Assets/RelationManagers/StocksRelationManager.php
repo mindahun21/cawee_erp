@@ -24,7 +24,7 @@ class StocksRelationManager extends RelationManager
         return $schema
             ->components([
                 \Filament\Forms\Components\Select::make('location_id')
-                    ->relationship('location', 'name')
+                    ->relationship('location', 'location_name')
                     ->required()
                     ->searchable()
                     ->preload()
@@ -50,9 +50,9 @@ class StocksRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('location.name')
+            ->recordTitleAttribute('location.location_name')
             ->columns([
-                TextColumn::make('location.name')
+                TextColumn::make('location.location_name')
                     ->label('Location')
                     ->sortable()
                     ->searchable(),

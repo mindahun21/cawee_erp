@@ -41,7 +41,7 @@ class AssetAssignmentForm
                             ->preload(),
                         Select::make('location_id')
                             ->label('Assigned To Location')
-                            ->relationship('location', 'name')
+                            ->relationship('location', 'location_name')
                             ->searchable()
                             ->preload(),
                         DatePicker::make('assigned_date')

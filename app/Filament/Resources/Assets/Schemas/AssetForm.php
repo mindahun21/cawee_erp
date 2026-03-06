@@ -71,7 +71,7 @@ class AssetForm
                     ->columns(2)
                     ->schema([
                         Select::make('location_id')
-                            ->relationship('location', 'name')
+                            ->relationship('location', 'location_name')
                             ->preload()
                             ->searchable()
                             ->visible($isFixedAsset),
@@ -168,7 +168,7 @@ class AssetForm
                             ->relationship('stocks')
                             ->schema([
                                 Select::make('location_id')
-                                    ->relationship('location', 'name')
+                                    ->relationship('location', 'location_name')
                                     ->required()
                                     ->searchable()
                                     ->preload()

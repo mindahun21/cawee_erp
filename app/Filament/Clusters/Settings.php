@@ -12,7 +12,7 @@ class Settings extends Cluster
     
     protected static ?string $navigationLabel = 'Settings';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Inventory Mgmt';
+    protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
     protected static ?int $navigationSort = 5;
 }

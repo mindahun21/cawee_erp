@@ -29,7 +29,7 @@ class InventoryReport extends Page implements HasForms
 
     protected string $view = 'filament.pages.reports.inventory-report';
     
-    protected static string | \UnitEnum | null $navigationGroup = 'Inventory Mgmt';
+    protected static string | \UnitEnum | null $navigationGroup = 'Inventory and Asset';
     
     protected static ?int $navigationSort = 6;
     
