@@ -56,7 +56,7 @@ class RecruitmentCampaignForm
             TextInput::make('workplace')->label('Workplace'),
             TextInput::make('starting_salary_from')->label('Starting Salary From (USD)')->numeric(),
             TextInput::make('starting_salary_to')->label('Starting Salary To (USD)')->numeric(),
-            TextInput::make('display_salary')->label('Display Salary on Portal'),
+            TextInput::make('display_salary')->label('Display Salary on Portal')->required(),
             DatePicker::make('from_date')->label('From Date'),
             DatePicker::make('to_date')->label('To Date'),
             Textarea::make('reason')->label('Reason for Recruitment'),
