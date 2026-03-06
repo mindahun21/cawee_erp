@@ -40,6 +40,9 @@ class GoodsReceipt extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $gr->grn_number = sprintf('GRN-%s-%04d', $year, $seq);
             }
+            if (empty($gr->received_by)) {
+                $gr->received_by = auth()->id();
+            }
         });
     }
 
