@@ -17,10 +17,7 @@ class InventoryOverview extends StatsOverviewWidget
                 ->description('Total purchase cost')
                 ->descriptionIcon('heroicon-m-currency-rupee')
                 ->color('success'),
-            Stat::make('Pending PRs', \App\Models\PurchaseRequest::where('status', 'pending')->count())
-                ->description('Awaiting approval')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('warning'),
+
             Stat::make('Active Assignments', \App\Models\AssetAssignment::whereNull('returned_date')->count())
                 ->description('Assets currently checked out')
                 ->descriptionIcon('heroicon-m-user'),

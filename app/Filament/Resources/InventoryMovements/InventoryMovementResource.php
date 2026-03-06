@@ -23,6 +23,8 @@ class InventoryMovementResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory Mgmt';
 
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $recordTitleAttribute = 'reference_no';
 
     public static function form(Schema $schema): Schema

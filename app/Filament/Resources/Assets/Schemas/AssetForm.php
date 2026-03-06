@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Assets\Schemas;
 use App\Models\AssetCategory;
 use App\Models\Department;
 use App\Models\Location;
-use App\Models\Supplier;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
@@ -116,11 +115,6 @@ class AssetForm
                             ->relationship('currency', 'code')
                             ->searchable()
                             ->preload()
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        Select::make('supplier_id')
-                            ->relationship('supplier', 'name')
-                            ->preload()
-                            ->searchable()
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         Select::make('donor_id')
                             ->label('Donor')

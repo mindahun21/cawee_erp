@@ -8,8 +8,4 @@ class Item extends Model
 {
     protected $fillable = ['name', 'sku', 'unit_price', 'description'];
 
-    public function purchaseRequestItems()
-    {
-        return $this->hasMany(PurchaseRequestItem::class);
-    }
 }

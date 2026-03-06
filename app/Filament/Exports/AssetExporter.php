@@ -25,7 +25,6 @@ class AssetExporter extends Exporter
             ExportColumn::make('assetCategory.name')->label('Category'),
             ExportColumn::make('location.name')->label('Location'),
             ExportColumn::make('department.name')->label('Department'),
-            ExportColumn::make('supplier.name')->label('Supplier'),
             ExportColumn::make('is_fixed_asset')->label('Type')
                 ->formatStateUsing(fn ($state) => $state ? 'Fixed Asset' : 'Inventory'),
             ExportColumn::make('status')->label('Status'),

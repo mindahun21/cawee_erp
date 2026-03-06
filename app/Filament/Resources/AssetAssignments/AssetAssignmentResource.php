@@ -23,6 +23,8 @@ class AssetAssignmentResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory Mgmt';
 
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $recordTitleAttribute = 'id';
 
     public static function form(Schema $schema): Schema

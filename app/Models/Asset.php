@@ -8,7 +8,6 @@ class Asset extends Model
 {
     protected $fillable = [
         'asset_category_id',
-        'supplier_id',
         'currency_id',
         'donor_id',
         'location_id',
@@ -49,10 +48,6 @@ class Asset extends Model
         return $this->belongsTo(AssetCategory::class);
     }
 
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
 
     public function location()
     {

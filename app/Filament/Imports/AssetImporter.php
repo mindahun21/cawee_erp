@@ -71,11 +71,6 @@ class AssetImporter extends Importer
                 ->label('Depreciation Method')
                 ->rules(['nullable', 'in:straight-line,declining-balance']),
 
-            ImportColumn::make('supplier_id')
-                ->label('Supplier ID')
-                ->numeric()
-                ->rules(['nullable', 'integer', 'exists:suppliers,id']),
-
             ImportColumn::make('location_id')
                 ->label('Location ID')
                 ->numeric()
@@ -124,7 +119,6 @@ class AssetImporter extends Importer
     {
         return [
             'asset_category_id.exists' => "Category ID ':input' does not exist in the asset_categories table.",
-            'supplier_id.exists' => "Supplier ID ':input' does not exist in the suppliers table.",
             'location_id.exists' => "Location ID ':input' does not exist in the locations table.",
             'department_id.exists' => "Department ID ':input' does not exist in the departments table.",
             'currency_id.exists' => "Currency ID ':input' does not exist in the currencies table.",

@@ -8,8 +8,4 @@ class Tax extends Model
 {
     protected $fillable = ['name', 'rate'];
 
-    public function purchaseRequestItems()
-    {
-        return $this->hasMany(PurchaseRequestItem::class);
-    }
 }

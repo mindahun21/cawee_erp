@@ -23,6 +23,8 @@ class AssetResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory Mgmt';
 
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'Fixed Assets';
 
     protected static ?string $pluralModelLabel = 'Fixed Assets';

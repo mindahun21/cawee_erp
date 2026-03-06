@@ -23,6 +23,8 @@ class InventoryResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory Mgmt';
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationLabel = 'Inventory / Consumables';
 
     protected static ?string $pluralModelLabel = 'Inventory / Consumables';

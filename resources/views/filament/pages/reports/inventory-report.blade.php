@@ -79,8 +79,7 @@
                     'damaged' => 'Lost/Damaged',
                     'location' => 'Location-wise',
                     'category' => 'Category-wise',
-                    'procurement' => 'Procurement',
-                    'turnover' => 'Inventory Turnover'
+
                 ] as $key => $label)
                     <x-filament::tabs.item
                         :active="$activeTab === $key"
@@ -306,38 +305,6 @@
                     </table>
                 </div>
 
-            @elseif($activeTab === 'procurement')
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20 mt-10">
-                    <x-filament::section><p class="text-[10px] font-bold uppercase text-gray-500">PRs Issued</p><p class="text-2xl font-black">{{ $reportData['requests_count'] }}</p></x-filament::section>
-                    <x-filament::section><p class="text-[10px] font-bold uppercase text-gray-500">POs Generated</p><p class="text-2xl font-black">{{ $reportData['orders_count'] }}</p></x-filament::section>
-                    <x-filament::section><p class="text-[10px] font-bold uppercase text-gray-500">Value Requested</p><p class="text-2xl font-black text-primary-600">{{ number_format($reportData['total_requested'], 2) }}</p></x-filament::section>
-                    <x-filament::section><p class="text-[10px] font-bold uppercase text-gray-500">Value Ordered</p><p class="text-2xl font-black text-success-600">{{ number_format($reportData['total_ordered'], 2) }}</p></x-filament::section>
-                </div>
-
-                <div class="report-table-wrapper custom-scrollbar mt-24">
-                    <table class="report-inner-table min-w-[800px]">
-                        <thead>
-                            <tr>
-                                <th>PO Number</th>
-                                <th>Supplier</th>
-                                <th>Date</th>
-                                <th class="text-right">Amount</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($reportData['recent_orders'] as $po)
-                                <tr>
-                                    <td class="font-black text-primary-600">{{ $po->po_number }}</td>
-                                    <td class="font-bold">{{ $po->supplier->name }}</td>
-                                    <td class="font-mono text-xs">{{ $po->po_date->format('d/m/Y') }}</td>
-                                    <td class="text-right font-mono font-bold">{{ number_format($po->total_amount, 2) }}</td>
-                                    <td class="text-center"><x-filament::badge>{{ $po->status }}</x-filament::badge></td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
 
             @elseif($activeTab === 'turnover')
                 <div class="report-table-wrapper custom-scrollbar mt-24">

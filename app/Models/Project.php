@@ -8,8 +8,4 @@ class Project extends Model
 {
     protected $fillable = ['name', 'description'];
 
-    public function purchaseRequests()
-    {
-        return $this->hasMany(PurchaseRequest::class);
-    }
 }

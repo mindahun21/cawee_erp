@@ -10,8 +10,6 @@ use App\Models\Department;
 use App\Models\InventoryMovement;
 use App\Models\DepreciationLog;
 use App\Models\AssetAssignment;
-use App\Models\PurchaseRequest;
-use App\Models\PurchaseOrder;
 
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -32,6 +30,8 @@ class InventoryReport extends Page implements HasForms
     protected string $view = 'filament.pages.reports.inventory-report';
     
     protected static string | \UnitEnum | null $navigationGroup = 'Inventory Mgmt';
+    
+    protected static ?int $navigationSort = 6;
     
     protected static ?string $title = 'Inventory & Asset Reports';
     protected static ?string $navigationLabel = 'Report';
@@ -106,7 +106,6 @@ class InventoryReport extends Page implements HasForms
             'damaged' => $this->loadDamaged($filters),
             'location' => $this->loadLocationWise($filters),
             'category' => $this->loadCategoryWise($filters),
-            'procurement' => $this->loadProcurement($filters),
             'turnover' => $this->loadTurnover($filters),
             default => $this->loadValuation($filters),
         };
@@ -202,17 +201,6 @@ class InventoryReport extends Page implements HasForms
             ]);
     }
 
-    protected function loadProcurement(array $filters): void
-    {
-        $this->reportData = [
-            'requests_count' => PurchaseRequest::count(),
-            'orders_count' => PurchaseOrder::count(),
-            'total_requested' => PurchaseRequest::sum('total_amount'),
-            'total_ordered' => PurchaseOrder::sum('total_amount'),
-            'recent_orders' => PurchaseOrder::with('supplier')->latest()->limit(10)->get(),
-        ];
-    }
-
     protected function loadTurnover(array $filters): void
     {
         // Simple turnover: Outgoing Qty / Average Stock
@@ -292,13 +280,6 @@ class InventoryReport extends Page implements HasForms
                     $c->name, $c->assets_count, number_format(Asset::where('asset_category_id', $c->id)->sum('purchase_cost'), 2)
                 ])->toArray();
                 $title = "CATEGORY-WISE ASSET REPORT";
-                break;
-            case 'procurement':
-                $headers = ['PO Number', 'Supplier', 'Date', 'Amount', 'Status'];
-                $data = \App\Models\PurchaseOrder::with('supplier')->latest()->get()->map(fn($p) => [
-                    $p->po_number, $p->supplier->name, $p->po_date->format('d/m/Y'), number_format($p->total_amount, 2), $p->status
-                ])->toArray();
-                $title = "PROCUREMENT SUMMARY REPORT";
                 break;
             case 'turnover':
                 $headers = ['Asset Name', 'Units Out', 'Available Stock', 'Turnover Ratio'];
