@@ -46,6 +46,9 @@ class Contract extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $c->contract_number = sprintf('CTR-%s-%04d', $year, $seq);
             }
+            if (empty($c->created_by)) {
+                $c->created_by = auth()->id();
+            }
         });
     }
 

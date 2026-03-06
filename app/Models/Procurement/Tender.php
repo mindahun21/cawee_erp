@@ -42,6 +42,9 @@ class Tender extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $t->tender_number = sprintf('TND-%s-%04d', $year, $seq);
             }
+            if (empty($t->created_by)) {
+                $t->created_by = auth()->id();
+            }
         });
     }
 
