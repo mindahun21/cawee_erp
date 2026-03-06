@@ -67,6 +67,9 @@ class Requisition extends Model
             if (empty($r->overall_status)) {
                 $r->overall_status = self::STATUS_DRAFT;
             }
+            if (empty($r->requested_by)) {
+                $r->requested_by = auth()->id();
+            }
         });
     }
 
