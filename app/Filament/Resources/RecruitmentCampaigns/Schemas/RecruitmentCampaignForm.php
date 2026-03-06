@@ -21,7 +21,7 @@ class RecruitmentCampaignForm
             // Tabs::make('RecruitmentPlanTabs')
             // ->tabs([
             // Tab::make('General Info')->schema([
-            TextInput::make('campaign_code')->label('Campaign Code'),
+            TextInput::make('campaign_code')->label('Campaign Code')->required(),
             TextInput::make('campaign_name')->label('Campaign Name')->required(),
             // TextInput::make('plan_name')->label('Recruitment Plan')->required(),
             Select::make('recruitment_plan_id')

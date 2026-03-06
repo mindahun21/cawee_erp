@@ -6,19 +6,16 @@ use App\Http\Controllers\JobApplicationController;
 use App\Filament\Pages\RecruitmentPortal;
 use App\Http\Controllers\PublicRecruitmentController;
 
-
+// Public job listing & job pages
+Route::get('/jobs', [PublicRecruitmentController::class, 'index'])->name('jobs.index');
 Route::get('/jobs/{id}', [PublicRecruitmentController::class, 'showJob'])->name('jobs.show');
-Route::get('/recruitment-portal', [PublicRecruitmentController::class, 'index'])
-    ->name('recruitment.portal');
-Route::get('/jobs', [PublicRecruitmentController::class, 'index']);
-Route::get('/jobs/{id}', [PublicRecruitmentController::class, 'show']);
 
-Route::get('/jobs', function () {
+// Filament internal pages (avoid URL conflicts with public jobs)
+Route::get('/recruitment-portal', function () {
     return app(RecruitmentPortal::class)->render();
-});
+})->name('recruitment.portal');
 
-Route::get('/jobs/{id}', JobDetails::class);
-
+Route::get('/job-details/{id}', JobDetails::class)->name('job.details');
 // Step 1: Personal Info
 Route::get('/apply/{jobId}/step1', [JobApplicationController::class, 'personalInfo'])->name('apply.step1');
 Route::post('/apply/{jobId}/step1', [JobApplicationController::class, 'submitStep1'])->name('apply.submitStep1');
@@ -43,12 +40,15 @@ Route::get('/apply/{jobId}/step5', [JobApplicationController::class, 'additional
 
 Route::post('/apply/{jobId}/step5', [JobApplicationController::class, 'submitAdditionalInfo'])
     ->name('apply.submitAdditionalInfo');
-// Step 6: Verify & Submit
-Route::get('/apply/{jobId}/verify', [JobApplicationController::class, 'verify'])->name('apply.verify');
-Route::post('/apply/{jobId}/submit', [JobApplicationController::class, 'finalSubmit'])->name('apply.finalSubmit');
+// Step 6: Verify
+Route::get('/apply/{jobId}/verify', [JobApplicationController::class, 'verify'])
+    ->name('apply.verify');
 
-Route::get('/verify/{jobId}', [JobApplicationController::class, 'verify'])->name('apply.verify');
-Route::post('/submit/{jobId}', [JobApplicationController::class, 'finalSubmit'])->name('apply.finalSubmit');
+
+// Final Submit
+Route::post('/apply/{jobId}/submit', [JobApplicationController::class, 'finalSubmit'])
+    ->name('apply.finalSubmit');
+
 Route::get('/', function () {
     return view('welcome');
 });

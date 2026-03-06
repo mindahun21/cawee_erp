@@ -12,7 +12,7 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-6">
             Additional Information
         </h1>
-
+<x-application-progress :currentStep="5" />
         <form method="POST" action="{{ route('apply.submitAdditionalInfo', $job->id) }}">
             @csrf
 

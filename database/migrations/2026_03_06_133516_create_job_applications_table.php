@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('job_id');
             $table->json('data')->nullable();
             $table->boolean('submitted')->default(false);
+            $table->string('status')->default('draft');
             $table->timestamps();
 
             $table->foreign('job_id')

@@ -138,32 +138,21 @@ class JobApplicationController extends Controller
     public function submitAdditionalInfo(Request $request, $jobId)
     {
         $request->validate([
-            'workplace' => 'required|string',
-            'application_education' => 'required|string',
-            'resume' => 'required|file|mimes:pdf',
-            'cover_letter' => 'nullable|string',
-            'agree_terms' => 'required|boolean',
-            'consent_contact' => 'required|boolean',
+            'linkedin_profile' => 'nullable|url',
+            'portfolio' => 'nullable|url',
+            'additional_notes' => 'nullable|string',
         ]);
 
         $application = JobApplication::firstOrCreate(['job_id' => $jobId]);
         $data = $application->data ?? [];
 
-        if ($request->hasFile('resume')) {
-            $resumePath = $request->file('resume')->store('resumes');
-            $requestData = $request->all();
-            $requestData['resume'] = $resumePath;
-        } else {
-            $requestData = $request->all();
-        }
+        $data['additional_info'] = $request->all();
 
-        $data['additional_info'] = $requestData;
         $application->data = $data;
         $application->save();
 
         return redirect()->route('apply.verify', $jobId);
     }
-
     // Step 6: Verify & Submit
     public function verify($jobId)
     {
@@ -172,15 +161,22 @@ class JobApplicationController extends Controller
         $application = JobApplication::where('job_id', $jobId)->first();
         $savedData = $application ? $application->data : [];
 
-        return view('applications.verify', compact('job', 'savedData'));
-    }
-    public function finalSubmit(Request $request, $jobId)
-    {
-        $application = JobApplication::where('job_id', $jobId)->firstOrFail();
-        $application->submitted = true;
-        $application->save();
+        // Pass the current step to the view
+        $currentStep = 6;
 
-        return redirect()->route('apply.step1', $jobId)
+        return view('applications.verify', compact('job', 'savedData', 'currentStep'));
+    }
+    public function finalSubmit($jobId)
+    {
+        $application = JobApplication::where('job_id', $jobId)->first();
+
+        if ($application) {
+            $application->submitted = true;
+            $application->save();
+        }
+
+        return redirect()
+            ->route('jobs.show', $jobId)
             ->with('success', 'Application submitted successfully!');
     }
 }

@@ -12,7 +12,7 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-6">
             Work Experience
         </h1>
-
+<x-application-progress :currentStep="3" />
         {{-- Success box --}}
         @if(session('success'))
             <div class="bg-green-100 text-green-800 p-4 rounded mb-6">

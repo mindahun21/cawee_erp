@@ -12,7 +12,7 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-6">
             Educational Background
         </h1>
-
+<x-application-progress :currentStep="2" />
         <form method="POST" action="{{ url('/apply/'.$job->id.'/step2') }}">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
