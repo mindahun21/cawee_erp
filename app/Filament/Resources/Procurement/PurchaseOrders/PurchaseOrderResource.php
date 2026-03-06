@@ -265,7 +265,7 @@ class PurchaseOrderResource extends Resource
                             'director_approved_at' => now(),
                             'overall_status'       => PurchaseOrder::STATUS_APPROVED,
                         ]);
-                        Notification::make()->title('✅ PO fully authorized — ready to send to supplier')->success()->send();
+                        Notification::make()->title('  PO fully authorized — ready to send to supplier')->success()->send();
                     }),
 
                 // Send to Supplier

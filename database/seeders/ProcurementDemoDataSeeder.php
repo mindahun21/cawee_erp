@@ -408,7 +408,7 @@ class ProcurementDemoDataSeeder extends Seeder
         ]);
 
         $this->command->info('');
-        $this->command->info('✅ Ethiopian Procurement Demo Data seeded successfully!');
+        $this->command->info('  Ethiopian Procurement Demo Data seeded successfully!');
         $this->command->info('   ✓ ' . Supplier::count()          . ' Suppliers');
         $this->command->info('   ✓ ' . ProcurementBudget::count() . ' Budget Lines');
         $this->command->info('   ✓ ' . Requisition::count()       . ' Requisitions & Items');

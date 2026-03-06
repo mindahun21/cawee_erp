@@ -140,6 +140,6 @@ class HrSettingsSeeder extends Seeder
             );
         }
 
-        $this->command->info('✅ HR Settings seeded: departments, positions, contract types, education levels, fields of study, training types, layoff checklist.');
+        $this->command->info('  HR Settings seeded: departments, positions, contract types, education levels, fields of study, training types, layoff checklist.');
     }
 }

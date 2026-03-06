@@ -263,7 +263,7 @@ class ContractResource extends Resource
                     ->modalDescription('Both parties have signed. Activate this contract to make it operational.')
                     ->action(fn (Contract $r) =>
                         $r->update(['status' => 'Active'])
-                        && Notification::make()->title('✅ Contract activated')->success()->send()
+                        && Notification::make()->title('Contract activated')->success()->send()
                     ),
 
                 // Record amendment

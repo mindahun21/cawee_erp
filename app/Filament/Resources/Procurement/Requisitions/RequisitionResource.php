@@ -384,7 +384,7 @@ class RequisitionResource extends Resource
                             'procurement_remarks'     => $data['procurement_remarks'] ?? null,
                             'overall_status'          => Requisition::STATUS_APPROVED,
                         ]);
-                        Notification::make()->title('✅ Requisition fully authorized — ready for procurement!')->success()->send();
+                        Notification::make()->title('  Requisition fully authorized — ready for procurement!')->success()->send();
                     }),
 
                 // ── Reject (any stage, with reason) ──────────────────

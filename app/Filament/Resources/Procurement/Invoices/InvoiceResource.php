@@ -192,7 +192,7 @@ class InvoiceResource extends Resource
 
                         if ($matchStatus === 'Matched') {
                             $invoice->update(['status' => Invoice::STATUS_MATCHED]);
-                            Notification::make()->title('✅ 3-Way Match: PASSED — Invoice matched to PO & GRN')->success()->send();
+                            Notification::make()->title('  3-Way Match: PASSED — Invoice matched to PO & GRN')->success()->send();
                         } else {
                             $invoice->update(['status' => Invoice::STATUS_DISPUTED]);
                             Notification::make()
@@ -238,7 +238,7 @@ class InvoiceResource extends Resource
                             'director_approved_at' => now(),
                             'status'               => Invoice::STATUS_APPROVED,
                         ]);
-                        Notification::make()->title('✅ Invoice authorized — ready for payment scheduling')->success()->send();
+                        Notification::make()->title('  Invoice authorized — ready for payment scheduling')->success()->send();
                     }),
 
                 // Reject

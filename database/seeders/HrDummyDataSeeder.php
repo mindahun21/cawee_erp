@@ -123,6 +123,6 @@ class HrDummyDataSeeder extends Seeder
             }
         }
 
-        $this->command->info('✅ Successfully seeded 50 Dummy Employees with their related data!');
+        $this->command->info('  Successfully seeded 50 Dummy Employees with their related data!');
     }
 }

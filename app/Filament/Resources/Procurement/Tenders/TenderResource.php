@@ -203,7 +203,7 @@ class TenderResource extends Resource
                     ->modalDescription('Confirm that the evaluation is complete and a supplier has been selected. You can then create a Purchase Order from the awarded bid.')
                     ->action(fn (Tender $r) =>
                         $r->update(['status' => 'Awarded', 'award_date' => now()->toDateString()])
-                        && Notification::make()->title('Tender awarded ✅ — generate PO from awarded bid')->success()->send()
+                        && Notification::make()->title('Tender awarded   — generate PO from awarded bid')->success()->send()
                     ),
 
                 // Cancel

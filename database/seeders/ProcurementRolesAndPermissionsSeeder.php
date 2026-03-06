@@ -139,6 +139,6 @@ class ProcurementRolesAndPermissionsSeeder extends Seeder
             $role->syncPermissions($rolePermissions);
         }
 
-        $this->command->info('✅  Procurement roles and permissions seeded successfully.');
+        $this->command->info('   Procurement roles and permissions seeded successfully.');
     }
 }

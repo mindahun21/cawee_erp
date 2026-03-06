@@ -187,7 +187,7 @@ class PaymentResource extends Resource
                             'director_approved_at' => now(),
                             'status'               => 'Approved',
                         ]);
-                        Notification::make()->title('✅ Payment fully authorized — ready for bank processing')->success()->send();
+                        Notification::make()->title('  Payment fully authorized — ready for bank processing')->success()->send();
                     }),
 
                 // Process (mark as paid)
@@ -211,7 +211,7 @@ class PaymentResource extends Resource
                         ]);
                         // Mark the invoice as paid
                         $r->invoice?->update(['status' => Invoice::STATUS_PAID]);
-                        Notification::make()->title('✅ Payment processed — invoice marked Paid')->success()->send();
+                        Notification::make()->title('  Payment processed — invoice marked Paid')->success()->send();
                     }),
 
                 // Cancel

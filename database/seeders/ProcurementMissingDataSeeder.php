@@ -172,7 +172,7 @@ class ProcurementMissingDataSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('✅ Missing data seeded!');
+        $this->command->info('  Missing data seeded!');
         $this->command->info('   ✓ ' . ThreeWayMatch::count() . ' 3-Way Match records');
         $this->command->info('   ✓ ' . Payment::count()       . ' Payments');
         $this->command->info('   ✓ ' . Contract::count()      . ' Contracts');
