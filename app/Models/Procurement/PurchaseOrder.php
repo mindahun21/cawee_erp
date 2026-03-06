@@ -63,6 +63,9 @@ class PurchaseOrder extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $po->po_number = sprintf('PO-%s-%04d', $year, $seq);
             }
+            if (empty($po->created_by)) {
+                $po->created_by = auth()->id();
+            }
         });
 
         static::saving(function (self $po) {

@@ -43,6 +43,9 @@ class Payment extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $p->payment_reference = sprintf('PAY-%s-%04d', $year, $seq);
             }
+            if (empty($p->created_by)) {
+                $p->created_by = auth()->id();
+            }
         });
     }
 

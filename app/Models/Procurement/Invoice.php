@@ -56,6 +56,9 @@ class Invoice extends Model
                 $seq  = static::whereYear('created_at', $year)->count() + 1;
                 $inv->invoice_number = sprintf('INV-%s-%04d', $year, $seq);
             }
+            if (empty($inv->created_by)) {
+                $inv->created_by = auth()->id();
+            }
         });
     }
 
