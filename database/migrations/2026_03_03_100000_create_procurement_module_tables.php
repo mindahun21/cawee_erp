@@ -236,15 +236,18 @@ return new class extends Migration
             ])->default('Draft');
 
             $table->enum('procurement_officer_status', ['Pending', 'Approved', 'Rejected'])->default('Pending');
-            $table->foreignId('procurement_officer_approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedBigInteger('procurement_officer_approved_by')->nullable();
+            $table->foreign('procurement_officer_approved_by', 'po_officer_approved_by_fk')->references('id')->on('users')->nullOnDelete();
             $table->timestamp('procurement_officer_approved_at')->nullable();
 
             $table->enum('finance_status', ['Pending', 'Approved', 'Rejected'])->default('Pending');
-            $table->foreignId('finance_approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedBigInteger('finance_approved_by')->nullable();
+            $table->foreign('finance_approved_by', 'po_finance_approved_by_fk')->references('id')->on('users')->nullOnDelete();
             $table->timestamp('finance_approved_at')->nullable();
 
             $table->enum('director_status', ['Pending', 'Approved', 'Rejected'])->default('Pending');
-            $table->foreignId('director_approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedBigInteger('director_approved_by')->nullable();
+            $table->foreign('director_approved_by', 'po_director_approved_by_fk')->references('id')->on('users')->nullOnDelete();
             $table->timestamp('director_approved_at')->nullable();
 
             $table->text('attachments')->nullable();
