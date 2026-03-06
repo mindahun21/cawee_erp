@@ -23,6 +23,15 @@ class ContractVersion extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $v) {
+            if (empty($v->amended_by)) {
+                $v->amended_by = auth()->id();
+            }
+        });
+    }
+
     // ── Relationships ───────────────────────────────────────────────
     public function contract(): BelongsTo { return $this->belongsTo(Contract::class); }
     public function amendedBy(): BelongsTo { return $this->belongsTo(User::class, 'amended_by'); }
