@@ -42,6 +42,63 @@ class User extends Authenticatable
         return $this->hasAnyRole(['hr_supervisor', 'hr_officer', 'hr_director', 'super_admin']);
     }
 
+    // ── Procurement Role Helpers ───────────────────────────────────
+    // Mirror the HR pattern; super_admin always has access.
+
+    /** Requester: can create purchase requisitions */
+    public function isProcurementRequester(): bool
+    {
+        return $this->hasAnyRole(['procurement_requester', 'procurement_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Supervisor: approves requisitions at Stage 1 */
+    public function isProcurementSupervisor(): bool
+    {
+        return $this->hasAnyRole(['procurement_supervisor', 'procurement_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Department Head: approves requisitions at Stage 2 */
+    public function isProcurementDeptHead(): bool
+    {
+        return $this->hasAnyRole(['procurement_dept_head', 'procurement_director', 'super_admin']);
+    }
+
+    /** Procurement Officer: manages tenders, suppliers, PO approvals */
+    public function isProcurementOfficer(): bool
+    {
+        return $this->hasAnyRole(['procurement_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Evaluation Committee: evaluates bids */
+    public function isProcurementEvaluator(): bool
+    {
+        return $this->hasAnyRole(['procurement_evaluator', 'procurement_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Store / Warehouse: receives and inspects goods */
+    public function isProcurementStore(): bool
+    {
+        return $this->hasAnyRole(['procurement_store', 'procurement_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Finance Officer: approves invoices, payments, budget checks */
+    public function isProcurementFinance(): bool
+    {
+        return $this->hasAnyRole(['procurement_finance', 'finance_officer', 'procurement_director', 'super_admin']);
+    }
+
+    /** Director: final approval for POs, invoices, payments */
+    public function isProcurementDirector(): bool
+    {
+        return $this->hasAnyRole(['procurement_director', 'super_admin']);
+    }
+
+    /** Auditor: read-only access to all procurement records */
+    public function isProcurementAuditor(): bool
+    {
+        return $this->hasAnyRole(['procurement_auditor', 'procurement_director', 'super_admin']);
+    }
+
     /**
      * The attributes that are mass assignable.
      *
