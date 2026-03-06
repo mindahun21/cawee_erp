@@ -46,7 +46,7 @@ return new class extends Migration
             $table->string('contact_linkedin')->nullable();
             $table->string('contact_resident')->nullable();
             $table->string('contact_accomodationn')->nullable();
-            $table->string('contact_password');
+            $table->string('contact_password')->nullable();
             $table->string('profile_picture')->nullable();
             $table->string('cv')->nullable();
 
