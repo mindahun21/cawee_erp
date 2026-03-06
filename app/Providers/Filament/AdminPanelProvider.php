@@ -57,7 +57,7 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Inventory Mgmt')
+                \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
                     ->collapsible(),
