@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Campaigns;
 
 use App\Filament\Resources\Campaigns\Pages\ManageCampaigns;
+use App\Filament\Resources\Campaigns\Pages\ViewCampaign;
 use App\Models\Campaign;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -39,6 +40,7 @@ class CampaignResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 \Filament\Schemas\Components\Section::make('Campaign Details')
                     ->columns(2)
@@ -100,7 +102,18 @@ class CampaignResource extends Resource
             ->columns([
                 TextColumn::make('title')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\Campaigns\CampaignResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\Campaigns\CampaignResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                    '), position: 'below'),
                 TextColumn::make('goal_amount')
                     ->money(fn ($record) => $record->currency->code ?? 'USD')
                     ->sortable(),
@@ -162,12 +175,6 @@ class CampaignResource extends Resource
                     }),
                 TrashedFilter::make(),
             ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-                ForceDeleteAction::make(),
-                RestoreAction::make(),
-            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -188,6 +195,7 @@ class CampaignResource extends Resource
     {
         return [
             'index' => ManageCampaigns::route('/'),
+            'view' => ViewCampaign::route('/{record}'),
         ];
     }
 

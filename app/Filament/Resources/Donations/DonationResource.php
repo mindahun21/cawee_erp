@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Donations;
 
 use App\Filament\Resources\Donations\Pages\ManageDonations;
+use App\Filament\Resources\Donations\Pages\ViewDonation;
 use App\Models\Donation;
 use App\Models\Donor;
 use BackedEnum;
@@ -37,6 +38,7 @@ class DonationResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 \Filament\Schemas\Components\Section::make('Donation Details')
                     ->columns(2)
@@ -140,7 +142,18 @@ class DonationResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\Donations\DonationResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\Donations\DonationResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                    '), position: 'below'),
                 TextColumn::make('donor.full_name')
                     ->label('Donor')
                     ->searchable()
@@ -236,8 +249,6 @@ class DonationResource extends Resource
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
                 Action::make('downloadReceipt')
                     ->label('Download PDF')
                     ->icon('heroicon-o-arrow-down-tray')
@@ -326,6 +337,7 @@ class DonationResource extends Resource
     {
         return [
             'index' => ManageDonations::route('/'),
+            'view' => ViewDonation::route('/{record}'),
         ];
     }
 }

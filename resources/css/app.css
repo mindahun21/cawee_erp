@@ -9,3 +9,16 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Row Hover Actions */
+.hover-actions-wrapper {
+    @apply opacity-0 transition-opacity duration-200;
+}
+
+.fi-ta-record:hover .hover-actions-wrapper {
+    @apply opacity-100;
+}
+
+.hover-action-link {
+    @apply text-[11px] font-medium transition-colors;
+}
