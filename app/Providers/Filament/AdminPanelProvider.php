@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use Filament\Http\Middleware\Authenticate;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -28,12 +29,28 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
                 'primary' => Color::Amber,
             ])
+            // Full width content — no more scrolling through narrow tables
+            ->maxContentWidth(\Filament\Support\Enums\Width::Full)
+            // Sidebar collapses to icons on desktop for more workspace
+            ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->databaseNotifications()
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('My Profile')
+                    ->icon('heroicon-o-user-circle')
+                    ->url(fn (): string => \App\Filament\Pages\MyProfile::getUrl()),
+            ])
             ->navigationGroups([
+                \Filament\Navigation\NavigationGroup::make('Human Resources')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Procurement')
+                    ->collapsible()
+                    ->icon('heroicon-o-shopping-bag'),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
@@ -42,6 +59,15 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory Mgmt')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('System Administration')
+                    ->collapsible(),
+            ])
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('HR Settings')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(90)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl()),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -63,6 +89,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,
