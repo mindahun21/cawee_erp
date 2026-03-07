@@ -15,8 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('campaign_code');
             $table->string('campaign_name');
-            $table->foreignId('recruitment_plan_id')->nullable()->constrained('plan_names')->cascadeOnDelete();
-            $table->foreignId('recruitment_channel_id')->constrained('names')->cascadeOnDelete();
+            $table->foreignId('recruitment_plan_id')
+                ->nullable()
+                ->constrained('recruitment_plans')
+                ->cascadeOnDelete();
+
+            $table->foreignId('recruitment_company_id')
+                ->nullable()
+                ->constrained('recruitment_companies')
+                ->cascadeOnDelete();
             $table->string('position');
             $table->string('company')->nullable();
             $table->integer('quantity')->nullable();

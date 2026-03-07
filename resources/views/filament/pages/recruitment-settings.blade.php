@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    {{-- Page content --}}
+    <h1>Admin Recruitment Portal (Filament)</h1>
 </x-filament-panels::page>

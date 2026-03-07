@@ -20,6 +20,20 @@ class RecruitmentCampaign extends Model
         'updated_at',
         'deleted_at',
     ];
+    public function recruitmentPlan()
+    {
+        return $this->belongsTo(RecruitmentPlan::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(RecruitmentCompany::class, 'recruitment_company_id');
+    }
+    // public function recruitmentChannel()
+    // {
+    //     return $this->belongsTo(recruitmentChannel::class);
+    // }
+
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
