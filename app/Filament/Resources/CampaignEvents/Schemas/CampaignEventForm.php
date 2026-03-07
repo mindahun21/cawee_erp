@@ -14,6 +14,7 @@ class CampaignEventForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 \Filament\Schemas\Components\Section::make('Event Basics')
                     ->columns(2)

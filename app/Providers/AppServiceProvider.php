@@ -20,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \App\Models\Donation::observe(\App\Observers\DonationObserver::class);
+        \App\Models\Asset::observe(\App\Observers\AssetObserver::class);
+        \App\Models\InventoryMovement::observe(\App\Observers\InventoryMovementObserver::class);
+        \App\Models\AssetAssignment::observe(\App\Observers\AssetAssignmentObserver::class);
 
         // Set default pagination to 25 rows across all Filament tables
         \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {

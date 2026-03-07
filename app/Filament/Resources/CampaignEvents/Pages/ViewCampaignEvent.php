@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CampaignEvents\Pages;
 
 use App\Filament\Resources\CampaignEvents\CampaignEventResource;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -14,6 +15,7 @@ class ViewCampaignEvent extends ViewRecord
     {
         return [
             EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

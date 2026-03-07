@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Donors;
 
 use App\Filament\Resources\Donors\Pages\ManageDonors;
+use App\Filament\Resources\Donors\Pages\ViewDonor;
 use App\Models\Donor;
 use BackedEnum;
 use Filament\Actions\BulkAction;
@@ -44,6 +45,7 @@ class DonorResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Basic Information')
                     ->columns(2)
@@ -112,6 +114,9 @@ class DonorResource extends Resource
                         Textarea::make('address')
                             ->columnSpanFull()
                             ->placeholder('123 Main St, Apt 4B'),
+                    ]),
+                Section::make('Donor Categories')
+                    ->schema([
                         Select::make('categories')
                             ->multiple()
                             ->relationship('categories', 'name')
@@ -148,7 +153,18 @@ class DonorResource extends Resource
                 TextColumn::make('full_name')
                     ->label('Name')
                     ->searchable(['first_name', 'last_name', 'organization_name'])
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\Donors\DonorResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\Donors\DonorResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                    '), position: 'below'),
                 TextColumn::make('email')
                     ->label('Email address')
                     ->searchable()
@@ -204,12 +220,6 @@ class DonorResource extends Resource
                     ->multiple()
                     ->preload(),
             ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-                ForceDeleteAction::make(),
-                RestoreAction::make(),
-            ])
             ->bulkActions([
                 BulkActionGroup::make([
                     BulkAction::make('assignCategories')
@@ -247,6 +257,7 @@ class DonorResource extends Resource
     {
         return [
             'index' => ManageDonors::route('/'),
+            'view' => ViewDonor::route('/{record}'),
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Donors;
 
 use App\Filament\Resources\Donors\DonorCategoryResource\Pages\ManageDonorCategories;
+use App\Filament\Resources\Donors\DonorCategoryResource\Pages\ViewDonorCategory;
 use App\Models\DonorCategory;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
@@ -26,12 +27,16 @@ class DonorCategoryResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->unique(ignoreRecord: true),
-                Textarea::make('description')
-                    ->columnSpanFull(),
+                \Filament\Schemas\Components\Section::make('Category Details')
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Textarea::make('description')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
@@ -41,7 +46,18 @@ class DonorCategoryResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\Donors\DonorCategoryResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\Donors\DonorCategoryResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                    '), position: 'below'),
                 TextColumn::make('description')
                     ->limit(50),
                 TextColumn::make('donors_count')
@@ -54,10 +70,6 @@ class DonorCategoryResource extends Resource
             ])
             ->filters([
                 //
-            ])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
             ]);
     }
 
@@ -65,6 +77,7 @@ class DonorCategoryResource extends Resource
     {
         return [
             'index' => ManageDonorCategories::route('/'),
+            'view' => ViewDonorCategory::route('/{record}'),
         ];
     }
 }

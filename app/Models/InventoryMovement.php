@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class InventoryMovement extends Model
+{
+    protected $fillable = [
+        'asset_id',
+        'supplier_id',
+        'from_location_id',
+        'to_location_id',
+        'user_id',
+        'type',
+        'reason',
+        'quantity',
+        'date',
+        'reference_no',
+        'remarks',
+        'status',
+        'reason',
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+    ];
+
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class);
+    }
+
+    public function fromLocation()
+    {
+        return $this->belongsTo(Location::class, 'from_location_id');
+    }
+
+    public function toLocation()
+    {
+        return $this->belongsTo(Location::class, 'to_location_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(\App\Models\Procurement\Supplier::class);
+    }
+}

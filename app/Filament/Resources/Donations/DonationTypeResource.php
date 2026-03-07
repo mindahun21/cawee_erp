@@ -24,6 +24,7 @@ class DonationTypeResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 \Filament\Schemas\Components\Section::make('Basic Information')
                     ->columns(2)
@@ -98,7 +99,18 @@ class DonationTypeResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (DonationType $record) => Str::limit($record->description, 50)),
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\Donations\DonationTypeResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\Donations\DonationTypeResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                        <div class="text-xs text-gray-500">'.\Illuminate\Support\Str::limit($record->description, 50).'</div>
+                    '), position: 'below'),
                 Tables\Columns\TextColumn::make('code')
                     ->searchable()
                     ->sortable()
@@ -137,10 +149,6 @@ class DonationTypeResource extends Resource
                     ->query(fn ($query) => $query->where('is_in_kind', true))
                     ->label('In-Kind Only'),
             ])
-            ->actions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
-            ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
@@ -152,6 +160,7 @@ class DonationTypeResource extends Resource
     {
         return [
             'index' => Pages\ManageDonationTypes::route('/'),
+            'view' => Pages\ViewDonationType::route('/{record}'),
         ];
     }
 }

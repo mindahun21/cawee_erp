@@ -25,7 +25,18 @@ class CampaignEventsTable
                     ->toggleable(),
                 TextColumn::make('event_name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                            <a href="'.\App\Filament\Resources\CampaignEvents\CampaignEventResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
+                            <span class="text-gray-200">|</span>
+                            <a href="'.\App\Filament\Resources\CampaignEvents\CampaignEventResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <span class="text-gray-200">|</span>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
+                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                        </div>
+                    '), position: 'below'),
                 TextColumn::make('event_type')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -75,10 +86,6 @@ class CampaignEventsTable
             ])
             ->filters([
                 TrashedFilter::make(),
-            ])
-            ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

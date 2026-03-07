@@ -38,6 +38,7 @@ class AdminPanelProvider extends PanelProvider
             // Sidebar collapses to icons on desktop for more workspace
             ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->databaseNotifications()
             ->userMenuItems([
                 \Filament\Navigation\MenuItem::make()
                     ->label('My Profile')
@@ -56,6 +57,8 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
                     ->collapsible(),
             ])
@@ -66,6 +69,7 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(90)
                     ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl()),
             ])
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
