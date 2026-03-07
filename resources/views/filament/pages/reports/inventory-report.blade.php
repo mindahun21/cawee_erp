@@ -48,27 +48,17 @@
         .dark .report-table-wrapper { border-color: rgba(75, 85, 99, 0.5); background: rgba(0,0,0,0.2); }
     </style>
 
-    <div class="flex flex-col gap-32 p-12 md:p-24 mb-32">
-        <x-filament::section class="mb-0 rounded-t-lg border-b-0">
-            <div class="flex flex-col rounded-t-lg gap-4">
-                <form wire:submit="loadReport" class="w-full mb-20">
-                    <div class="mb-10">
-                        {{ $this->form }}
-                    </div>
-                </form>
-
-                <div class="flex flex-wrap gap-20 items-center pt-24">
-                    <span class="text-xs font-black uppercase text-gray-400 tracking-[0.5em] mr-12 ml-4">Export Tools:</span>
-                    <x-filament::button color="danger" icon="heroicon-m-document-arrow-down" wire:click="export('pdf')" size="lg" class="px-16 py-6 shadow-2xl">PDF Report</x-filament::button>
-                    <x-filament::button color="success" icon="heroicon-m-table-cells" wire:click="export('excel')" size="lg" class="px-16 py-6 shadow-2xl">Excel Sheet</x-filament::button>
-                    <x-filament::button color="gray" icon="heroicon-m-list-bullet" wire:click="export('csv')" size="lg" class="px-16 py-6 shadow-2xl">CSV File</x-filament::button>
-                </div>
+    <div class="flex flex-col gap-0 p-12 md:p-24 mb-32">
+        <x-filament::section class="mb-0 border border-gray-200 dark:border-white/10 rounded-t-xl rounded-b-none">
+            <div class="flex flex-wrap gap-20 items-center">
+                <span class="text-xs font-black uppercase text-gray-400 tracking-[0.5em] mr-12 ml-4">Export Tools:</span>
+                <x-filament::button color="danger" icon="heroicon-m-document-arrow-down" wire:click="export('pdf')" size="lg" class="px-16 py-6 shadow-2xl">PDF Report</x-filament::button>
+                <x-filament::button color="success" icon="heroicon-m-table-cells" wire:click="export('excel')" size="lg" class="px-16 py-6 shadow-2xl">Excel Sheet</x-filament::button>
+                <x-filament::button color="gray" icon="heroicon-m-list-bullet" wire:click="export('csv')" size="lg" class="px-16 py-6 shadow-2xl">CSV File</x-filament::button>
             </div>
         </x-filament::section>
 
-
-
-        <div class="py-12 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 border-b-0 border-t-0 p-6 flex flex-col gap-6">
+        <div class="py-12 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-none border-b-0 border-t-0 p-6 flex flex-col gap-6">
             <x-filament::tabs label="Reports" class="overflow-x-auto custom-scrollbar">
                 @foreach([
                     'valuation' => 'Asset Valuation',
@@ -91,6 +81,16 @@
                 @endforeach
             </x-filament::tabs>
         </div>
+
+        <x-filament::section class="mb-0 border border-gray-200 dark:border-white/10 rounded-none border-b-0 border-t-0">
+            <div class="flex flex-col rounded-t-lg">
+                <form wire:submit="loadReport" class="w-full">
+                    <div class="">
+                        {{ $this->form }}
+                    </div>
+                </form>
+            </div>
+        </x-filament::section>
 
 
 
@@ -249,8 +249,8 @@
                                         }">{{ $move->type }}</x-filament::badge>
                                     </td>
                                     <td class="text-center font-black">{{ $move->quantity }}</td>
-                                    <td class="text-[11px] font-medium">{{ $move->fromLocation->name ?? 'SYSTEM/PO' }}</td>
-                                    <td class="text-[11px] font-medium">{{ $move->toLocation->name ?? 'RECIPIENT' }}</td>
+                                    <td class="text-[11px] font-medium">{{ $move->fromLocation->location_name ?? 'SYSTEM/PO' }}</td>
+                                    <td class="text-[11px] font-medium">{{ $move->toLocation->location_name ?? 'RECIPIENT' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -274,7 +274,7 @@
                                     <td class="font-bold leading-tight">{{ $asset->name }} <br> <span class="text-[10px] font-normal opacity-50">{{ $asset->barcode }}</span></td>
                                     <td><x-filament::badge color="danger">{{ $asset->status }}</x-filament::badge></td>
                                     <td><x-filament::badge color="warning">{{ $asset->condition }}</x-filament::badge></td>
-                                    <td class="opacity-70">{{ $asset->location->name ?? 'N/A' }}</td>
+                                    <td class="opacity-70">{{ $asset->location->location_name ?? 'N/A' }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="4" class="p-8 text-center text-gray-500 italic">No lost or damaged assets found in logs</td></tr>

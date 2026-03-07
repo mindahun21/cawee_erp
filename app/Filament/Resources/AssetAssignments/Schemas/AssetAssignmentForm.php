@@ -36,7 +36,7 @@ class AssetAssignmentForm
                             ->preload(),
                         Select::make('project_id')
                             ->label('Assigned To Project')
-                            ->relationship('project', 'name')
+                            ->relationship('project', 'project_name')
                             ->searchable()
                             ->preload(),
                         Select::make('location_id')

@@ -10,6 +10,7 @@ class Asset extends Model
         'asset_category_id',
         'currency_id',
         'donor_id',
+        'supplier_id',
         'location_id',
         'department_id',
         'name',
@@ -67,6 +68,11 @@ class Asset extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(\App\Models\Procurement\Supplier::class);
     }
 
     public function assignments()

@@ -50,6 +50,10 @@ class InventoryMovementsTable
                 \Filament\Tables\Columns\TextColumn::make('reason')
                     ->searchable()
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('supplier.name')
+                    ->label('Supplier')
+                    ->sortable()
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -62,9 +66,9 @@ class InventoryMovementsTable
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('quantity')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('fromLocation.name')
+                \Filament\Tables\Columns\TextColumn::make('fromLocation.location_name')
                     ->label('From'),
-                \Filament\Tables\Columns\TextColumn::make('toLocation.name')
+                \Filament\Tables\Columns\TextColumn::make('toLocation.location_name')
                     ->label('To'),
                 \Filament\Tables\Columns\TextColumn::make('reference_no')
                     ->label('Ref #')
@@ -79,12 +83,17 @@ class InventoryMovementsTable
                         'Return' => 'Return',
                         'Adjustment' => 'Adjustment',
                     ]),
+                \Filament\Tables\Filters\SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->relationship('supplier', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('from_location_id')
                     ->label('From Location')
-                    ->relationship('fromLocation', 'name'),
+                    ->relationship('fromLocation', 'location_name'),
                 \Filament\Tables\Filters\SelectFilter::make('to_location_id')
                     ->label('To Location')
-                    ->relationship('toLocation', 'name'),
+                    ->relationship('toLocation', 'location_name'),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(3)

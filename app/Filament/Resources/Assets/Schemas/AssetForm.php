@@ -134,6 +134,12 @@ class AssetForm
                             ->label('Warranty Expiry')
                             ->visible($isFixedAsset)
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
+                        Select::make('supplier_id')
+                            ->label('Supplier')
+                            ->relationship('supplier', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         TextInput::make('useful_life')
                             ->label('Useful Life (Years)')
                             ->numeric()

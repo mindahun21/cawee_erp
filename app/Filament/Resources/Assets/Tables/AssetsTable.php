@@ -34,6 +34,10 @@ class AssetsTable
                 \Filament\Tables\Columns\TextColumn::make('assetCategory.name')
                     ->label('Category')
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('supplier.name')
+                    ->label('Supplier')
+                    ->sortable()
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('barcode')
                     ->searchable()
                     ->visible($isFixedAsset),
@@ -62,7 +66,8 @@ class AssetsTable
                     ->badge()
                     ->color(fn ($record): string => $record->is_low_stock ? 'danger' : 'success')
                     ->visible(!$isFixedAsset),
-                \Filament\Tables\Columns\TextColumn::make('location.name')
+                \Filament\Tables\Columns\TextColumn::make('location.location_name')
+                    ->label('Location')
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('purchase_cost')
                     ->money('INR')
@@ -82,6 +87,11 @@ class AssetsTable
                 \Filament\Tables\Filters\SelectFilter::make('asset_category_id')
                     ->label('Category')
                     ->relationship('assetCategory', 'name'),
+                \Filament\Tables\Filters\SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->relationship('supplier', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'available' => 'Available',

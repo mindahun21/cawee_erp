@@ -62,7 +62,7 @@ class InventoryReport extends Page implements HasForms
                 ->schema([
                     Select::make('locationId')
                         ->label('Warehouse/Location')
-                        ->options(Location::pluck('name', 'id'))
+                        ->options(Location::pluck('location_name', 'id'))
                         ->live()
                         ->afterStateUpdated(fn () => $this->loadReport()),
                     Select::make('categoryId')
@@ -185,7 +185,7 @@ class InventoryReport extends Page implements HasForms
     {
         $this->reportData = Location::withCount('assets')
             ->get()->map(fn($l) => [
-                'name' => $l->name,
+                'name' => $l->location_name,
                 'asset_count' => $l->assets_count,
                 'total_value' => Asset::where('location_id', $l->id)->sum('purchase_cost'),
             ]);
@@ -256,21 +256,21 @@ class InventoryReport extends Page implements HasForms
             case 'movement':
                 $headers = ['Date', 'Asset', 'Type', 'Qty', 'Origin', 'Destination'];
                 $data = InventoryMovement::with(['asset', 'fromLocation', 'toLocation'])->latest()->get()->map(fn($m) => [
-                    $m->date->format('d/m/Y'), $m->asset->name, $m->type, $m->quantity, $m->fromLocation->name ?? 'N/A', $m->toLocation->name ?? 'N/A'
+                    $m->date->format('d/m/Y'), $m->asset->name, $m->type, $m->quantity, $m->fromLocation->location_name ?? 'N/A', $m->toLocation->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "INVENTORY MOVEMENT REPORT";
                 break;
             case 'damaged':
                 $headers = ['Asset Name', 'Status', 'Condition', 'Location'];
                 $data = Asset::whereIn('status', ['lost'])->orWhereIn('condition', ['Poor', 'Broken'])->get()->map(fn($a) => [
-                    $a->name, $a->status, $a->condition, $a->location->name ?? 'N/A'
+                    $a->name, $a->status, $a->condition, $a->location->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "LOST/DAMAGED ASSET REPORT";
                 break;
             case 'location':
                 $headers = ['Location Name', 'Asset Count', 'Financial Value'];
                 $data = Location::withCount('assets')->get()->map(fn($l) => [
-                    $l->name, $l->assets_count, number_format(Asset::where('location_id', $l->id)->sum('purchase_cost'), 2)
+                    $l->location_name, $l->assets_count, number_format(Asset::where('location_id', $l->id)->sum('purchase_cost'), 2)
                 ])->toArray();
                 $title = "LOCATION-WISE ASSET REPORT";
                 break;

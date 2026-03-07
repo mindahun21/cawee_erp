@@ -8,6 +8,7 @@ class InventoryMovement extends Model
 {
     protected $fillable = [
         'asset_id',
+        'supplier_id',
         'from_location_id',
         'to_location_id',
         'user_id',
@@ -43,5 +44,10 @@ class InventoryMovement extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(\App\Models\Procurement\Supplier::class);
     }
 }

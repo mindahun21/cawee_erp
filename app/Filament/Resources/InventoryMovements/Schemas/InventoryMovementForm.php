@@ -99,6 +99,12 @@ class InventoryMovementForm
                         TextInput::make('reference_no')
                             ->label('Reference Number / Ticket')
                             ->maxLength(255),
+                        Select::make('supplier_id')
+                            ->label('Supplier')
+                            ->relationship('supplier', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn (Get $get) => in_array($get('type'), ['Stock In', 'Adjustment'])),
                         Select::make('user_id')
                             ->label('Handled By')
                             ->relationship('user', 'name')
@@ -112,7 +118,7 @@ class InventoryMovementForm
                     ->schema([
                         Select::make('from_location_id')
                             ->label('From Location')
-                            ->relationship('fromLocation', 'name', function ($query, Get $get) {
+                            ->relationship('fromLocation', 'location_name', function ($query, Get $get) {
                                 $assetId = $get('asset_id');
                                 $type = $get('type');
                                 
@@ -129,7 +135,7 @@ class InventoryMovementForm
                             ->hidden(fn (Get $get) => $get('type') === 'Stock In'),
                         Select::make('to_location_id')
                             ->label('To Location')
-                            ->relationship('toLocation', 'name')
+                            ->relationship('toLocation', 'location_name')
                             ->searchable()
                             ->preload()
                             ->required(fn (Get $get) => in_array($get('type'), ['Stock In', 'Transfer']))

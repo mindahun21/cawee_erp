@@ -39,11 +39,11 @@ class AssetAssignmentsTable
                     ->label('Assigned Dept')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                \Filament\Tables\Columns\TextColumn::make('project.name')
+                \Filament\Tables\Columns\TextColumn::make('project.project_name')
                     ->label('Assigned Project')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                \Filament\Tables\Columns\TextColumn::make('location.name')
+                \Filament\Tables\Columns\TextColumn::make('location.location_name')
                     ->label('Assigned Location')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
