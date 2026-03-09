@@ -36,6 +36,11 @@ class InventoryReport extends Page implements HasForms
     protected static ?string $title = 'Inventory & Asset Reports';
     protected static ?string $navigationLabel = 'Report';
 
+    public static function canView(): bool
+    {
+        return auth()->user()->can('view_InventoryReport');
+    }
+
     public string $activeTab = 'valuation';
     public ?array $data = [];
     public $reportData = [];
