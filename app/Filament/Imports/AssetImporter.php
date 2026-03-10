@@ -57,19 +57,10 @@ class AssetImporter extends Importer
                 ->label('Warranty Expiry Date (YYYY-MM-DD)')
                 ->rules(['nullable', 'date']),
 
-            ImportColumn::make('useful_life')
-                ->label('Useful Life (Years)')
+            ImportColumn::make('depreciation_id')
+                ->label('Depreciation Type ID')
                 ->numeric()
-                ->rules(['nullable', 'integer', 'min:0']),
-
-            ImportColumn::make('residual_value')
-                ->label('Residual Value')
-                ->numeric()
-                ->rules(['nullable', 'numeric', 'min:0']),
-
-            ImportColumn::make('depreciation_method')
-                ->label('Depreciation Method')
-                ->rules(['nullable', 'in:straight-line,declining-balance']),
+                ->rules(['nullable', 'integer', 'exists:depreciations,id']),
 
             ImportColumn::make('location_id')
                 ->label('Location ID')

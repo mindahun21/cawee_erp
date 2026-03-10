@@ -131,7 +131,7 @@ class InventoryReport extends Page implements HasForms
                 'code' => $a->barcode,
                 'cost' => $a->purchase_cost,
                 'current' => $a->current_value,
-                'status' => $a->status,
+                'status' => $a->statusRecord?->name ?? $a->status,
             ]),
         ];
     }
@@ -153,9 +153,9 @@ class InventoryReport extends Page implements HasForms
         $this->reportData = $query->whereNotNull('purchase_date')->get()->map(fn($a) => [
             'name' => $a->name,
             'purchase_date' => $a->purchase_date,
-            'age_years' => $a->purchase_date->diffInYears(now()),
-            'useful_life' => $a->useful_life,
-            'remaining_life' => max(0, $a->useful_life - $a->purchase_date->diffInYears(now())),
+            'age_months' => $a->purchase_date->diffInMonths(now()),
+            'useful_life_months' => $a->depreciation?->months ?? 0,
+            'remaining_months' => $a->remaining_months,
         ]);
     }
 
@@ -181,8 +181,8 @@ class InventoryReport extends Page implements HasForms
 
     protected function loadDamaged(array $filters): void
     {
-        $this->reportData = Asset::whereIn('status', ['lost'])
-            ->orWhereIn('condition', ['Poor', 'Broken'])
+        $this->reportData = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
+            ->orWhereHas('condition', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
             ->get();
     }
 
@@ -233,7 +233,7 @@ class InventoryReport extends Page implements HasForms
             case 'valuation':
                 $headers = ['Asset Name', 'Barcode', 'Purchase Cost', 'Current Value', 'Status'];
                 $data = Asset::all()->map(fn($a) => [
-                    $a->name, $a->barcode, number_format($a->purchase_cost, 2), number_format($a->current_value, 2), $a->status
+                    $a->name, $a->barcode, number_format($a->purchase_cost, 2), number_format($a->current_value, 2), $a->statusRecord?->name ?? $a->status
                 ])->toArray();
                 $title = "ASSET VALUATION REPORT";
                 break;
@@ -245,9 +245,9 @@ class InventoryReport extends Page implements HasForms
                 $title = "DEPRECIATION REPORT";
                 break;
             case 'aging':
-                $headers = ['Asset Name', 'Purchase Date', 'Age (Years)', 'Remaining (Years)', 'Useful Life'];
+                $headers = ['Asset Name', 'Purchase Date', 'Age (Months)', 'Remaining (Months)', 'Useful Life (Months)'];
                 $data = Asset::whereNotNull('purchase_date')->get()->map(fn($a) => [
-                    $a->name, $a->purchase_date->format('d/m/Y'), $a->purchase_date->diffInYears(now()), max(0, $a->useful_life - $a->purchase_date->diffInYears(now())), $a->useful_life
+                    $a->name, $a->purchase_date->format('d/m/Y'), $a->purchase_date->diffInMonths(now()), $a->remaining_months, $a->depreciation?->months ?? 0
                 ])->toArray();
                 $title = "ASSET AGING REPORT";
                 break;
@@ -268,7 +268,7 @@ class InventoryReport extends Page implements HasForms
             case 'damaged':
                 $headers = ['Asset Name', 'Status', 'Condition', 'Location'];
                 $data = Asset::whereIn('status', ['lost'])->orWhereIn('condition', ['Poor', 'Broken'])->get()->map(fn($a) => [
-                    $a->name, $a->status, $a->condition, $a->location->location_name ?? 'N/A'
+                    $a->name, $a->statusRecord?->name ?? $a->status, $a->condition?->name ?? $a->condition, $a->location->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "LOST/DAMAGED ASSET REPORT";
                 break;

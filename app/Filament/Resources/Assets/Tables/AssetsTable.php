@@ -49,16 +49,21 @@ class AssetsTable
                     ->label('RFID Tag')
                     ->searchable()
                     ->visible($isFixedAsset),
-                \Filament\Tables\Columns\TextColumn::make('status')
+                \Filament\Tables\Columns\TextColumn::make('statusRecord.name')
+                    ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'available' => 'success',
-                        'assigned' => 'info',
-                        'maintenance' => 'warning',
-                        'disposed' => 'danger',
-                        'lost' => 'gray',
+                    ->color(fn ($state): string => match ($state) {
+                        'Available' => 'success',
+                        'Assigned' => 'info',
+                        'Maintenance' => 'warning',
+                        'Disposed' => 'danger',
+                        'Lost' => 'gray',
                         default => 'gray',
                     })
+                    ->sortable()
+                    ->visible($isFixedAsset),
+                \Filament\Tables\Columns\TextColumn::make('condition.name')
+                    ->label('Condition')
                     ->sortable()
                     ->visible($isFixedAsset),
                 \Filament\Tables\Columns\TextColumn::make('quantity')
@@ -72,15 +77,15 @@ class AssetsTable
                 \Filament\Tables\Columns\TextColumn::make('purchase_cost')
                     ->money('INR')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('annual_depreciation')
-                    ->label('Annual Depr.')
+                \Filament\Tables\Columns\TextColumn::make('monthly_depreciation')
+                    ->label('Monthly Depr.')
                     ->money('INR')
-                    ->state(fn ($record) => $record->annual_depreciation)
+                    ->sortable()
                     ->visible($isFixedAsset),
                 \Filament\Tables\Columns\TextColumn::make('current_value')
                     ->label('Current Val.')
                     ->money('INR')
-                    ->state(fn ($record) => $record->current_value)
+                    ->sortable()
                     ->visible($isFixedAsset),
             ])
             ->filters([
@@ -92,14 +97,15 @@ class AssetsTable
                     ->relationship('supplier', 'name')
                     ->searchable()
                     ->preload(),
-                \Filament\Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'available' => 'Available',
-                        'assigned' => 'Assigned',
-                        'maintenance' => 'Maintenance',
-                        'disposed' => 'Disposed',
-                        'lost' => 'Lost',
-                    ]),
+                \Filament\Tables\Filters\SelectFilter::make('asset_status_id')
+                    ->label('Status')
+                    ->relationship('statusRecord', 'name'),
+                \Filament\Tables\Filters\SelectFilter::make('asset_condition_id')
+                    ->label('Condition')
+                    ->relationship('condition', 'name'),
+                \Filament\Tables\Filters\SelectFilter::make('acquisition_type_id')
+                    ->label('Acquisition Type')
+                    ->relationship('acquisitionTypeRecord', 'name'),
                 \Filament\Tables\Filters\TernaryFilter::make('is_low_stock')
                     ->label('Stock Level')
                     ->placeholder('All Items')

@@ -80,37 +80,30 @@ class AssetForm
                             ->preload()
                             ->searchable()
                             ->visible($isFixedAsset),
-                        Select::make('condition')
-                            ->options([
-                                'New' => 'New',
-                                'Good' => 'Good',
-                                'Fair' => 'Fair',
-                                'Poor' => 'Poor',
-                                'Broken' => 'Broken',
-                            ]),
-                        Select::make('status')
-                            ->options([
-                                'available' => 'Available',
-                                'assigned' => 'Assigned',
-                                'maintenance' => 'Maintenance',
-                                'disposed' => 'Disposed',
-                                'lost' => 'Lost',
-                            ])
+                        Select::make('asset_condition_id')
+                            ->label('Condition')
+                            ->relationship('condition', 'name')
+                            ->preload()
+                            ->searchable(),
+                        Select::make('asset_status_id')
+                            ->label('Status')
+                            ->relationship('statusRecord', 'name')
                             ->required()
-                            ->default('available'),
+                            ->preload()
+                            ->searchable()
+                            ->default(fn () => \App\Models\AssetStatus::where('name', 'Available')->first()?->id),
                     ]),
 
                 Section::make('Acquisition & Valuation')
                     ->columns(2)
                     ->schema([
-                        Select::make('acquisition_type')
-                            ->options([
-                                'Purchase' => 'Purchase',
-                                'Donation' => 'Donation',
-                                'Lease' => 'Lease',
-                            ])
+                        Select::make('acquisition_type_id')
+                            ->label('Acquisition Type')
+                            ->relationship('acquisitionTypeRecord', 'name')
                             ->live()
-                            ->required(),
+                            ->required()
+                            ->preload()
+                            ->searchable(),
                         Select::make('currency_id')
                             ->relationship('currency', 'code')
                             ->searchable()
@@ -140,23 +133,11 @@ class AssetForm
                             ->searchable()
                             ->preload()
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        TextInput::make('useful_life')
-                            ->label('Useful Life (Years)')
-                            ->numeric()
-                            ->visible($isFixedAsset)
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        TextInput::make('residual_value')
-                            ->numeric()
-                            ->prefix('INR')
-                            ->default(0)
-                            ->visible($isFixedAsset)
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        Select::make('depreciation_method')
-                            ->options([
-                                'straight-line' => 'Straight Line',
-                                'declining-balance' => 'Declining Balance',
-                            ])
-                            ->default('straight-line')
+                        Select::make('depreciation_id')
+                            ->label('Depreciation Type')
+                            ->relationship('depreciation', 'name')
+                            ->preload()
+                            ->searchable()
                             ->visible($isFixedAsset)
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         Textarea::make('contract_details')

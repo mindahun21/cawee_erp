@@ -44,18 +44,26 @@ class DepreciationLogsRelationManager extends RelationManager
             ->recordTitleAttribute('period_date')
             ->defaultSort('period_date', 'desc')
             ->columns([
+                TextColumn::make('asset.name')
+                    ->label('Asset'),
+                TextColumn::make('asset.depreciation.name')
+                    ->label('Depreciation Type'),
+                TextColumn::make('asset.depreciation.months')
+                    ->label('Total Months'),
                 TextColumn::make('period_date')
                     ->label('Period')
                     ->date('M Y')
                     ->sortable(),
                 TextColumn::make('depreciation_amount')
-                    ->label('Depreciation Amount')
+                    ->label('Monthly Depr.')
                     ->money('ETB')
                     ->sortable(),
                 TextColumn::make('book_value')
-                    ->label('Net Book Value')
+                    ->label('Current Value')
                     ->money('ETB')
                     ->sortable(),
+                TextColumn::make('asset.remaining_months')
+                    ->label('Remaining Months'),
                 TextColumn::make('created_at')
                     ->label('Posted On')
                     ->dateTime()

@@ -7,23 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Asset extends Model
 {
     protected $fillable = [
+        'asset_condition_id',
+        'asset_status_id',
+        'acquisition_type_id',
         'asset_category_id',
         'currency_id',
         'donor_id',
         'supplier_id',
         'location_id',
         'department_id',
+        'depreciation_id',
         'name',
         'model',
         'serial_number',
         'barcode',
-        'acquisition_type',
         'purchase_cost',
         'purchase_date',
-        'useful_life',
-        'residual_value',
-        'status',
-        'condition',
         'description',
         'is_fixed_asset',
         'quantity',
@@ -32,13 +31,11 @@ class Asset extends Model
         'rfid_tag',
         'warranty_expiry_date',
         'contract_details',
-        'depreciation_method',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'purchase_cost' => 'decimal:2',
-        'residual_value' => 'decimal:2',
         'is_fixed_asset' => 'boolean',
         'warranty_expiry_date' => 'date',
         'contract_details' => 'json',
@@ -47,6 +44,21 @@ class Asset extends Model
     public function assetCategory()
     {
         return $this->belongsTo(AssetCategory::class);
+    }
+
+    public function condition()
+    {
+        return $this->belongsTo(AssetCondition::class, 'asset_condition_id');
+    }
+
+    public function statusRecord()
+    {
+        return $this->belongsTo(AssetStatus::class, 'asset_status_id');
+    }
+
+    public function acquisitionTypeRecord()
+    {
+        return $this->belongsTo(AcquisitionType::class, 'acquisition_type_id');
     }
 
 
@@ -75,6 +87,11 @@ class Asset extends Model
         return $this->belongsTo(\App\Models\Procurement\Supplier::class);
     }
 
+    public function depreciation()
+    {
+        return $this->belongsTo(Depreciation::class);
+    }
+
     public function assignments()
     {
         return $this->hasMany(AssetAssignment::class);
@@ -101,31 +118,48 @@ class Asset extends Model
     }
 
     /**
-     * Calculate straight-line depreciation.
-     * Annual = (Cost - Residual) / Useful Life
+     * Calculate monthly depreciation.
      */
-    public function getAnnualDepreciationAttribute()
+    public function getMonthlyDepreciationAttribute()
     {
-        if (!$this->useful_life || $this->useful_life <= 0) {
+        if (!$this->depreciation || !$this->depreciation->months || $this->depreciation->months <= 0) {
             return 0;
         }
 
-        return ($this->purchase_cost - $this->residual_value) / $this->useful_life;
+        return $this->purchase_cost / $this->depreciation->months;
+    }
+
+    /**
+     * Calculate annual depreciation.
+     */
+    public function getAnnualDepreciationAttribute()
+    {
+        return $this->monthly_depreciation * 12;
     }
 
     public function getCurrentValueAttribute()
     {
-        if (!$this->purchase_date || !$this->useful_life) {
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
             return $this->purchase_cost;
         }
 
-        $yearsOwned = $this->purchase_date->diffInYears(now());
+        $monthsOwned = $this->purchase_date->diffInMonths(now());
         
-        if ($yearsOwned >= $this->useful_life) {
-            return $this->residual_value;
+        if ($monthsOwned >= $this->depreciation->months) {
+            return 0;
         }
 
-        return $this->purchase_cost - ($this->annual_depreciation * $yearsOwned);
+        return max(0, $this->purchase_cost - ($this->monthly_depreciation * $monthsOwned));
+    }
+
+    public function getRemainingMonthsAttribute()
+    {
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
+            return 0;
+        }
+
+        $monthsOwned = $this->purchase_date->diffInMonths(now());
+        return max(0, $this->depreciation->months - $monthsOwned);
     }
 
     public function getQuantityAttribute()
@@ -166,11 +200,11 @@ class Asset extends Model
             return null;
         }
 
-        $depreciationAmount = $this->annual_depreciation / 12;
+        $depreciationAmount = $this->monthly_depreciation;
         $lastLog = $this->depreciationLogs()->orderBy('period_date', 'desc')->first();
         $currentBookValue = $lastLog ? $lastLog->book_value : $this->purchase_cost;
         
-        $newBookValue = max($this->residual_value, $currentBookValue - $depreciationAmount);
+        $newBookValue = max(0, $currentBookValue - $depreciationAmount);
 
         return $this->depreciationLogs()->create([
             'period_date' => $periodDate,
