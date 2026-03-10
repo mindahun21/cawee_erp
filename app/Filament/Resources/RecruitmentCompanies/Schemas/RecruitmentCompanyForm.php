@@ -10,10 +10,10 @@ class RecruitmentCompanyForm
     {
         return $schema
             ->components([
-                \Filament\Forms\Components\TextInput::make('name')->required(),
-                \Filament\Forms\Components\TextInput::make('address')->required(),
-                \Filament\Forms\Components\Textarea::make('industry'),
-                \Filament\Forms\Components\FileUpload::make('images')->image()->multiple(),
+                \Filament\Forms\Components\TextInput::make('name')->label('Company Name')->required(),
+                \Filament\Forms\Components\TextInput::make('address')->label('Company Address')->required(),
+                \Filament\Forms\Components\Textarea::make('industry')->label('Company Industry'),
+                \Filament\Forms\Components\FileUpload::make('images')->label('Company Image')->image()->multiple(),
             ]);
     }
 }
