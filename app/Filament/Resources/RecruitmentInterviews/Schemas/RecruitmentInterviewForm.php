@@ -20,7 +20,7 @@ class RecruitmentInterviewForm
             ->components([
                 Grid::make(2)->schema([
 
-                    TextInput::make('interview_schedule_name')
+                    TextInput::make('schedule_name')
                         ->label('Interview Schedule Name')
                         ->required(),
 
@@ -29,9 +29,12 @@ class RecruitmentInterviewForm
                         ->required()
                         ->searchable()
                         ->preload(),
-
-                    TextInput::make('position'),
-
+                    Select::make('recruitment_position_id')
+                        ->label('Position')
+                        ->relationship('recruitmentPosition', 'job_position')
+                        ->required()
+                        ->searchable()
+                        ->preload(),
                     Select::make('interviewer_id')
                         ->label('Interviewer')
                         ->options(User::pluck('name', 'id'))
@@ -49,35 +52,29 @@ class RecruitmentInterviewForm
                         ->label('To Time')
                         ->required(),
 
-                    TextInput::make('interview_location'),
-
-                    Toggle::make('send_email_notification')
-                        ->label('Send email notifications to the contact')
-                        ->inline(false),
-
+                    TextInput::make('location')
+                        ->label('Interview Location'),
                 ]),
 
                 Repeater::make('candidates')
                     ->relationship()
                     ->schema([
-
                         Grid::make(3)->schema([
-
                             Select::make('candidate_id')
-                                ->relationship('candidates', 'name')
+                                ->label('Candidate')
+                                ->options(\App\Models\RecruitmentCandidate::pluck('first_name', 'id'))
                                 ->searchable()
-                                ->required(),
-
-                            TextInput::make('email')
-                                ->email(),
-
-                            TextInput::make('phone_number'),
-
-                            TimePicker::make('from_hour')
-                                ->label('From'),
-
-                            TimePicker::make('to_hour')
-                                ->label('To'),
+                                ->required()
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, $set) {
+                                    $candidate = \App\Models\RecruitmentCandidate::find($state);
+                                    if ($candidate) {
+                                        $set('email', $candidate->email);
+                                        $set('phone_number', $candidate->phone_number);
+                                    }
+                                }),
+                            TimePicker::make('from_hour')->label('From')->required(),
+                            TimePicker::make('to_hour')->label('To')->required(),
 
                         ]),
 

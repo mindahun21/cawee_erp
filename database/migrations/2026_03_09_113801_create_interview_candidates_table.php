@@ -19,7 +19,9 @@ return new class extends Migration
             $table->foreignId('added_by')
                 ->nullable()
                 ->constrained('users');
-            $table->foreignId('candidate_id')->constrained();
+            $table->foreignId('candidate_id')
+                ->constrained('recruitment_candidates') 
+                ->cascadeOnDelete();
             $table->time('from_hour');
             $table->time('to_hour');
             $table->timestamps();

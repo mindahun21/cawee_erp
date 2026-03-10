@@ -31,7 +31,6 @@ class EvaluationCriteriaForm
                     ->default(null)
                     ->required(),
 
-
                 Repeater::make('scores')
                     ->label('Score Descriptions')
                     ->relationship('scores')
