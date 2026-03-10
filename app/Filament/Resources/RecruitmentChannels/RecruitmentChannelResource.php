@@ -22,11 +22,10 @@ class RecruitmentChannelResource extends Resource
     protected static ?string $model = RecruitmentChannel::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    
+
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
 
-
-    protected static ?string $navigationLabel = 'Skills';
+    protected static ?string $navigationLabel = 'Channels';
 
     protected static ?string $recordTitleAttribute = 'form_name';
 

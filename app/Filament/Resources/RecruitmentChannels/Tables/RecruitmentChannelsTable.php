@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -16,7 +17,9 @@ class RecruitmentChannelsTable
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('form_name')->label('Form Name')->sortable()->searchable(),
+                TextColumn::make('form_type')->label('Form Type')->sortable(),
+                TextColumn::make('status')->label('Status')->sortable(),
             ])
             ->filters([
                 TrashedFilter::make(),

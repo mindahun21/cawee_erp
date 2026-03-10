@@ -28,4 +28,9 @@ class recruitmentInterview extends Model
     {
         return $this->belongsTo(User::class, 'added_by');
     }
+
+    public function recruitmentPosition()
+    {
+        return $this->belongsTo(RecruitmentPosition::class, 'recruitment_position_id');
+    }
 }

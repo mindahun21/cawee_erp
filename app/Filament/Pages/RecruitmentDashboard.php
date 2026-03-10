@@ -9,7 +9,10 @@ use UnitEnum;
 class RecruitmentDashboard extends Page
 {
     protected string $view = 'filament.pages.recruitment-dashboard';
+
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
+
+    protected static ?string $navigationLabel = 'Dashboard';
 
     protected function getWidgets(): array
     {

@@ -17,9 +17,9 @@ class RecruitmentInterviewsTable
     {
         return $table
             ->columns([
-                TextColumn::make('interview_schedule_name')
-                    ->label('Interview Schedule Name')
-                    ->searchable(),
+                // TextColumn::make('interview_schedule_name')
+                //     ->label('Interview Schedule Name')
+                //     ->searchable(),
 
                 TextColumn::make('from_hour')
                     ->label('Time')
@@ -31,22 +31,19 @@ class RecruitmentInterviewsTable
                 TextColumn::make('interview_date')
                     ->date(),
 
-                TextColumn::make('recruitment_campaign')
-                    ->searchable(),
+                // TextColumn::make('recruitment_campaign')
+                //     ->searchable(),
 
-                TextColumn::make('candidates.candidate')
-                    ->label('Candidate')
-                    ->listWithLineBreaks(),
 
-                TextColumn::make('interviewer')
-                    ->searchable(),
+                // TextColumn::make('interviewer')
+                //     ->searchable(),
 
                 TextColumn::make('created_at')
                     ->label('Added Date')
                     ->dateTime(),
 
-                TextColumn::make('added_by.name')
-                    ->label('Added By'),
+                // TextColumn::make('added_by.name')
+                //     ->label('Added By'),
 
             ])
             ->filters([

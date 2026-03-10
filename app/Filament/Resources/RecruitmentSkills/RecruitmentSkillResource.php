@@ -19,15 +19,16 @@ class RecruitmentSkillResource extends Resource
 {
     protected static ?string $model = RecruitmentSkill::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationParentItem = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
 
     protected static ?string $navigationLabel = 'Skills';
 
-    protected static ?int $navigationSort = 5;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationParentItem = 'Settings';
+
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $recordTitleAttribute = 'name';
 
