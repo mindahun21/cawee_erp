@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class RecruitmentCompany extends Model
+class RecruitmentChannel extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -19,13 +17,7 @@ class RecruitmentCompany extends Model
         'updated_at',
         'deleted_at',
     ];
-
     protected $casts = [
-        'images' => 'array',
+        'form_fields' => 'array',
     ];
-
-    public function skills()
-    {
-        return $this->belongsToMany(RecruitmentSkill::class);
-    }
 }
