@@ -20,6 +20,7 @@ class ContractVersion extends Model
         return [
             'amendment_date' => 'date',
             'amended_value'  => 'decimal:2',
+            'document'       => 'array',
         ];
     }
 

@@ -5,8 +5,10 @@ namespace App\Filament\Resources\Procurement\Contracts;
 use App\Filament\Resources\Procurement\Contracts\Pages\CreateContract;
 use App\Filament\Resources\Procurement\Contracts\Pages\EditContract;
 use App\Filament\Resources\Procurement\Contracts\Pages\ListContracts;
+use App\Models\Currency;
 use App\Models\Procurement\Contract;
 use BackedEnum;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -50,14 +52,9 @@ class ContractResource extends Resource
                     ->placeholder('Auto-generated on save'),
 
                 Select::make('contract_type')
-                    ->options([
-                        'Goods Supply' => 'Goods Supply',
-                        'Services'     => 'Services',
-                        'Works'        => 'Works',
-                        'Consultancy'  => 'Consultancy',
-                        'Framework'    => 'Framework Agreement',
-                        'Other'        => 'Other',
-                    ])
+                    ->options(fn () => \App\Models\Procurement\ProcurementContractType::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 TextInput::make('title')->required()->maxLength(300)->columnSpanFull(),
@@ -68,8 +65,15 @@ class ContractResource extends Resource
                     ->relationship('supplier', 'name')
                     ->searchable()->preload()->required(),
 
-                TextInput::make('contract_value')->numeric()->prefix('ETB')->required(),
-                TextInput::make('currency')->default('ETB')->maxLength(10),
+                TextInput::make('contract_value')->numeric()->prefix(fn (Get $get) => Currency::symbolFor($get('currency')))->required(),
+                Select::make('currency')
+                    ->label('Currency')
+                    ->options(fn () => Currency::procurementOptions())
+                    ->default(fn () => Currency::procurementDefault())
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->required(),
                 TextInput::make('advance_payment_percentage')
                     ->numeric()->suffix('%')->default(0)->label('Advance Payment (%)'),
                 TextInput::make('payment_terms')->maxLength(200)->nullable()->placeholder('e.g., Net 30 from GRN'),
@@ -77,6 +81,9 @@ class ContractResource extends Resource
                 Select::make('status')
                     ->options([
                         'Draft'             => 'Draft',
+                        'Pending Approval'  => 'Pending Approval',
+                        'Approved'          => 'Approved',
+                        'Rejected'          => 'Rejected',
                         'Pending Signature' => 'Pending Signature',
                         'Active'            => 'Active',
                         'Suspended'         => 'Suspended',
@@ -107,7 +114,8 @@ class ContractResource extends Resource
 
                 Select::make('bid_id')
                     ->label('Awarded Bid (optional)')
-                    ->relationship('bid', 'reference_number')
+                    ->relationship('bid', 'id')
+                    ->getOptionLabelFromRecordUsing(fn (\App\Models\Procurement\Bid $record) => $record->reference_number ?? ("Bid #" . $record->id))
                     ->searchable()->preload()->nullable(),
 
                 Select::make('purchase_order_id')
@@ -127,6 +135,19 @@ class ContractResource extends Resource
                     ->nullable()->columnSpanFull(),
             ]),
 
+            Section::make('Approval Trail')
+                ->description('Live approval trail — configured under Procurement → Settings → Approval Workflows.')
+                ->collapsible()
+                ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract'))
+                ->schema([
+                    \Filament\Forms\Components\Placeholder::make('_approval_trail')
+                        ->label('')
+                        ->columnSpanFull()
+                        ->content(fn (?Contract $record) =>
+                            \App\Services\Procurement\ProcurementApprovalService::renderApprovalTrailHtml($record, 'contract')
+                        ),
+                ]),
+
             Section::make('Amendment History')
                 ->description('Use the "Add Amendment" action button on the list view to record contract amendments.')
                 ->schema([
@@ -136,8 +157,8 @@ class ContractResource extends Resource
                             TextInput::make('version_number')->numeric()->label('Version #')->disabled(),
                             DatePicker::make('amendment_date')->required()->label('Amendment Date'),
                             TextInput::make('change_summary')->required()->maxLength(500)->label('Summary of Changes')->columnSpan(3),
-                            TextInput::make('amended_value')->numeric()->prefix('ETB')->nullable()->label('New Value'),
-                            FileUpload::make('document')->disk('local')->directory('procurement/contracts/amendments')->nullable()->label('Amendment Doc'),
+                            TextInput::make('amended_value')->numeric()->prefix(fn (Get $get) => Currency::symbolFor($get('../../currency')))->nullable()->label('New Value'),
+                            FileUpload::make('document')->multiple()->disk('local')->directory('procurement/contracts/amendments')->nullable()->label('Amendment Docs'),
                         ])
                         ->columns(4)
                         ->addable(false)
@@ -177,9 +198,8 @@ class ContractResource extends Resource
                         default        => 'gray',
                     }),
 
-                TextColumn::make('contract_value')
-                    ->label('Value (ETB)')
-                    ->numeric(2)->prefix('ETB ')->sortable(),
+                TextColumn::make('contract_value')->label('Value')->numeric(2)->sortable()
+                    ->formatStateUsing(fn ($state, Contract $record) => ($record->currency ?? 'ETB') . ' ' . number_format((float)$state, 2)),
 
                 TextColumn::make('effective_date')
                     ->label('Start')->date()->sortable(),
@@ -221,15 +241,31 @@ class ContractResource extends Resource
                     ->trueColor('success')
                     ->falseColor('warning'),
 
+                TextColumn::make('approval_stage')
+                    ->label('Approval')
+                    ->badge()
+                    ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract'))
+                    ->getStateUsing(fn (Contract $r) => \App\Services\Procurement\ProcurementApprovalService::currentStageLabel($r, 'contract'))
+                    ->color(fn ($state) => match (true) {
+                        str_contains($state, 'Fully Approved') => 'success',
+                        str_contains($state, 'Rejected')       => 'danger',
+                        str_contains($state, 'Awaiting')       => 'warning',
+                        $state === 'Not Started'               => 'gray',
+                        default                                => 'info',
+                    }),
+
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'Active'            => 'success',
                         'Pending Signature' => 'warning',
+                        'Pending Approval'  => 'warning',
+                        'Approved'          => 'success',
                         'Suspended'         => 'warning',
                         'Expired'           => 'danger',
                         'Terminated'        => 'danger',
                         'Completed'         => 'info',
+                        'Rejected'          => 'danger',
                         default             => 'gray',
                     }),
             ])
@@ -237,7 +273,7 @@ class ContractResource extends Resource
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        'Draft' => 'Draft', 'Pending Signature' => 'Pending Signature',
+                        'Draft' => 'Draft', 'Pending Approval' => 'Pending Approval', 'Approved' => 'Approved', 'Rejected' => 'Rejected', 'Pending Signature' => 'Pending Signature',
                         'Active' => 'Active', 'Suspended' => 'Suspended',
                         'Expired' => 'Expired', 'Terminated' => 'Terminated', 'Completed' => 'Completed',
                     ]),
@@ -248,6 +284,76 @@ class ContractResource extends Resource
                     ]),
             ])
             ->recordActions([
+                // Submit for approval
+                Action::make('submit')
+                    ->label(fn () => \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract') ? 'Submit for Approval' : 'Make Pending Signature')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('info')
+                    ->visible(fn (Contract $r) => $r->status === 'Draft' && auth()->user()->isProcurementOfficer())
+                    ->requiresConfirmation()
+                    ->action(function (Contract $r) {
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract')) {
+                            $r->update(['status' => 'Pending Signature']);
+                            Notification::make()->title('Contract moved to Pending Signature (no workflow active)')->success()->send();
+                        } else {
+                            $r->update(['status' => 'Pending Approval']);
+                            \App\Services\Procurement\ProcurementApprovalService::initialise($r, 'contract');
+                            Notification::make()->title('Contract submitted — approval workflow started')->info()->send();
+                        }
+                    }),
+
+                // Approval actions
+                Action::make('approve')
+                    ->label(fn (Contract $r) =>
+                        '✓ Approve — ' .
+                        (\App\Services\Procurement\ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'contract')?->stage_name ?? 'Approve')
+                    )
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Contract $r) =>
+                        $r->status === 'Pending Approval'
+                        && \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract')
+                        && \App\Services\Procurement\ProcurementApprovalService::canApprove(auth()->user(), $r, 'contract')
+                    )
+                    ->requiresConfirmation()
+                    ->form([\Filament\Forms\Components\Textarea::make('notes')->label('Remarks (optional)')->rows(3)->nullable()])
+                    ->action(function (Contract $r, array $data) {
+                        $user    = auth()->user();
+                        $pending = \App\Services\Procurement\ProcurementApprovalService::pendingRecordFor($user, $r, 'contract');
+                        if (! $pending) return;
+
+                        \App\Services\Procurement\ProcurementApprovalService::approve($r, 'contract', $pending->stage_order, $user, $data['notes'] ?? null);
+
+                        if (\App\Services\Procurement\ProcurementApprovalService::isFullyApproved($r, 'contract')) {
+                            $r->update(['status' => 'Pending Signature']);
+                            Notification::make()->title('✓ Contract fully approved — ready for signatures!')->success()->send();
+                        } else {
+                            Notification::make()->title("✓ Approved: {$pending->stage_name} — advancing to next stage")->success()->send();
+                        }
+                    }),
+
+                Action::make('reject')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(function (Contract $r) {
+                        if ($r->status !== 'Pending Approval') return false;
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('contract')) return false;
+                        $pending = \App\Services\Procurement\ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'contract');
+                        return $pending && ($pending->stage?->can_reject ?? true);
+                    })
+                    ->requiresConfirmation()
+                    ->form([\Filament\Forms\Components\Textarea::make('notes')->label('Rejection Reason')->required()->rows(3)])
+                    ->action(function (Contract $r, array $data) {
+                        $user    = auth()->user();
+                        $pending = \App\Services\Procurement\ProcurementApprovalService::pendingRecordFor($user, $r, 'contract');
+                        if (! $pending) return;
+
+                        \App\Services\Procurement\ProcurementApprovalService::reject($r, 'contract', $pending->stage_order, $user, $data['notes'] ?? null);
+                        $r->update(['status' => 'Rejected']);
+                        Notification::make()->title("Contract rejected at {$pending->stage_name}")->danger()->send();
+                    }),
+
                 // Activate contract (once both parties signed)
                 Action::make('activate')
                     ->label('Activate')
@@ -284,7 +390,7 @@ class ContractResource extends Resource
                         DatePicker::make('amendment_date')
                             ->label('Amendment Date')->required()->default(now()->toDateString()),
                         FileUpload::make('document')
-                            ->label('Amendment Document')->disk('local')
+                            ->label('Amendment Documents')->multiple()->disk('local')
                             ->directory('procurement/contracts/amendments')->nullable(),
                     ])
                     ->action(function (Contract $r, array $data) {

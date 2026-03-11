@@ -48,14 +48,9 @@ class SupplierResource extends Resource
                 TextInput::make('tin_number')->label('TIN Number')->maxLength(50)->nullable(),
 
                 Select::make('category')
-                    ->options([
-                        'Goods'       => 'Goods',
-                        'Services'    => 'Services',
-                        'Works'       => 'Works',
-                        'Consultancy' => 'Consultancy',
-                        'General'     => 'General',
-                    ])
-                    ->default('General')
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 Select::make('status')
@@ -100,14 +95,14 @@ class SupplierResource extends Resource
                         default       => 'gray',
                     }),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Active'      => 'success',
-                        'Inactive'    => 'gray',
-                        'Blacklisted' => 'danger',
-                        default       => 'gray',
-                    }),
+                \Filament\Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                        'Active'      => 'Active',
+                        'Inactive'    => 'Inactive',
+                        'Blacklisted' => 'Blacklisted',
+                    ])
+                    ->sortable()
+                    ->searchable(),
 
                 TextColumn::make('created_at')->label('Since')->date()->sortable()->toggleable(),
             ])
@@ -116,7 +111,7 @@ class SupplierResource extends Resource
                 SelectFilter::make('status')
                     ->options(['Active' => 'Active', 'Inactive' => 'Inactive', 'Blacklisted' => 'Blacklisted']),
                 SelectFilter::make('category')
-                    ->options(['Goods' => 'Goods', 'Services' => 'Services', 'Works' => 'Works', 'Consultancy' => 'Consultancy', 'General' => 'General']),
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::pluck('name', 'name')->toArray()),
             ])
             ->recordActions([EditAction::make(), DeleteAction::make()])
             ->bulkActions([DeleteBulkAction::make()]);

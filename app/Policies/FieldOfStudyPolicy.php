@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class FieldOfStudyPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:FieldOfStudy');
     }
 
-    public function view(AuthUser $authUser, FieldOfStudy $record): bool
+    public function view(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('View:FieldOfStudy');
     }
@@ -26,22 +27,22 @@ class FieldOfStudyPolicy
         return $authUser->can('Create:FieldOfStudy');
     }
 
-    public function update(AuthUser $authUser, FieldOfStudy $record): bool
+    public function update(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('Update:FieldOfStudy');
     }
 
-    public function delete(AuthUser $authUser, FieldOfStudy $record): bool
+    public function delete(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('Delete:FieldOfStudy');
     }
 
-    public function restore(AuthUser $authUser, FieldOfStudy $record): bool
+    public function restore(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('Restore:FieldOfStudy');
     }
 
-    public function forceDelete(AuthUser $authUser, FieldOfStudy $record): bool
+    public function forceDelete(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('ForceDelete:FieldOfStudy');
     }
@@ -56,7 +57,7 @@ class FieldOfStudyPolicy
         return $authUser->can('RestoreAny:FieldOfStudy');
     }
 
-    public function replicate(AuthUser $authUser, FieldOfStudy $record): bool
+    public function replicate(AuthUser $authUser, FieldOfStudy $fieldOfStudy): bool
     {
         return $authUser->can('Replicate:FieldOfStudy');
     }
@@ -65,5 +66,5 @@ class FieldOfStudyPolicy
     {
         return $authUser->can('Reorder:FieldOfStudy');
     }
-}
 
+}

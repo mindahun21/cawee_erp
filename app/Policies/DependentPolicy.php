@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class DependentPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Dependent');
     }
 
-    public function view(AuthUser $authUser, Dependent $record): bool
+    public function view(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('View:Dependent');
     }
@@ -26,22 +27,22 @@ class DependentPolicy
         return $authUser->can('Create:Dependent');
     }
 
-    public function update(AuthUser $authUser, Dependent $record): bool
+    public function update(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('Update:Dependent');
     }
 
-    public function delete(AuthUser $authUser, Dependent $record): bool
+    public function delete(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('Delete:Dependent');
     }
 
-    public function restore(AuthUser $authUser, Dependent $record): bool
+    public function restore(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('Restore:Dependent');
     }
 
-    public function forceDelete(AuthUser $authUser, Dependent $record): bool
+    public function forceDelete(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('ForceDelete:Dependent');
     }
@@ -56,7 +57,7 @@ class DependentPolicy
         return $authUser->can('RestoreAny:Dependent');
     }
 
-    public function replicate(AuthUser $authUser, Dependent $record): bool
+    public function replicate(AuthUser $authUser, Dependent $dependent): bool
     {
         return $authUser->can('Replicate:Dependent');
     }
@@ -65,5 +66,5 @@ class DependentPolicy
     {
         return $authUser->can('Reorder:Dependent');
     }
-}
 
+}

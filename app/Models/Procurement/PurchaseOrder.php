@@ -29,8 +29,9 @@ class PurchaseOrder extends Model
         'po_number', 'version', 'requisition_id', 'tender_id', 'bid_id',
         'supplier_id', 'created_by', 'order_date', 'delivery_date',
         'supplier_acknowledged_at', 'delivery_location', 'payment_terms',
-        'currency', 'subtotal', 'tax_rate', 'tax_amount', 'total_amount',
-        'notes', 'overall_status',
+        'currency', 'subtotal', 'tax_rate', 'tax_amount',
+        'discount_amount', 'other_charges', 'other_charges_description',
+        'total_amount', 'notes', 'overall_status',
         // Approval stages
         'procurement_officer_status', 'procurement_officer_approved_by', 'procurement_officer_approved_at',
         'finance_status', 'finance_approved_by', 'finance_approved_at',
@@ -47,6 +48,8 @@ class PurchaseOrder extends Model
             'subtotal'                         => 'decimal:2',
             'tax_rate'                         => 'decimal:2',
             'tax_amount'                       => 'decimal:2',
+            'discount_amount'                  => 'decimal:2',
+            'other_charges'                    => 'decimal:2',
             'total_amount'                     => 'decimal:2',
             'procurement_officer_approved_at'  => 'datetime',
             'finance_approved_at'              => 'datetime',
@@ -60,7 +63,7 @@ class PurchaseOrder extends Model
         static::creating(function (self $po) {
             if (empty($po->po_number)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $po->po_number = sprintf('PO-%s-%04d', $year, $seq);
             }
             if (empty($po->created_by)) {
@@ -68,9 +71,34 @@ class PurchaseOrder extends Model
             }
         });
 
-        static::saving(function (self $po) {
-            $po->tax_amount   = round((float)$po->subtotal * (float)$po->tax_rate / 100, 2);
-            $po->total_amount = round((float)$po->subtotal + (float)$po->tax_amount, 2);
+        static::saved(function (self $po) {
+            // Recompute header totals from persisted line items.
+            $items = $po->items()->get();
+            $untaxedSubtotal = 0;
+            $totalTax = 0;
+
+            foreach ($items as $item) {
+                // Line base without tax
+                $base = (float)$item->quantity * (float)$item->unit_price;
+                $disc = $base * ((float)$item->discount_percent / 100);
+                $taxableBase = max(0, $base - $disc);
+                $taxAmount = $taxableBase * ((float)$item->tax_rate / 100);
+
+                $untaxedSubtotal += $taxableBase;
+                $totalTax += $taxAmount;
+            }
+
+            $headerDiscount = (float) $po->discount_amount;
+            $otherCharges   = (float) $po->other_charges;
+
+            $realSubtotal = max(0, $untaxedSubtotal - $headerDiscount);
+
+            $po->withoutEvents(function () use ($po, $untaxedSubtotal, $totalTax, $realSubtotal, $otherCharges) {
+                $po->subtotal     = round($untaxedSubtotal, 2);
+                $po->tax_amount   = round($totalTax, 2);
+                $po->total_amount = round($realSubtotal + $totalTax + $otherCharges, 2);
+                $po->saveQuietly();
+            });
         });
     }
 

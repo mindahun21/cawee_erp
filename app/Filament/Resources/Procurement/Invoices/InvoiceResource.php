@@ -5,9 +5,14 @@ namespace App\Filament\Resources\Procurement\Invoices;
 use App\Filament\Resources\Procurement\Invoices\Pages\CreateInvoice;
 use App\Filament\Resources\Procurement\Invoices\Pages\EditInvoice;
 use App\Filament\Resources\Procurement\Invoices\Pages\ListInvoices;
+use App\Models\Currency;
 use App\Models\Procurement\Invoice;
 use App\Models\Procurement\ThreeWayMatch;
+use App\Services\Procurement\ProcurementApprovalService;
 use BackedEnum;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Placeholder;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -38,13 +43,34 @@ class InvoiceResource extends Resource
     {
         return $schema->components([
             Section::make('Invoice Details')->columns(2)->schema([
-                TextInput::make('invoice_number')->label('Invoice #')->disabled()->dehydrated()->placeholder('Auto-generated'),
-                TextInput::make('supplier_invoice_number')->label("Supplier's Invoice #")->maxLength(100)->nullable(),
+                TextInput::make('invoice_number')
+                    ->label('Invoice #')
+                    ->disabled()->dehydrated()
+                    ->placeholder('Auto-generated'),
+
+                TextInput::make('supplier_invoice_number')
+                    ->label("Supplier's Invoice #")
+                    ->maxLength(100)->nullable(),
 
                 Select::make('purchase_order_id')
                     ->label('Purchase Order')
                     ->relationship('purchaseOrder', 'po_number')
-                    ->searchable()->preload()->required(),
+                    ->searchable()->preload()->required()
+                    ->live()
+                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                        if (! $state) return;
+
+                        $po = \App\Models\Procurement\PurchaseOrder::with('supplier')->find($state);
+                        if (! $po) return;
+
+                        // Auto-fill from PO — user can override if invoice differs
+                        $set('supplier_id',  $po->supplier_id);
+                        $set('currency',     $po->currency);
+                        $set('subtotal',     (float) $po->subtotal);
+                        $set('tax_amount',   (float) $po->tax_amount);
+                        $set('total_amount', (float) $po->total_amount);
+                    })
+                    ->helperText('Selecting a PO auto-fills amounts below — adjust if the supplier billed differently'),
 
                 Select::make('supplier_id')
                     ->label('Supplier')
@@ -54,10 +80,47 @@ class InvoiceResource extends Resource
                 DatePicker::make('invoice_date')->required()->default(now()->toDateString()),
                 DatePicker::make('due_date')->required(),
 
-                TextInput::make('subtotal')->numeric()->prefix('ETB')->required()->default(0),
-                TextInput::make('tax_amount')->numeric()->prefix('ETB')->default(0)->label('VAT / Tax Amount'),
-                TextInput::make('total_amount')->numeric()->prefix('ETB')->default(0)->disabled()->dehydrated(),
-                TextInput::make('currency')->default('ETB')->maxLength(10),
+                Select::make('currency')
+                    ->label('Currency')
+                    ->options(fn () => Currency::procurementOptions())
+                    ->default(fn () => Currency::procurementDefault())
+                    ->searchable()->preload()->live()->required(),
+            ]),
+
+            Section::make('Financial Summary')->columns(3)->schema([
+                TextInput::make('subtotal')
+                    ->label('Subtotal (Pre-Tax)')
+                    ->helperText('Sum of line net amounts from PO')
+                    ->numeric()
+                    ->prefix(fn (Get $get) => Currency::symbolFor($get('currency') ?? 'ETB'))
+                    ->required()->default(0)
+                    ->live(debounce: 500)
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        $set('total_amount', round(
+                            (float)$get('subtotal') + (float)$get('tax_amount'), 2
+                        ));
+                    }),
+
+                TextInput::make('tax_amount')
+                    ->label('VAT / Tax Amount')
+                    ->helperText('Adjust only if supplier billed different tax')
+                    ->numeric()
+                    ->prefix(fn (Get $get) => Currency::symbolFor($get('currency') ?? 'ETB'))
+                    ->default(0)
+                    ->live(debounce: 500)
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        $set('total_amount', round(
+                            (float)$get('subtotal') + (float)$get('tax_amount'), 2
+                        ));
+                    }),
+
+                TextInput::make('total_amount')
+                    ->label('Invoice Total')
+                    ->helperText('Subtotal + VAT — must match supplier invoice')
+                    ->numeric()
+                    ->prefix(fn (Get $get) => Currency::symbolFor($get('currency') ?? 'ETB'))
+                    ->default(0)
+                    ->disabled()->dehydrated(),
 
                 Textarea::make('notes')->rows(2)->columnSpanFull()->nullable(),
 
@@ -68,17 +131,17 @@ class InvoiceResource extends Resource
             ]),
 
             Section::make('Approval Trail')
-                ->description('Approved via action buttons on the list view.')
-                ->columns(2)
+                ->description('Live approval trail — updates instantly when approvers act on the list view.')
+                ->collapsible()
+                ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice'))
                 ->schema([
-                    Select::make('finance_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Finance'),
-                    Select::make('director_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Director'),
-                ])
-                ->collapsible(),
+                    Placeholder::make('_approval_trail')
+                        ->label('')
+                        ->columnSpanFull()
+                        ->content(fn (?Invoice $record) =>
+                            ProcurementApprovalService::renderApprovalTrailHtml($record, 'invoice')
+                        ),
+                ]),
         ]);
     }
 
@@ -96,16 +159,22 @@ class InvoiceResource extends Resource
                     ->color(fn (Invoice $record) =>
                         $record->isOverdue() ? 'danger' : null
                     ),
-                TextColumn::make('total_amount')->label('Total (ETB)')->numeric(2)->prefix('ETB ')->sortable(),
-                TextColumn::make('finance_status')->label('Finance')->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
-                    }),
-                TextColumn::make('director_status')->label('Director')->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
+                TextColumn::make('total_amount')->label('Total')->numeric(2)->sortable()
+                    ->formatStateUsing(fn ($state, Invoice $record) => ($record->currency ?? 'ETB') . ' ' . number_format((float)$state, 2)),
+                TextColumn::make('approval_stage')
+                    ->label('Approval')
+                    ->badge()
+                    ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice'))
+                    ->getStateUsing(fn (Invoice $r) => ProcurementApprovalService::currentStageLabel($r, 'invoice'))
+                    ->color(fn ($state) => match (true) {
+                        str_contains($state, 'Fully Approved') => 'success',
+                        str_contains($state, 'Rejected')       => 'danger',
+                        str_contains($state, 'Awaiting')       => 'warning',
+                        $state === 'Not Started'               => 'gray',
+                        default                                => 'info',
                     }),
                 TextColumn::make('current_stage')->label('Stage')->badge()
+                    ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice'))
                     ->color(fn ($state) => match (true) {
                         str_contains($state, 'Paid ✓') || str_contains($state, 'Approved') => 'success',
                         str_contains($state, 'Rejected')    => 'danger',
@@ -131,21 +200,25 @@ class InvoiceResource extends Resource
                         'Approved' => 'Approved', 'Paid' => 'Paid', 'Overdue' => 'Overdue',
                         'Disputed' => 'Disputed', 'Rejected' => 'Rejected',
                     ]),
-                SelectFilter::make('finance_status')
-                    ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected']),
             ])
             ->recordActions([
                 // Submit invoice
                 Action::make('submit')
-                    ->label('Submit')
+                    ->label(fn () => \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice') ? 'Submit for Approval' : 'Approve Invoice')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
                     ->visible(fn (Invoice $r) => $r->status === Invoice::STATUS_DRAFT && auth()->user()->isProcurementFinance())
                     ->requiresConfirmation()
-                    ->action(fn (Invoice $r) =>
-                        $r->update(['status' => Invoice::STATUS_SUBMITTED])
-                        && Notification::make()->title('Invoice submitted — run 3-way match')->info()->send()
-                    ),
+                    ->action(function (Invoice $r) {
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice')) {
+                            $r->update(['status' => Invoice::STATUS_APPROVED]);
+                            Notification::make()->title('Invoice approved directly (no workflow active)')->success()->send();
+                        } else {
+                            $r->update(['status' => Invoice::STATUS_SUBMITTED]);
+                            ProcurementApprovalService::initialise($r, 'invoice');
+                            Notification::make()->title('Invoice submitted — approval workflow started')->info()->send();
+                        }
+                    }),
 
                 // Run 3-Way Match
                 Action::make('run_match')
@@ -201,61 +274,57 @@ class InvoiceResource extends Resource
                         }
                     }),
 
-                // Finance Approve
-                Action::make('finance_approve')
-                    ->label('Approve (Finance)')
+                // ── Dynamic Approval via workflow config ──────────────────────────────────
+                Action::make('approve')
+                    ->label(fn (Invoice $r) =>
+                        '✓ Approve — ' .
+                        (ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'invoice')?->stage_name ?? 'Approve')
+                    )
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn (Invoice $r) => $r->canFinanceApprove() && auth()->user()->isProcurementFinance())
+                    ->visible(fn (Invoice $r) =>
+                        !in_array($r->status, [Invoice::STATUS_PAID, Invoice::STATUS_REJECTED])
+                        && \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice')
+                        && ProcurementApprovalService::canApprove(auth()->user(), $r, 'invoice')
+                    )
                     ->requiresConfirmation()
-                    ->modalHeading('Finance Invoice Approval')
-                    ->modalDescription('Approve this invoice for payment processing. It will advance to the Director for final authorization.')
-                    ->form([Textarea::make('finance_remarks')->label('Remarks (optional)')->rows(3)->nullable()])
+                    ->form([Textarea::make('notes')->label('Approval Remarks (optional)')->rows(3)->nullable()])
                     ->action(function (Invoice $r, array $data) {
-                        $r->update([
-                            'finance_status'      => 'Approved',
-                            'finance_approved_by' => auth()->id(),
-                            'finance_approved_at' => now(),
-                            'finance_remarks'     => $data['finance_remarks'] ?? null,
-                        ]);
-                        Notification::make()->title('✓ Invoice approved by Finance — forwarded to Director')->success()->send();
+                        $user    = auth()->user();
+                        $pending = ProcurementApprovalService::pendingRecordFor($user, $r, 'invoice');
+                        if (! $pending) return;
+
+                        ProcurementApprovalService::approve($r, 'invoice', $pending->stage_order, $user, $data['notes'] ?? null);
+
+                        if (ProcurementApprovalService::isFullyApproved($r, 'invoice')) {
+                            $r->update(['status' => Invoice::STATUS_APPROVED]);
+                            Notification::make()->title('✓ Invoice fully approved — ready for payment scheduling')->success()->send();
+                        } else {
+                            Notification::make()->title("✓ Approved: {$pending->stage_name} — advancing to next stage")->success()->send();
+                        }
                     }),
 
-                // Director Approve (Final)
-                Action::make('director_approve')
-                    ->label('Authorize (Director)')
-                    ->icon('heroicon-o-shield-check')
-                    ->color('primary')
-                    ->visible(fn (Invoice $r) => $r->canDirectorApprove() && auth()->user()->isProcurementDirector())
-                    ->requiresConfirmation()
-                    ->modalHeading('Director Invoice Authorization')
-                    ->modalDescription('Final authorization to process payment for this invoice.')
-                    ->modalSubmitActionLabel('Authorize')
-                    ->action(function (Invoice $r) {
-                        $r->update([
-                            'director_status'      => 'Approved',
-                            'director_approved_by' => auth()->id(),
-                            'director_approved_at' => now(),
-                            'status'               => Invoice::STATUS_APPROVED,
-                        ]);
-                        Notification::make()->title('  Invoice authorized — ready for payment scheduling')->success()->send();
-                    }),
-
-                // Reject
                 Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Invoice $r) =>
-                        !in_array($r->status, [Invoice::STATUS_PAID, Invoice::STATUS_REJECTED])
-                        && (auth()->user()->isProcurementFinance() || auth()->user()->isProcurementDirector())
-                    )
+                    ->visible(function (Invoice $r) {
+                        if (in_array($r->status, [Invoice::STATUS_PAID, Invoice::STATUS_REJECTED])) return false;
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('invoice')) return false;
+                        $pending = ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'invoice');
+                        return $pending && ($pending->stage?->can_reject ?? true);
+                    })
                     ->requiresConfirmation()
-                    ->form([Textarea::make('rejection_reason')->label('Rejection Reason')->required()->rows(3)])
-                    ->action(fn (Invoice $r, array $data) =>
-                        $r->update(['status' => Invoice::STATUS_REJECTED, 'finance_remarks' => $data['rejection_reason']])
-                        && Notification::make()->title('Invoice rejected')->danger()->send()
-                    ),
+                    ->form([Textarea::make('notes')->label('Rejection Reason')->required()->rows(3)])
+                    ->action(function (Invoice $r, array $data) {
+                        $user    = auth()->user();
+                        $pending = ProcurementApprovalService::pendingRecordFor($user, $r, 'invoice');
+                        if (! $pending) return;
+
+                        ProcurementApprovalService::reject($r, 'invoice', $pending->stage_order, $user, $data['notes'] ?? null);
+                        $r->update(['status' => Invoice::STATUS_REJECTED]);
+                        Notification::make()->title("Invoice rejected at {$pending->stage_name}")->danger()->send();
+                    }),
 
                 EditAction::make(),
                 DeleteAction::make()->visible(fn (Invoice $r) => $r->status === Invoice::STATUS_DRAFT),
