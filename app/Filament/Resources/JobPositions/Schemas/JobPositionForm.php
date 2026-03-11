@@ -16,10 +16,10 @@ class JobPositionForm
                 TextInput::make('job_position')
                     ->required()
                     ->maxLength(255),
-
-                Select::make('recruitment_skill_id')
-                    ->label('Skill')
-                    ->relationship('skill', 'name')
+                    
+                Select::make('skills')
+                    ->relationship('skills', 'name')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
 

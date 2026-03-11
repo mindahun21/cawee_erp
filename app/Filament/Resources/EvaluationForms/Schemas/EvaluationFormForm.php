@@ -75,6 +75,7 @@ class EvaluationFormForm
 
                 Textarea::make('description')
                     ->label('Description')
+                    ->required()
                     ->rows(3),
             ]);
     }
