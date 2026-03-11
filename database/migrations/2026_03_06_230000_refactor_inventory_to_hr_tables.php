@@ -12,41 +12,59 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $hasLegacyLocations = Schema::hasTable('locations');
+        $hasLegacyDepartments = Schema::hasTable('departments');
+
         // 1. Modify hr_locations type column to string
         Schema::table('hr_locations', function (Blueprint $table) {
             $table->string('type')->nullable()->change();
         });
 
         // 2. Migrate data from locations to hr_locations
-        $locations = DB::table('locations')->get();
-        foreach ($locations as $location) {
-            DB::table('hr_locations')->insert([
-                'id' => $location->id, // Preserve IDs for FK consistency
-                'location_name' => $location->name,
-                'type' => $location->type,
-                'address' => $location->description, // description -> address as fallback
-                'created_at' => $location->created_at,
-                'updated_at' => $location->updated_at,
-            ]);
+        if ($hasLegacyLocations) {
+            $locations = DB::table('locations')->get();
+            foreach ($locations as $location) {
+                if (! DB::table('hr_locations')->where('id', $location->id)->exists()) {
+                    DB::table('hr_locations')->insert([
+                        'id' => $location->id, // Preserve IDs for FK consistency
+                        'location_name' => $location->name,
+                        'type' => $location->type,
+                        'address' => $location->description, // description -> address as fallback
+                        'created_at' => $location->created_at,
+                        'updated_at' => $location->updated_at,
+                    ]);
+                } else {
+                    DB::table('hr_locations')->where('id', $location->id)->update([
+                        'location_name' => $location->name,
+                        'type' => $location->type,
+                        'address' => $location->description,
+                        'updated_at' => $location->updated_at,
+                    ]);
+                }
+            }
         }
 
         // 3. Migrate data from departments to hr_departments
-        $departments = DB::table('departments')->get();
-        foreach ($departments as $dept) {
-            // Check if ID already exists to avoid collisions
-            if (!DB::table('hr_departments')->where('id', $dept->id)->exists()) {
-                DB::table('hr_departments')->insert([
-                    'id' => $dept->id,
-                    'name' => $dept->name,
-                    'created_at' => $dept->created_at,
-                    'updated_at' => $dept->updated_at,
-                ]);
-            } else {
-                // If ID exists, just update name or skip if identical
-                DB::table('hr_departments')->where('id', $dept->id)->update([
-                    'name' => $dept->name,
-                ]);
+        if ($hasLegacyDepartments) {
+            $departments = DB::table('departments')->get();
+            foreach ($departments as $dept) {
+                if (! DB::table('hr_departments')->where('id', $dept->id)->exists()) {
+                    DB::table('hr_departments')->insert([
+                        'id' => $dept->id,
+                        'name' => $dept->name,
+                        'created_at' => $dept->created_at,
+                        'updated_at' => $dept->updated_at,
+                    ]);
+                } else {
+                    DB::table('hr_departments')->where('id', $dept->id)->update([
+                        'name' => $dept->name,
+                    ]);
+                }
             }
+        }
+
+        if (! $hasLegacyLocations && ! $hasLegacyDepartments) {
+            return;
         }
 
         // 4. Update Assets foreign keys
@@ -86,8 +104,14 @@ return new class extends Migration
         });
 
         // 8. Drop redundant tables
-        Schema::dropIfExists('departments');
-        Schema::dropIfExists('locations');
+        Schema::disableForeignKeyConstraints();
+        if ($hasLegacyDepartments) {
+            Schema::dropIfExists('departments');
+        }
+        if ($hasLegacyLocations) {
+            Schema::dropIfExists('locations');
+        }
+        Schema::enableForeignKeyConstraints();
     }
 
     /**

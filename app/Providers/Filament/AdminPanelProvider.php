@@ -68,6 +68,11 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-cog-6-tooth')
                     ->sort(90)
                     ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl()),
+                \Filament\Navigation\NavigationItem::make('Car & Rent Management')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-truck')
+                    ->sort(91)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Branches\BranchResource::getUrl()),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

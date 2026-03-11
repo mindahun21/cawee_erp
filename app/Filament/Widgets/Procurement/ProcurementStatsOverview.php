@@ -9,6 +9,7 @@ use App\Models\Procurement\ProcurementBudget;
 use App\Models\Procurement\PurchaseOrder;
 use App\Models\Procurement\Requisition;
 use App\Models\Procurement\Supplier;
+use Illuminate\Support\Facades\Cache;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -20,17 +21,33 @@ class ProcurementStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         $year = now()->year;
-        $reqPending      = Requisition::where('overall_status', Requisition::STATUS_SUBMITTED)->count();
-        $poValueYTD      = PurchaseOrder::whereYear('created_at', $year)->sum('total_amount');
-        $overdueInvoices = Invoice::whereDate('due_date', '<', now())->whereNotIn('status', ['Paid', 'Rejected'])->count();
-        $budgets         = ProcurementBudget::where('status', 'Active')->get();
-        $totalAllocated  = (float) $budgets->sum('allocated_amount');
-        $utilizationPct  = $totalAllocated > 0
-            ? round(((float)$budgets->sum('expended_amount') + (float)$budgets->sum('committed_amount')) / $totalAllocated * 100, 1)
-            : 0;
-        $supplierCount     = Supplier::where('status', 'Active')->count();
-        $contractsExpiring = Contract::where('status', 'Active')->whereDate('expiry_date', '<=', now()->addDays(30))->whereDate('expiry_date', '>=', now())->count();
-        $paymentsPending   = Payment::where('status', 'Pending Approval')->count();
+        $metrics = Cache::remember("dashboard:procurement-stats-overview:{$year}", now()->addMinutes(5), function () use ($year): array {
+            $budgets = ProcurementBudget::where('status', 'Active')->get();
+            $totalAllocated = (float) $budgets->sum('allocated_amount');
+
+            return [
+                'req_pending' => Requisition::where('overall_status', Requisition::STATUS_SUBMITTED)->count(),
+                'po_value_ytd' => PurchaseOrder::whereYear('created_at', $year)->sum('total_amount'),
+                'overdue_invoices' => Invoice::whereDate('due_date', '<', now())->whereNotIn('status', ['Paid', 'Rejected'])->count(),
+                'utilization_pct' => $totalAllocated > 0
+                    ? round(((float) $budgets->sum('expended_amount') + (float) $budgets->sum('committed_amount')) / $totalAllocated * 100, 1)
+                    : 0,
+                'supplier_count' => Supplier::where('status', 'Active')->count(),
+                'contracts_expiring' => Contract::where('status', 'Active')
+                    ->whereDate('expiry_date', '<=', now()->addDays(30))
+                    ->whereDate('expiry_date', '>=', now())
+                    ->count(),
+                'payments_pending' => Payment::where('status', 'Pending Approval')->count(),
+            ];
+        });
+
+        $reqPending = $metrics['req_pending'];
+        $poValueYTD = $metrics['po_value_ytd'];
+        $overdueInvoices = $metrics['overdue_invoices'];
+        $utilizationPct = $metrics['utilization_pct'];
+        $supplierCount = $metrics['supplier_count'];
+        $contractsExpiring = $metrics['contracts_expiring'];
+        $paymentsPending = $metrics['payments_pending'];
 
         return [
             Stat::make('Requisitions Awaiting Approval', $reqPending)
