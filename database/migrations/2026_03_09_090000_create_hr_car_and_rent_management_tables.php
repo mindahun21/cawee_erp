@@ -123,7 +123,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['next_service_date', 'service_date']);
+            $table->index(['next_service_date', 'service_date'], 'hr_veh_maint_service_dates_idx');
         });
 
         Schema::create('hr_vehicle_licenses', function (Blueprint $table) {
