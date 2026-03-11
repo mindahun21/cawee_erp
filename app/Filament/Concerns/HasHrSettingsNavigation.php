@@ -11,7 +11,9 @@ use App\Filament\Resources\HR\Settings\ContractTypeResource;
 use App\Filament\Resources\HR\Settings\DepartmentResource;
 use App\Filament\Resources\HR\Settings\EducationLevelResource;
 use App\Filament\Resources\HR\Settings\FieldOfStudyResource;
+use App\Filament\Resources\HR\Settings\HrSettingOptionResource;
 use App\Filament\Resources\HR\Settings\JobPositionResource;
+use App\Filament\Resources\HR\Settings\LandlordResource;
 use App\Filament\Resources\HR\Settings\LayoffChecklistResource;
 use App\Filament\Resources\HR\Settings\TrainingTypeResource;
 use Filament\Navigation\NavigationItem;
@@ -80,6 +82,16 @@ trait HasHrSettingsNavigation
                 ->icon('heroicon-o-star')
                 ->url(AppraisalTemplateResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(AppraisalTemplateResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Car & Rent Dropdowns')
+                ->icon('heroicon-o-rectangle-stack')
+                ->url(HrSettingOptionResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(HrSettingOptionResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Landlords')
+                ->icon('heroicon-o-home-modern')
+                ->url(LandlordResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(LandlordResource::getRouteBaseName() . '.*')),
         ];
     }
 }
