@@ -10,9 +10,10 @@ class AssetStatusChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = \App\Models\Asset::groupBy('status')
-            ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
-            ->pluck('count', 'status')
+        $data = \App\Models\Asset::join('asset_statuses', 'assets.asset_status_id', '=', 'asset_statuses.id')
+            ->groupBy('asset_statuses.name')
+            ->select('asset_statuses.name', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->pluck('count', 'name')
             ->toArray();
 
         return [

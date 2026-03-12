@@ -17,7 +17,7 @@ class AssetAssignmentExporter extends Exporter
         return [
             ExportColumn::make('id')->label('ID'),
             ExportColumn::make('asset.name')->label('Asset'),
-            ExportColumn::make('user.name')->label('Assigned User'),
+            ExportColumn::make('employee.full_name')->label('Assigned Staff'),
             ExportColumn::make('department.name')->label('Assigned Department'),
             ExportColumn::make('project.project_name')->label('Assigned Project'),
             ExportColumn::make('location.location_name')->label('Assigned Location'),

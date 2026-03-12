@@ -8,7 +8,7 @@ class AssetAssignment extends Model
 {
     protected $fillable = [
         'asset_id',
-        'user_id',
+        'employee_id',
         'department_id',
         'project_id',
         'location_id',
@@ -34,9 +34,9 @@ class AssetAssignment extends Model
         return $this->belongsTo(Asset::class);
     }
 
-    public function user()
+    public function employee()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Employee::class);
     }
 
     public function department()

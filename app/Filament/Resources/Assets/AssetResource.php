@@ -7,6 +7,7 @@ use App\Filament\Resources\Assets\Pages\EditAsset;
 use App\Filament\Resources\Assets\Pages\ListAssets;
 use App\Filament\Resources\Assets\Pages\ViewAsset;
 use App\Filament\Resources\Assets\Schemas\AssetForm;
+use App\Filament\Resources\Assets\Schemas\AssetInfolist;
 use App\Filament\Resources\Assets\Tables\AssetsTable;
 use App\Models\Asset;
 use BackedEnum;
@@ -25,33 +26,33 @@ class AssetResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $navigationLabel = 'Fixed Assets';
+    protected static ?string $navigationLabel = 'Assets';
 
-    protected static ?string $pluralModelLabel = 'Fixed Assets';
+    protected static ?string $pluralModelLabel = 'Assets';
 
-    protected static ?string $modelLabel = 'Fixed Asset';
+    protected static ?string $modelLabel = 'Asset';
 
     protected static ?string $recordTitleAttribute = null;
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        return parent::getEloquentQuery()->where('is_fixed_asset', true);
-    }
-
     public static function form(Schema $schema): Schema
     {
-        return AssetForm::configure($schema, isFixedAsset: true);
+        return AssetForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return AssetInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return AssetsTable::configure($table, isFixedAsset: true);
+        return AssetsTable::configure($table);
     }
 
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\Assets\RelationManagers\DepreciationLogsRelationManager::class,
+            //
         ];
     }
 

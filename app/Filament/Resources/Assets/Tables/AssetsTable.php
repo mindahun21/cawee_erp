@@ -10,10 +10,11 @@ use Filament\Actions\ExportAction;
 use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
 use App\Filament\Exports\AssetExporter;
+use Filament\Actions\DeleteAction;
 
 class AssetsTable
 {
-    public static function configure(Table $table, bool $isFixedAsset = true, string $resource = \App\Filament\Resources\Assets\AssetResource::class): Table
+    public static function configure(Table $table, string $resource = \App\Filament\Resources\Assets\AssetResource::class): Table
     {
         return $table
             ->columns([
@@ -25,30 +26,37 @@ class AssetsTable
                             <a href="'.$resource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
                             <span class="text-gray-200">|</span>
                             <a href="'.$resource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
-                            <span class="text-gray-200">|</span>
-                            <button type="button" 
-                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
-                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
                         </div>
                     '), position: 'below'),
-                \Filament\Tables\Columns\TextColumn::make('assetCategory.name')
+                \Filament\Tables\Columns\TextColumn::make('assetModel.category.name')
                     ->label('Category')
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('assetModel.type.name')
+                    ->label('Type of Asset')
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('assetModel.model_number')
+                    ->label('Model No')
+                    ->sortable()
+                    ->toggleable(),
+                \Filament\Tables\Columns\TextColumn::make('assetModel.manufacturer.name')
+                    ->label('Manufacturer')
+                    ->sortable()
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('supplier.name')
                     ->label('Supplier')
                     ->sortable()
                     ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('barcode')
                     ->searchable()
-                    ->visible($isFixedAsset),
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('qr_code')
                     ->label('QR Code')
                     ->searchable()
-                    ->visible($isFixedAsset),
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('rfid_tag')
                     ->label('RFID Tag')
                     ->searchable()
-                    ->visible($isFixedAsset),
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('statusRecord.name')
                     ->label('Status')
                     ->badge()
@@ -60,38 +68,46 @@ class AssetsTable
                         'Lost' => 'gray',
                         default => 'gray',
                     })
-                    ->sortable()
-                    ->visible($isFixedAsset),
+                    ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('condition.name')
                     ->label('Condition')
                     ->sortable()
-                    ->visible($isFixedAsset),
+                    ->toggleable(),
+                \Filament\Tables\Columns\TextColumn::make('unit.name')
+                    ->label('Unit')
+                    ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('quantity')
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record): string => $record->is_low_stock ? 'danger' : 'success')
-                    ->visible(!$isFixedAsset),
+                    ->color('success'),
                 \Filament\Tables\Columns\TextColumn::make('location.location_name')
                     ->label('Location')
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('purchase_cost')
                     ->money('INR')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('monthly_depreciation')
-                    ->label('Monthly Depr.')
-                    ->money('INR')
-                    ->sortable()
-                    ->visible($isFixedAsset),
-                \Filament\Tables\Columns\TextColumn::make('current_value')
-                    ->label('Current Val.')
-                    ->money('INR')
-                    ->sortable()
-                    ->visible($isFixedAsset),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('asset_category_id')
+                \Filament\Tables\Filters\SelectFilter::make('category')
                     ->label('Category')
-                    ->relationship('assetCategory', 'name'),
+                    ->relationship('assetModel.category', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('manufacturer')
+                    ->label('Manufacturer')
+                    ->relationship('assetModel.manufacturer', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('assetType')
+                    ->label('Type of Asset')
+                    ->relationship('assetModel.type', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('asset_model_id')
+                    ->label('Model')
+                    ->relationship('assetModel', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('supplier_id')
                     ->label('Supplier')
                     ->relationship('supplier', 'name')
@@ -99,25 +115,25 @@ class AssetsTable
                     ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('asset_status_id')
                     ->label('Status')
-                    ->relationship('statusRecord', 'name'),
+                    ->relationship('statusRecord', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('asset_condition_id')
                     ->label('Condition')
-                    ->relationship('condition', 'name'),
+                    ->relationship('condition', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('acquisition_type_id')
                     ->label('Acquisition Type')
-                    ->relationship('acquisitionTypeRecord', 'name'),
-                \Filament\Tables\Filters\TernaryFilter::make('is_low_stock')
-                    ->label('Stock Level')
-                    ->placeholder('All Items')
-                    ->trueLabel('Low Stock Only')
-                    ->falseLabel('Sufficient Stock')
-                    ->queries(
-                        true: fn ($query) => $query->whereColumn('quantity', '<=', 'min_stock_level'),
-                        false: fn ($query) => $query->whereColumn('quantity', '>', 'min_stock_level'),
-                    ),
+                    ->relationship('acquisitionTypeRecord', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(3)
+            ->recordActions([
+                DeleteAction::make(),
+            ])
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

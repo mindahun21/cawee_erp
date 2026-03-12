@@ -25,18 +25,21 @@ class AssetImporter extends Importer
                 ->numeric()
                 ->rules(['required', 'integer', 'exists:asset_categories,id']),
 
-            ImportColumn::make('status')
-                ->label('Status')
+            ImportColumn::make('asset_status_id')
+                ->label('Status ID')
                 ->requiredMapping()
-                ->rules(['required', 'in:available,assigned,maintenance,disposed,lost']),
+                ->numeric()
+                ->rules(['required', 'integer', 'exists:asset_statuses,id']),
 
-            ImportColumn::make('acquisition_type')
-                ->label('Acquisition Type')
-                ->rules(['nullable', 'in:Purchase,Donation,Lease']),
+            ImportColumn::make('acquisition_type_id')
+                ->label('Acquisition Type ID')
+                ->numeric()
+                ->rules(['nullable', 'integer', 'exists:acquisition_types,id']),
 
-            ImportColumn::make('condition')
-                ->label('Condition')
-                ->rules(['nullable', 'in:New,Good,Fair,Poor,Broken']),
+            ImportColumn::make('asset_condition_id')
+                ->label('Condition ID')
+                ->numeric()
+                ->rules(['nullable', 'integer', 'exists:asset_conditions,id']),
 
             ImportColumn::make('serial_number')
                 ->label('Serial Number'),
@@ -124,9 +127,8 @@ class AssetImporter extends Importer
     {
         $this->record->is_fixed_asset = true;
         $this->record->quantity ??= 1;
-        $this->record->min_stock_level ??= 0;
-        $this->record->status ??= 'available';
-        $this->record->acquisition_type ??= 'Purchase';
+        $this->record->asset_status_id ??= \App\Models\AssetStatus::where('name', 'Available')->first()?->id;
+        $this->record->acquisition_type_id ??= \App\Models\AcquisitionType::where('name', 'Purchase')->first()?->id;
     }
 
     public static function getCompletedNotificationBody(Import $import): string
