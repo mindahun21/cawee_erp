@@ -38,12 +38,14 @@ class BranchUtilityResource extends Resource
         return $schema->components([
             Select::make('branch_id')
                 ->relationship('branch', 'branch_name')
+                ->preload()
                 ->searchable()
                 ->required(),
 
             Select::make('utility_type_option_id')
                 ->label('Utility Type')
                 ->options(fn () => HrSettingOption::optionsFor('utility_type'))
+                ->searchable()
                 ->required(),
 
             TextInput::make('provider')->maxLength(150),

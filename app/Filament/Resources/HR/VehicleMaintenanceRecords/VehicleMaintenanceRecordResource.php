@@ -54,6 +54,9 @@ class VehicleMaintenanceRecordResource extends Resource
             Select::make('service_request_id')
                 ->label('Service Request')
                 ->relationship('serviceRequest', 'id')
+                ->getOptionLabelFromRecordUsing(fn (\App\Models\VehicleServiceRequest $record) =>
+                    ($record->vehicle?->name ?? 'Unknown Vehicle') . ' — ' . \Illuminate\Support\Str::limit($record->problem_description, 40) . ' (' . $record->status . ')'
+                )
                 ->searchable()
                 ->nullable(),
 
