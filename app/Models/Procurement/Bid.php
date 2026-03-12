@@ -18,7 +18,7 @@ class Bid extends Model
         'tender_id', 'supplier_id', 'reference_number', 'submission_date',
         'bid_amount', 'currency', 'delivery_days', 'status',
         'technical_score', 'financial_score', 'composite_score',
-        'validity_date', 'notes', 'attachments', 'conflict_of_interest_declared',
+        'validity_date', 'bid_security', 'notes', 'attachments', 'conflict_of_interest_declared',
     ];
 
     protected function casts(): array
@@ -39,5 +39,6 @@ class Bid extends Model
     public function tender(): BelongsTo      { return $this->belongsTo(Tender::class); }
     public function supplier(): BelongsTo    { return $this->belongsTo(Supplier::class); }
     public function evaluations(): HasMany   { return $this->hasMany(BidEvaluation::class); }
+    public function criterionScores(): HasMany { return $this->hasMany(BidCriterionScore::class); }
     public function purchaseOrder(): ?PurchaseOrder { return $this->hasOne(PurchaseOrder::class)->first(); }
 }

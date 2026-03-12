@@ -39,7 +39,7 @@ class Tender extends Model
         static::creating(function (self $t) {
             if (empty($t->tender_number)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $t->tender_number = sprintf('TND-%s-%04d', $year, $seq);
             }
             if (empty($t->created_by)) {
@@ -52,6 +52,7 @@ class Tender extends Model
     public function requisition(): BelongsTo  { return $this->belongsTo(Requisition::class); }
     public function creator(): BelongsTo      { return $this->belongsTo(User::class, 'created_by'); }
     public function bids(): HasMany            { return $this->hasMany(Bid::class); }
+    public function evaluationCriteria(): HasMany { return $this->hasMany(TenderEvaluationCriterion::class)->orderBy('sort_order'); }
 
     // ── Computed ────────────────────────────────────────────────────
     public function isOpen(): bool            { return $this->status === 'Published'; }

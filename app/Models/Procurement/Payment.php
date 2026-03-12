@@ -40,7 +40,7 @@ class Payment extends Model
         static::creating(function (self $p) {
             if (empty($p->payment_reference)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $p->payment_reference = sprintf('PAY-%s-%04d', $year, $seq);
             }
             if (empty($p->created_by)) {

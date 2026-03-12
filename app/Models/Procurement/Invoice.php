@@ -53,7 +53,7 @@ class Invoice extends Model
         static::creating(function (self $inv) {
             if (empty($inv->invoice_number)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $inv->invoice_number = sprintf('INV-%s-%04d', $year, $seq);
             }
             if (empty($inv->created_by)) {

@@ -43,7 +43,7 @@ class Contract extends Model
         static::creating(function (self $c) {
             if (empty($c->contract_number)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $c->contract_number = sprintf('CTR-%s-%04d', $year, $seq);
             }
             if (empty($c->created_by)) {

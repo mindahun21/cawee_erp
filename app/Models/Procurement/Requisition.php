@@ -61,7 +61,7 @@ class Requisition extends Model
             if (empty($r->requisition_number)) {
                 $year  = now()->format('Y');
                 $month = now()->format('m');
-                $next  = static::whereYear('created_at', $year)->count() + 1;
+                $next  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $r->requisition_number = sprintf('REQ-%s%s-%04d', $year, $month, $next);
             }
             if (empty($r->overall_status)) {

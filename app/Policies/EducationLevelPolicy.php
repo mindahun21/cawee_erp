@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class EducationLevelPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:EducationLevel');
     }
 
-    public function view(AuthUser $authUser, EducationLevel $record): bool
+    public function view(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('View:EducationLevel');
     }
@@ -26,22 +27,22 @@ class EducationLevelPolicy
         return $authUser->can('Create:EducationLevel');
     }
 
-    public function update(AuthUser $authUser, EducationLevel $record): bool
+    public function update(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('Update:EducationLevel');
     }
 
-    public function delete(AuthUser $authUser, EducationLevel $record): bool
+    public function delete(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('Delete:EducationLevel');
     }
 
-    public function restore(AuthUser $authUser, EducationLevel $record): bool
+    public function restore(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('Restore:EducationLevel');
     }
 
-    public function forceDelete(AuthUser $authUser, EducationLevel $record): bool
+    public function forceDelete(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('ForceDelete:EducationLevel');
     }
@@ -56,7 +57,7 @@ class EducationLevelPolicy
         return $authUser->can('RestoreAny:EducationLevel');
     }
 
-    public function replicate(AuthUser $authUser, EducationLevel $record): bool
+    public function replicate(AuthUser $authUser, EducationLevel $educationLevel): bool
     {
         return $authUser->can('Replicate:EducationLevel');
     }
@@ -65,5 +66,5 @@ class EducationLevelPolicy
     {
         return $authUser->can('Reorder:EducationLevel');
     }
-}
 
+}

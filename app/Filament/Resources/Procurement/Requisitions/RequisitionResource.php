@@ -7,7 +7,9 @@ use App\Filament\Resources\Procurement\Requisitions\Pages\EditRequisition;
 use App\Filament\Resources\Procurement\Requisitions\Pages\ListRequisitions;
 use App\Models\Procurement\ProcurementBudget;
 use App\Models\Procurement\Requisition;
+use App\Services\Procurement\ProcurementApprovalService;
 use BackedEnum;
+use Filament\Forms\Components\Placeholder;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -51,23 +53,20 @@ class RequisitionResource extends Resource
                     ->placeholder('Auto-generated on save'),
 
                 Select::make('category')
-                    ->options([
-                        'Goods'       => 'Goods',
-                        'Services'    => 'Services',
-                        'Works'       => 'Works',
-                        'Consultancy' => 'Consultancy',
-                    ])
-                    ->required(),
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->required()
+                    ->searchable()
+                    ->preload(),
 
                 Select::make('budget_id')
                     ->label('Budget Line')
                     ->relationship('budget', 'code')
-                    ->getOptionLabelFromRecordUsing(fn (ProcurementBudget $r) =>
-                        "{$r->code} — {$r->title}"
-                    )
+                    ->getOptionLabelFromRecordUsing(function (ProcurementBudget $r) {
+                        return "{$r->code} — {$r->title} (Committed: ETB " . number_format($r->committed_amount, 2) . ")";
+                    })
                     ->searchable()
                     ->preload()
-                    ->nullable()
+                    ->required()
                     ->helperText('Select the applicable budget line for this requisition.'),
 
                 TextInput::make('budget_code')
@@ -75,19 +74,18 @@ class RequisitionResource extends Resource
                     ->maxLength(50)
                     ->nullable(),
 
-                TextInput::make('department')->maxLength(150)->nullable(),
+                Select::make('department')
+                    ->options(fn () => \App\Models\Department::pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
                 TextInput::make('cost_center')->maxLength(100)->nullable(),
 
                 Select::make('procurement_method')
                     ->label('Procurement Method')
-                    ->options([
-                        'Open Tender'       => 'Open Tender',
-                        'Restricted Tender' => 'Restricted Tender',
-                        'Two-Stage Tender'  => 'Two-Stage Tender',
-                        'RFP'               => 'Request for Proposal (RFP)',
-                        'RFQ'               => 'Request for Quotation (RFQ)',
-                        'Direct Procurement'=> 'Direct Procurement',
-                    ])
+                    ->options(fn () => \App\Models\Procurement\ProcurementMethod::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
                     ->nullable(),
 
                 DatePicker::make('required_by_date')->required(),
@@ -110,14 +108,18 @@ class RequisitionResource extends Resource
                     ->relationship()
                     ->schema([
                         TextInput::make('description')->required()->maxLength(300)->columnSpan(3),
-                        TextInput::make('unit')->maxLength(50)->placeholder('pcs, kg, hr…'),
+                        \Filament\Forms\Components\Select::make('unit')
+                            ->options(fn () => \App\Models\Procurement\ProcurementUnit::where('is_active', true)->pluck('name', 'abbreviation')->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('pcs, kg, hr…'),
                         TextInput::make('quantity')->numeric()->minValue(0.0001)->default(1)->required(),
                         TextInput::make('estimated_unit_price')
                             ->label('Unit Price (ETB)')
                             ->numeric()
                             ->prefix('ETB')
                             ->default(0),
-                        TextInput::make('specifications')->maxLength(500)->columnSpan(3)->nullable(),
+                        \Filament\Forms\Components\Textarea::make('specifications')->rows(2)->columnSpanFull()->nullable(),
                     ])
                     ->columns(6)
                     ->addActionLabel('+ Add Item')
@@ -126,28 +128,18 @@ class RequisitionResource extends Resource
                     ->itemLabel(fn (array $state) => $state['description'] ?? 'New Item'),
             ]),
 
-            // ── Approval Trail ─────────────────────────────────────────
             Section::make('Approval Trail')
-                ->description('Approvals are performed via the ⚡ action buttons on the list view — not editable here.')
-                ->columns(4)
+                ->description('Live approval trail — configured under Procurement → Settings → Approval Workflows.')
+                ->collapsible()
+                ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition'))
                 ->schema([
-                    Select::make('supervisor_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Supervisor'),
-
-                    Select::make('dept_head_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Dept Head'),
-
-                    Select::make('finance_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Finance'),
-
-                    Select::make('procurement_status')
-                        ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected'])
-                        ->default('Pending')->disabled()->dehydrated()->label('Procurement'),
-                ])
-                ->collapsible(),
+                    Placeholder::make('_approval_trail')
+                        ->label('')
+                        ->columnSpanFull()
+                        ->content(fn (?Requisition $record) =>
+                            ProcurementApprovalService::renderApprovalTrailHtml($record, 'requisition')
+                        ),
+                ]),
         ]);
     }
 
@@ -196,44 +188,17 @@ class RequisitionResource extends Resource
                     ->date()
                     ->sortable(),
 
-                // ── 4-stage approval badges ─────────────────────────
-                TextColumn::make('supervisor_status')
-                    ->label('Supervisor')
+                TextColumn::make('approval_stage')
+                    ->label('Approval')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
-                    }),
-
-                TextColumn::make('dept_head_status')
-                    ->label('Dept Head')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
-                    }),
-
-                TextColumn::make('finance_status')
-                    ->label('Finance')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
-                    }),
-
-                TextColumn::make('procurement_status')
-                    ->label('Procurement')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Approved' => 'success', 'Rejected' => 'danger', default => 'warning',
-                    }),
-
-                TextColumn::make('current_stage')
-                    ->label('Stage')
-                    ->badge()
+                    ->hidden(fn () => ! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition'))
+                    ->getStateUsing(fn (Requisition $r) => ProcurementApprovalService::currentStageLabel($r, 'requisition'))
                     ->color(fn ($state) => match (true) {
-                        str_contains($state, 'Approved') || str_contains($state, 'Fully')  => 'success',
-                        str_contains($state, 'Rejected')   => 'danger',
-                        str_contains($state, 'Awaiting')   => 'warning',
-                        $state === 'Draft'                  => 'gray',
-                        default                             => 'info',
+                        str_contains($state, 'Fully Approved') => 'success',
+                        str_contains($state, 'Rejected')       => 'danger',
+                        str_contains($state, 'Awaiting')       => 'warning',
+                        $state === 'Not Started'               => 'gray',
+                        default                                => 'info',
                     }),
 
                 TextColumn::make('overall_status')
@@ -259,21 +224,12 @@ class RequisitionResource extends Resource
                     ]),
 
                 SelectFilter::make('category')
-                    ->options([
-                        'Goods' => 'Goods', 'Services' => 'Services',
-                        'Works' => 'Works', 'Consultancy' => 'Consultancy',
-                    ]),
-
-                SelectFilter::make('supervisor_status')
-                    ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected']),
-
-                SelectFilter::make('finance_status')
-                    ->options(['Pending' => 'Pending', 'Approved' => 'Approved', 'Rejected' => 'Rejected']),
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::pluck('name', 'name')->toArray()),
             ])
             ->recordActions([
                 // ── Submit (Draft → Submitted) ──────────────────────
                 Action::make('submit')
-                    ->label('Submit for Approval')
+                    ->label(fn () => \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition') ? 'Submit for Approval' : 'Approve Requisition')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
                     ->visible(fn (Requisition $r) =>
@@ -282,151 +238,73 @@ class RequisitionResource extends Resource
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Submit Requisition')
-                    ->modalDescription('This will submit the requisition for the approval chain. Ensure all items and details are complete before proceeding.')
+                    ->modalDescription('This will submit the requisition. Ensure all items and details are complete before proceeding.')
                     ->modalSubmitActionLabel('Submit')
-                    ->action(fn (Requisition $r) =>
-                        $r->update(['overall_status' => Requisition::STATUS_SUBMITTED])
-                        && Notification::make()->title('Requisition submitted — forwarded to Supervisor')->info()->send()
-                    ),
+                    ->action(function (Requisition $r) {
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition')) {
+                            $r->update(['overall_status' => Requisition::STATUS_APPROVED]);
+                            Notification::make()->title('Requisition approved directly (no workflow active)')->success()->send();
+                        } else {
+                            $r->update(['overall_status' => Requisition::STATUS_SUBMITTED]);
+                            ProcurementApprovalService::initialise($r, 'requisition');
+                            Notification::make()->title('Requisition submitted — approval workflow started')->info()->send();
+                        }
+                    }),
 
                 // ── Stage 1: Supervisor Approve ─────────────────────
-                Action::make('supervisor_approve')
-                    ->label('Approve (Supervisor)')
+                // ── Dynamic Approval via workflow config ──────────────────────────────────
+                Action::make('approve')
+                    ->label(fn (Requisition $r) =>
+                        '✓ Approve — ' .
+                        (ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'requisition')?->stage_name ?? 'Approve')
+                    )
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Requisition $r) =>
-                        $r->canSupervisorApprove() && auth()->user()->isProcurementSupervisor()
+                        !in_array($r->overall_status, [Requisition::STATUS_APPROVED, Requisition::STATUS_REJECTED,
+                                                       Requisition::STATUS_DRAFT])
+                        && \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition')
+                        && ProcurementApprovalService::canApprove(auth()->user(), $r, 'requisition')
                     )
                     ->requiresConfirmation()
-                    ->modalHeading('Supervisor Approval')
-                    ->modalDescription('Confirm approval at the Supervisor level. The requisition will advance to the Department Head.')
-                    ->form([
-                        Textarea::make('supervisor_remarks')->label('Remarks (optional)')->rows(3)->nullable(),
-                    ])
+                    ->form([Textarea::make('notes')->label('Approval Remarks (optional)')->rows(3)->nullable()])
                     ->action(function (Requisition $r, array $data) {
-                        $r->update([
-                            'supervisor_status'      => 'Approved',
-                            'supervisor_approved_by' => auth()->id(),
-                            'supervisor_approved_at' => now(),
-                            'supervisor_remarks'     => $data['supervisor_remarks'] ?? null,
-                        ]);
-                        Notification::make()->title('✓ Supervisor approved — forwarded to Dept Head')->success()->send();
+                        $user    = auth()->user();
+                        $pending = ProcurementApprovalService::pendingRecordFor($user, $r, 'requisition');
+                        if (! $pending) return;
+
+                        ProcurementApprovalService::approve($r, 'requisition', $pending->stage_order, $user, $data['notes'] ?? null);
+
+                        if (ProcurementApprovalService::isFullyApproved($r, 'requisition')) {
+                            $r->update(['overall_status' => Requisition::STATUS_APPROVED]);
+                            Notification::make()->title('✓ Requisition fully approved — ready for procurement!')->success()->send();
+                        } else {
+                            Notification::make()->title("✓ Approved: {$pending->stage_name} — advancing to next stage")->success()->send();
+                        }
                     }),
 
-                // ── Stage 2: Department Head Approve ────────────────
-                Action::make('dept_head_approve')
-                    ->label('Approve (Dept Head)')
-                    ->icon('heroicon-o-check-badge')
-                    ->color('primary')
-                    ->visible(fn (Requisition $r) =>
-                        $r->canDeptHeadApprove() && auth()->user()->isProcurementDeptHead()
-                    )
-                    ->requiresConfirmation()
-                    ->modalHeading('Department Head Approval')
-                    ->modalDescription('Confirm departmental approval. The requisition will advance to Finance for budget confirmation.')
-                    ->form([
-                        Textarea::make('dept_head_remarks')->label('Remarks (optional)')->rows(3)->nullable(),
-                    ])
-                    ->action(function (Requisition $r, array $data) {
-                        $r->update([
-                            'dept_head_status'      => 'Approved',
-                            'dept_head_approved_by' => auth()->id(),
-                            'dept_head_approved_at' => now(),
-                            'dept_head_remarks'     => $data['dept_head_remarks'] ?? null,
-                        ]);
-                        Notification::make()->title('✓ Dept Head approved — forwarded to Finance')->success()->send();
-                    }),
-
-                // ── Stage 3: Finance Approve ─────────────────────────
-                Action::make('finance_approve')
-                    ->label('Approve (Finance)')
-                    ->icon('heroicon-o-banknotes')
-                    ->color('warning')
-                    ->visible(fn (Requisition $r) =>
-                        $r->canFinanceApprove() && auth()->user()->isProcurementFinance()
-                    )
-                    ->requiresConfirmation()
-                    ->modalHeading('Finance Approval — Budget Confirmation')
-                    ->modalDescription('Confirm that the budget is available and authorized for this requisition. It will proceed to Procurement for final approval.')
-                    ->form([
-                        Textarea::make('finance_remarks')->label('Finance Remarks (optional)')->rows(3)->nullable(),
-                    ])
-                    ->action(function (Requisition $r, array $data) {
-                        $r->update([
-                            'finance_status'      => 'Approved',
-                            'finance_approved_by' => auth()->id(),
-                            'finance_approved_at' => now(),
-                            'finance_remarks'     => $data['finance_remarks'] ?? null,
-                        ]);
-                        Notification::make()->title('✓ Finance approved — forwarded to Procurement')->success()->send();
-                    }),
-
-                // ── Stage 4: Procurement Approve (Final) ─────────────
-                Action::make('procurement_approve')
-                    ->label('Authorize (Procurement)')
-                    ->icon('heroicon-o-shield-check')
-                    ->color('success')
-                    ->visible(fn (Requisition $r) =>
-                        $r->canProcurementApprove() && auth()->user()->isProcurementOfficer()
-                    )
-                    ->requiresConfirmation()
-                    ->modalHeading('Final Procurement Authorization')
-                    ->modalDescription('By authorizing, this requisition will be fully approved and ready for tendering or direct procurement.')
-                    ->modalSubmitActionLabel('Authorize')
-                    ->form([
-                        Textarea::make('procurement_remarks')->label('Procurement Remarks (optional)')->rows(3)->nullable(),
-                    ])
-                    ->action(function (Requisition $r, array $data) {
-                        $r->update([
-                            'procurement_status'      => 'Approved',
-                            'procurement_approved_by' => auth()->id(),
-                            'procurement_approved_at' => now(),
-                            'procurement_remarks'     => $data['procurement_remarks'] ?? null,
-                            'overall_status'          => Requisition::STATUS_APPROVED,
-                        ]);
-                        Notification::make()->title('  Requisition fully authorized — ready for procurement!')->success()->send();
-                    }),
-
-                // ── Reject (any stage, with reason) ──────────────────
                 Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Requisition $r) =>
-                        ! $r->isRejected()
-                        && ! $r->isFullyApproved()
-                        && $r->overall_status !== Requisition::STATUS_DRAFT
-                        && (
-                            auth()->user()->isProcurementSupervisor()
-                            || auth()->user()->isProcurementDeptHead()
-                            || auth()->user()->isProcurementFinance()
-                            || auth()->user()->isProcurementOfficer()
-                        )
-                    )
+                    ->visible(function (Requisition $r) {
+                        if ($r->isRejected() || $r->isFullyApproved() || $r->overall_status === Requisition::STATUS_DRAFT) return false;
+                        if (! \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('requisition')) return false;
+                        $pending = ProcurementApprovalService::pendingRecordFor(auth()->user(), $r, 'requisition');
+                        return $pending && ($pending->stage?->can_reject ?? true);
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Reject Requisition')
                     ->modalDescription('Please provide a reason for rejection. The requester will be notified.')
-                    ->form([
-                        Textarea::make('rejection_reason')->label('Rejection Reason')->required()->rows(3),
-                    ])
+                    ->form([Textarea::make('notes')->label('Rejection Reason')->required()->rows(3)])
                     ->action(function (Requisition $r, array $data) {
-                        // Reject at whichever stage is currently active
-                        $updates = ['overall_status' => Requisition::STATUS_REJECTED];
-                        if ($r->supervisor_status === 'Pending') {
-                            $updates['supervisor_status'] = 'Rejected';
-                            $updates['supervisor_remarks'] = $data['rejection_reason'];
-                        } elseif ($r->dept_head_status === 'Pending') {
-                            $updates['dept_head_status'] = 'Rejected';
-                            $updates['dept_head_remarks'] = $data['rejection_reason'];
-                        } elseif ($r->finance_status === 'Pending') {
-                            $updates['finance_status'] = 'Rejected';
-                            $updates['finance_remarks'] = $data['rejection_reason'];
-                        } else {
-                            $updates['procurement_status'] = 'Rejected';
-                            $updates['procurement_remarks'] = $data['rejection_reason'];
-                        }
-                        $r->update($updates);
-                        Notification::make()->title('Requisition rejected')->danger()->send();
+                        $user    = auth()->user();
+                        $pending = ProcurementApprovalService::pendingRecordFor($user, $r, 'requisition');
+                        if (! $pending) return;
+
+                        ProcurementApprovalService::reject($r, 'requisition', $pending->stage_order, $user, $data['notes'] ?? null);
+                        $r->update(['overall_status' => Requisition::STATUS_REJECTED]);
+                        Notification::make()->title("Requisition rejected at {$pending->stage_name}")->danger()->send();
                     }),
 
                 EditAction::make(),

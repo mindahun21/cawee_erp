@@ -37,7 +37,7 @@ class GoodsReceipt extends Model
         static::creating(function (self $gr) {
             if (empty($gr->grn_number)) {
                 $year = now()->format('Y');
-                $seq  = static::whereYear('created_at', $year)->count() + 1;
+                $seq  = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
                 $gr->grn_number = sprintf('GRN-%s-%04d', $year, $seq);
             }
             if (empty($gr->received_by)) {

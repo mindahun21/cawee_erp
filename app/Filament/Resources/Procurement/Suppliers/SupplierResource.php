@@ -7,12 +7,15 @@ use App\Filament\Resources\Procurement\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Procurement\Suppliers\Pages\ListSuppliers;
 use App\Models\Procurement\Supplier;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -48,14 +51,9 @@ class SupplierResource extends Resource
                 TextInput::make('tin_number')->label('TIN Number')->maxLength(50)->nullable(),
 
                 Select::make('category')
-                    ->options([
-                        'Goods'       => 'Goods',
-                        'Services'    => 'Services',
-                        'Works'       => 'Works',
-                        'Consultancy' => 'Consultancy',
-                        'General'     => 'General',
-                    ])
-                    ->default('General')
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 Select::make('status')
@@ -69,6 +67,11 @@ class SupplierResource extends Resource
 
                 Textarea::make('address')->rows(2)->columnSpanFull()->nullable(),
                 Textarea::make('notes')->rows(2)->columnSpanFull()->nullable(),
+
+                Toggle::make('portal_access')
+                    ->label('Portal Access Granted')
+                    ->helperText('Allow this supplier to log in to the vendor portal and submit bids.')
+                    ->columnSpanFull(),
             ]),
 
             Section::make('Banking Details')->columns(2)->schema([
@@ -100,14 +103,20 @@ class SupplierResource extends Resource
                         default       => 'gray',
                     }),
 
-                TextColumn::make('status')
+                \Filament\Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                        'Active'      => 'Active',
+                        'Inactive'    => 'Inactive',
+                        'Blacklisted' => 'Blacklisted',
+                    ])
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('portal_access')
+                    ->label('Portal')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Active'      => 'success',
-                        'Inactive'    => 'gray',
-                        'Blacklisted' => 'danger',
-                        default       => 'gray',
-                    }),
+                    ->getStateUsing(fn (Supplier $r) => $r->portal_access ? 'Enabled' : 'Disabled')
+                    ->color(fn ($state) => $state === 'Enabled' ? 'success' : 'gray'),
 
                 TextColumn::make('created_at')->label('Since')->date()->sortable()->toggleable(),
             ])
@@ -116,9 +125,26 @@ class SupplierResource extends Resource
                 SelectFilter::make('status')
                     ->options(['Active' => 'Active', 'Inactive' => 'Inactive', 'Blacklisted' => 'Blacklisted']),
                 SelectFilter::make('category')
-                    ->options(['Goods' => 'Goods', 'Services' => 'Services', 'Works' => 'Works', 'Consultancy' => 'Consultancy', 'General' => 'General']),
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::pluck('name', 'name')->toArray()),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([
+                Action::make('grant_portal')
+                    ->label(fn (Supplier $r) => $r->portal_access ? 'Revoke Portal' : 'Grant Portal')
+                    ->icon(fn (Supplier $r) => $r->portal_access ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
+                    ->color(fn (Supplier $r) => $r->portal_access ? 'danger' : 'success')
+                    ->requiresConfirmation()
+                    ->action(function (Supplier $r) {
+                        $r->update([
+                            'portal_access' => ! $r->portal_access,
+                            'status'        => ! $r->portal_access ? 'Active' : $r->status,
+                        ]);
+                        Notification::make()
+                            ->title($r->fresh()->portal_access ? 'Portal access granted to '.$r->name : 'Portal access revoked for '.$r->name)
+                            ->success()
+                            ->send();
+                    }),
+                EditAction::make(), DeleteAction::make(),
+            ])
             ->bulkActions([DeleteBulkAction::make()]);
     }
 

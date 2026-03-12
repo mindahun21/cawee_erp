@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class ContractTypePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:ContractType');
     }
 
-    public function view(AuthUser $authUser, ContractType $record): bool
+    public function view(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('View:ContractType');
     }
@@ -26,22 +27,22 @@ class ContractTypePolicy
         return $authUser->can('Create:ContractType');
     }
 
-    public function update(AuthUser $authUser, ContractType $record): bool
+    public function update(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('Update:ContractType');
     }
 
-    public function delete(AuthUser $authUser, ContractType $record): bool
+    public function delete(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('Delete:ContractType');
     }
 
-    public function restore(AuthUser $authUser, ContractType $record): bool
+    public function restore(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('Restore:ContractType');
     }
 
-    public function forceDelete(AuthUser $authUser, ContractType $record): bool
+    public function forceDelete(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('ForceDelete:ContractType');
     }
@@ -56,7 +57,7 @@ class ContractTypePolicy
         return $authUser->can('RestoreAny:ContractType');
     }
 
-    public function replicate(AuthUser $authUser, ContractType $record): bool
+    public function replicate(AuthUser $authUser, ContractType $contractType): bool
     {
         return $authUser->can('Replicate:ContractType');
     }
@@ -65,5 +66,5 @@ class ContractTypePolicy
     {
         return $authUser->can('Reorder:ContractType');
     }
-}
 
+}
