@@ -115,10 +115,6 @@ class Asset extends Model
         return $this->hasMany(AssetStock::class);
     }
 
-    public function vehicleDetail()
-    {
-        return $this->hasOne(VehicleDetail::class);
-    }
 
 
 

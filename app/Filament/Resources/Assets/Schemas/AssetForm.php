@@ -72,7 +72,7 @@ class AssetForm
                             ->live(onBlur: true)
                             ->visible(fn (Get $get) => $get('quantity') <= 1)
                             ->hint(fn ($state, $record) => $state ? (Asset::where('serial_number', \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
-                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('serial_number', \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : null),
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('serial_number', \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('barcode')
                             ->label('Barcode')
                             ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_barcode'))
@@ -83,7 +83,7 @@ class AssetForm
                             ->live(onBlur: true)
                             ->visible(fn (Get $get) => $get('quantity') <= 1)
                             ->hint(fn ($state, $record) => $state ? (Asset::where('barcode', \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
-                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('barcode', \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : null),
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('barcode', \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('qr_code')
                             ->label('QR Code')
                             ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_qr_code'))
@@ -94,7 +94,7 @@ class AssetForm
                             ->live(onBlur: true)
                             ->visible(fn (Get $get) => $get('quantity') <= 1)
                             ->hint(fn ($state, $record) => $state ? (Asset::where('qr_code', \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
-                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('qr_code', \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : null),
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('qr_code', \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('rfid_tag')
                             ->label('RFID Tag')
                             ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_rfid_tag'))
@@ -105,7 +105,7 @@ class AssetForm
                             ->live(onBlur: true)
                             ->visible(fn (Get $get) => $get('quantity') <= 1)
                             ->hint(fn ($state, $record) => $state ? (Asset::where('rfid_tag', \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
-                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('rfid_tag', \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : null),
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('rfid_tag', \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         Textarea::make('description')
                             ->columnSpanFull(),
                     ]),
@@ -252,28 +252,6 @@ class AssetForm
                     ]),
 
 
-                Section::make('Vehicle / Machinery Details')
-                    ->relationship('vehicleDetail')
-                    ->columns(3)
-                    ->visible(fn (Get $get) => in_array(AssetModel::find($get('asset_model_id'))?->category?->name, ['Vehicles', 'Machinery']))
-                    ->schema([
-                        TextInput::make('plate_number')
-                            ->unique(ignoreRecord: true),
-                        TextInput::make('chassis_number'),
-                        TextInput::make('motor_number'),
-                        TextInput::make('engine_size'),
-                        TextInput::make('fuel_type'),
-                        TextInput::make('capacity'),
-                        TextInput::make('color'),
-                        TextInput::make('horsepower'),
-                        TextInput::make('year_manufactured'),
-                        TextInput::make('manufacturer'),
-                        TextInput::make('insurance_company'),
-                        TextInput::make('insurance_policy_no'),
-                        DatePicker::make('insurance_expiration_date'),
-                        DatePicker::make('technical_inspection_date'),
-                        DatePicker::make('technical_inspection_expiration_date'),
-                    ]),
             ]);
     }
 }
