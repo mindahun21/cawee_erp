@@ -8,6 +8,7 @@ use App\Filament\Widgets\ME\MeProgressByFrameworkChartWidget;
 use App\Models\ME\MeIndicatorReport;
 use App\Models\ME\MeProject;
 use App\Services\ME\DashboardService;
+use Illuminate\Support\Facades\Cache;
 use BackedEnum;
 use Filament\Pages\Page;
 use UnitEnum;
@@ -47,35 +48,29 @@ class MeDashboard extends Page
 
     protected function getViewData(): array
     {
-        $kpis = app(DashboardService::class)->kpis();
+        return Cache::remember('dashboard:me-view-data', now()->addMinutes(5), function (): array {
+            $kpis = app(DashboardService::class)->kpis();
 
-        $projectsCount = MeProject::query()->count();
-        $indicatorsCount = (int) ($kpis['total_indicators'] ?? 0);
-        $reportedIndicators = (int) ($kpis['reported_this_period'] ?? 0);
-        $unreportedIndicators = max($indicatorsCount - $reportedIndicators, 0);
-        $reportRows = (int) ($kpis['total_report_rows'] ?? 0);
-        $onTrack = (int) ($kpis['on_track'] ?? 0);
-        $needsAttention = (int) ($kpis['needs_attention'] ?? 0);
-        $offTrack = (int) ($kpis['off_track'] ?? 0);
-        $coverageRate = (float) ($kpis['coverage_rate'] ?? 0);
-        $reportsThisMonth = MeIndicatorReport::query()
-            ->whereMonth('period_end', now()->month)
-            ->whereYear('period_end', now()->year)
-            ->count();
-        $latestReportDate = MeIndicatorReport::query()->max('period_end');
+            $projectsCount = MeProject::query()->count();
+            $indicatorsCount = (int) ($kpis['total_indicators'] ?? 0);
+            $reportedIndicators = (int) ($kpis['reported_this_period'] ?? 0);
 
-        return [
-            'projectsCount' => $projectsCount,
-            'indicatorsCount' => $indicatorsCount,
-            'reportsThisMonth' => $reportsThisMonth,
-            'needsAttention' => $needsAttention,
-            'coverageRate' => number_format($coverageRate, 2),
-            'onTrack' => $onTrack,
-            'offTrack' => $offTrack,
-            'unreportedIndicators' => $unreportedIndicators,
-            'reportRows' => $reportRows,
-            'reportedIndicators' => $reportedIndicators,
-            'latestReportDate' => $latestReportDate,
-        ];
+            return [
+                'projectsCount' => $projectsCount,
+                'indicatorsCount' => $indicatorsCount,
+                'reportsThisMonth' => MeIndicatorReport::query()
+                    ->whereMonth('period_end', now()->month)
+                    ->whereYear('period_end', now()->year)
+                    ->count(),
+                'needsAttention' => (int) ($kpis['needs_attention'] ?? 0),
+                'coverageRate' => number_format((float) ($kpis['coverage_rate'] ?? 0), 2),
+                'onTrack' => (int) ($kpis['on_track'] ?? 0),
+                'offTrack' => (int) ($kpis['off_track'] ?? 0),
+                'unreportedIndicators' => max($indicatorsCount - $reportedIndicators, 0),
+                'reportRows' => (int) ($kpis['total_report_rows'] ?? 0),
+                'reportedIndicators' => $reportedIndicators,
+                'latestReportDate' => MeIndicatorReport::query()->max('period_end'),
+            ];
+        });
     }
 }

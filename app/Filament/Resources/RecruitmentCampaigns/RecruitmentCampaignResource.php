@@ -25,7 +25,8 @@ class RecruitmentCampaignResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
 
-    // protected static ?string $navigationLabel = 'Evaluation Form';
+
+    protected static ?string $navigationLabel = 'Campaigns';
 
     protected static ?string $recordTitleAttribute = 'campaign_name';
 

@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -11,13 +10,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class DelegationPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Delegation');
     }
 
-    public function view(AuthUser $authUser, Delegation $delegation): bool
+    public function view(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('View:Delegation');
     }
@@ -27,22 +26,22 @@ class DelegationPolicy
         return $authUser->can('Create:Delegation');
     }
 
-    public function update(AuthUser $authUser, Delegation $delegation): bool
+    public function update(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('Update:Delegation');
     }
 
-    public function delete(AuthUser $authUser, Delegation $delegation): bool
+    public function delete(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('Delete:Delegation');
     }
 
-    public function restore(AuthUser $authUser, Delegation $delegation): bool
+    public function restore(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('Restore:Delegation');
     }
 
-    public function forceDelete(AuthUser $authUser, Delegation $delegation): bool
+    public function forceDelete(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('ForceDelete:Delegation');
     }
@@ -57,7 +56,7 @@ class DelegationPolicy
         return $authUser->can('RestoreAny:Delegation');
     }
 
-    public function replicate(AuthUser $authUser, Delegation $delegation): bool
+    public function replicate(AuthUser $authUser, Delegation $record): bool
     {
         return $authUser->can('Replicate:Delegation');
     }
@@ -66,5 +65,5 @@ class DelegationPolicy
     {
         return $authUser->can('Reorder:Delegation');
     }
-
 }
+

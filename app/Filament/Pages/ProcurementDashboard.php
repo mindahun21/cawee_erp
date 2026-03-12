@@ -16,6 +16,7 @@ use App\Models\Procurement\PurchaseOrder;
 use App\Models\Procurement\Requisition;
 use App\Models\Procurement\Supplier;
 use App\Models\Procurement\Tender;
+use Illuminate\Support\Facades\Cache;
 use BackedEnum;
 use Filament\Pages\Page;
 use UnitEnum;
@@ -52,31 +53,33 @@ class ProcurementDashboard extends Page
     protected function getViewData(): array
     {
         $currentYear = date('Y');
-        $reqPending     = Requisition::where('overall_status', Requisition::STATUS_SUBMITTED)->count();
-        $reqThisMonth   = Requisition::whereMonth('created_at', now()->month)->whereYear('created_at', $currentYear)->count();
-        $poPending      = PurchaseOrder::where('overall_status', PurchaseOrder::STATUS_PENDING)->count();
-        $poValueYTD     = PurchaseOrder::whereYear('created_at', $currentYear)->sum('total_amount');
-        $invoiceOverdue = Invoice::whereDate('due_date', '<', now())->whereNotIn('status', ['Paid', 'Rejected'])->count();
-        $invoicePending = Invoice::where('finance_status', 'Pending')->count();
-        $paymentPending = Payment::where('status', 'Pending Approval')->count();
-        $paymentsThisMonth = Payment::where('status', 'Processed')->whereMonth('payment_date', now()->month)->sum('amount');
-        $budgets        = ProcurementBudget::where('status', 'Active')->get();
-        $totalAllocated = (float) $budgets->sum('allocated_amount');
-        $totalExpended  = (float) $budgets->sum('expended_amount');
-        $totalCommitted = (float) $budgets->sum('committed_amount');
-        $utilizationPct = $totalAllocated > 0 ? round(($totalExpended + $totalCommitted) / $totalAllocated * 100, 1) : 0;
-        $supplierCount      = Supplier::where('status', 'Active')->count();
-        $contractsActive    = Contract::where('status', 'Active')->count();
-        $contractsExpiring  = Contract::where('status', 'Active')->whereDate('expiry_date', '<=', now()->addDays(30))->whereDate('expiry_date', '>=', now())->count();
-        $tendersOpen    = Tender::where('status', 'Published')->count();
-        $grnPending     = GoodsReceipt::whereIn('status', ['Draft', 'Inspecting'])->count();
+        $metrics = Cache::remember("dashboard:procurement-view-data:{$currentYear}", now()->addMinutes(5), function () use ($currentYear): array {
+            $budgets = ProcurementBudget::where('status', 'Active')->get();
+            $totalAllocated = (float) $budgets->sum('allocated_amount');
+            $totalExpended = (float) $budgets->sum('expended_amount');
+            $totalCommitted = (float) $budgets->sum('committed_amount');
 
-        return compact(
-            'reqPending', 'reqThisMonth', 'poPending', 'poValueYTD',
-            'invoiceOverdue', 'invoicePending', 'paymentPending', 'paymentsThisMonth',
-            'totalAllocated', 'totalExpended', 'totalCommitted', 'utilizationPct',
-            'supplierCount', 'contractsActive', 'contractsExpiring',
-            'tendersOpen', 'grnPending', 'currentYear'
-        );
+            return [
+                'reqPending' => Requisition::where('overall_status', Requisition::STATUS_SUBMITTED)->count(),
+                'reqThisMonth' => Requisition::whereMonth('created_at', now()->month)->whereYear('created_at', $currentYear)->count(),
+                'poPending' => PurchaseOrder::where('overall_status', PurchaseOrder::STATUS_PENDING)->count(),
+                'poValueYTD' => PurchaseOrder::whereYear('created_at', $currentYear)->sum('total_amount'),
+                'invoiceOverdue' => Invoice::whereDate('due_date', '<', now())->whereNotIn('status', ['Paid', 'Rejected'])->count(),
+                'invoicePending' => Invoice::where('finance_status', 'Pending')->count(),
+                'paymentPending' => Payment::where('status', 'Pending Approval')->count(),
+                'paymentsThisMonth' => Payment::where('status', 'Processed')->whereMonth('payment_date', now()->month)->sum('amount'),
+                'totalAllocated' => $totalAllocated,
+                'totalExpended' => $totalExpended,
+                'totalCommitted' => $totalCommitted,
+                'utilizationPct' => $totalAllocated > 0 ? round(($totalExpended + $totalCommitted) / $totalAllocated * 100, 1) : 0,
+                'supplierCount' => Supplier::where('status', 'Active')->count(),
+                'contractsActive' => Contract::where('status', 'Active')->count(),
+                'contractsExpiring' => Contract::where('status', 'Active')->whereDate('expiry_date', '<=', now()->addDays(30))->whereDate('expiry_date', '>=', now())->count(),
+                'tendersOpen' => Tender::where('status', 'Published')->count(),
+                'grnPending' => GoodsReceipt::whereIn('status', ['Draft', 'Inspecting'])->count(),
+            ];
+        });
+
+        return [...$metrics, 'currentYear' => $currentYear];
     }
 }

@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -11,13 +10,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class TrainingTypePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:TrainingType');
     }
 
-    public function view(AuthUser $authUser, TrainingType $trainingType): bool
+    public function view(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('View:TrainingType');
     }
@@ -27,22 +26,22 @@ class TrainingTypePolicy
         return $authUser->can('Create:TrainingType');
     }
 
-    public function update(AuthUser $authUser, TrainingType $trainingType): bool
+    public function update(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('Update:TrainingType');
     }
 
-    public function delete(AuthUser $authUser, TrainingType $trainingType): bool
+    public function delete(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('Delete:TrainingType');
     }
 
-    public function restore(AuthUser $authUser, TrainingType $trainingType): bool
+    public function restore(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('Restore:TrainingType');
     }
 
-    public function forceDelete(AuthUser $authUser, TrainingType $trainingType): bool
+    public function forceDelete(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('ForceDelete:TrainingType');
     }
@@ -57,7 +56,7 @@ class TrainingTypePolicy
         return $authUser->can('RestoreAny:TrainingType');
     }
 
-    public function replicate(AuthUser $authUser, TrainingType $trainingType): bool
+    public function replicate(AuthUser $authUser, TrainingType $record): bool
     {
         return $authUser->can('Replicate:TrainingType');
     }
@@ -66,5 +65,5 @@ class TrainingTypePolicy
     {
         return $authUser->can('Reorder:TrainingType');
     }
-
 }
+

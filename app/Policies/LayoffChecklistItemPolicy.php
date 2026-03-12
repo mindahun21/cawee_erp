@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -11,13 +10,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class LayoffChecklistItemPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:LayoffChecklistItem');
     }
 
-    public function view(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function view(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('View:LayoffChecklistItem');
     }
@@ -27,22 +26,22 @@ class LayoffChecklistItemPolicy
         return $authUser->can('Create:LayoffChecklistItem');
     }
 
-    public function update(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function update(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('Update:LayoffChecklistItem');
     }
 
-    public function delete(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function delete(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('Delete:LayoffChecklistItem');
     }
 
-    public function restore(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function restore(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('Restore:LayoffChecklistItem');
     }
 
-    public function forceDelete(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function forceDelete(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('ForceDelete:LayoffChecklistItem');
     }
@@ -57,7 +56,7 @@ class LayoffChecklistItemPolicy
         return $authUser->can('RestoreAny:LayoffChecklistItem');
     }
 
-    public function replicate(AuthUser $authUser, LayoffChecklistItem $layoffChecklistItem): bool
+    public function replicate(AuthUser $authUser, LayoffChecklistItem $record): bool
     {
         return $authUser->can('Replicate:LayoffChecklistItem');
     }
@@ -66,5 +65,5 @@ class LayoffChecklistItemPolicy
     {
         return $authUser->can('Reorder:LayoffChecklistItem');
     }
-
 }
+

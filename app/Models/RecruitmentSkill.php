@@ -24,4 +24,17 @@ class RecruitmentSkill extends Model
     {
         return $this->belongsTo(RecruitmentSkill::class, 'recruitment_skill_id');
     }
+
+    public function companies()
+    {
+        return $this->belongsToMany(RecruitmentCompany::class);
+    }
+
+    public function positions()
+    {
+        return $this->belongsToMany(
+            RecruitmentPosition::class,
+            'recruitment_position_skill'
+        );
+    }
 }

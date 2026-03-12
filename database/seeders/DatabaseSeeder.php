@@ -31,8 +31,6 @@ class DatabaseSeeder extends Seeder
 
         // HR seed data
         $this->call(HrSeeder::class);
-
-        // Prefix settings
-        $this->call(PrefixSettingSeeder::class);
+        $this->call(HrCarRentSettingsSeeder::class);
     }
 }

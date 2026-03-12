@@ -19,4 +19,13 @@ class RecruitmentCompany extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    protected $casts = [
+        'images' => 'array',
+    ];
+
+    public function skills()
+    {
+        return $this->belongsToMany(RecruitmentSkill::class);
+    }
 }

@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -11,13 +10,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class JobPositionPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:JobPosition');
     }
 
-    public function view(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function view(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('View:JobPosition');
     }
@@ -27,22 +26,22 @@ class JobPositionPolicy
         return $authUser->can('Create:JobPosition');
     }
 
-    public function update(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function update(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('Update:JobPosition');
     }
 
-    public function delete(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function delete(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('Delete:JobPosition');
     }
 
-    public function restore(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function restore(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('Restore:JobPosition');
     }
 
-    public function forceDelete(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function forceDelete(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('ForceDelete:JobPosition');
     }
@@ -57,7 +56,7 @@ class JobPositionPolicy
         return $authUser->can('RestoreAny:JobPosition');
     }
 
-    public function replicate(AuthUser $authUser, JobPosition $jobPosition): bool
+    public function replicate(AuthUser $authUser, JobPosition $record): bool
     {
         return $authUser->can('Replicate:JobPosition');
     }
@@ -66,5 +65,5 @@ class JobPositionPolicy
     {
         return $authUser->can('Reorder:JobPosition');
     }
-
 }
+

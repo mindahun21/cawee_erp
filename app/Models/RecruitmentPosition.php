@@ -21,12 +21,13 @@ class RecruitmentPosition extends Model
         'deleted_at',
     ];
 
-
-    public function skill(): BelongsTo
+    public function skills()
     {
-        return $this->belongsTo(RecruitmentSkill::class, 'recruitment_skill_id');
+        return $this->belongsToMany(
+            RecruitmentSkill::class,
+            'recruitment_position_skill'
+        );
     }
-
     public function industry(): BelongsTo
     {
         return $this->belongsTo(RecruitmentIndustry::class, 'recruitment_industry_id');
