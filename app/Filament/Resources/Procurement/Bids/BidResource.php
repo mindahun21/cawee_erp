@@ -5,9 +5,11 @@ namespace App\Filament\Resources\Procurement\Bids;
 use App\Filament\Resources\Procurement\Bids\Pages\CreateBid;
 use App\Filament\Resources\Procurement\Bids\Pages\EditBid;
 use App\Filament\Resources\Procurement\Bids\Pages\ListBids;
+use App\Mail\BidAwardedMail;
 use App\Models\Currency;
 use App\Models\Procurement\Bid;
 use App\Models\Procurement\BidCriterionScore;
+use Illuminate\Support\Facades\Mail;
 use BackedEnum;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Actions\Action;
@@ -136,6 +138,7 @@ class BidResource extends Resource
 
             // ── Evaluation Scores ──────────────────────────────────────
             Section::make('Evaluation Scores')
+                ->visibleOn('edit')
                 ->description('Scores are entered during the evaluation phase by committee members.')
                 ->columns(3)
                 ->schema([
@@ -145,6 +148,7 @@ class BidResource extends Resource
                         ->maxValue(100)
                         ->suffix('/100')
                         ->label('Technical Score')
+                        ->hidden(fn (?\App\Models\Procurement\Bid $record) => $record?->tender?->evaluationCriteria()->exists())
                         ->nullable(),
 
                     TextInput::make('financial_score')
@@ -153,16 +157,96 @@ class BidResource extends Resource
                         ->maxValue(100)
                         ->suffix('/100')
                         ->label('Financial Score')
+                        ->hidden(fn (?\App\Models\Procurement\Bid $record) => $record?->tender?->evaluationCriteria()->exists())
                         ->nullable(),
 
                     TextInput::make('composite_score')
                         ->numeric()
-                        ->minValue(0)
-                        ->maxValue(100)
                         ->suffix('/100')
                         ->label('Composite Score')
-                        ->nullable()
-                        ->helperText('Auto-calculated or manually set weighted score.'),
+                        ->readOnly()
+                        ->helperText('Auto-calculated by scoring action or saved automatically from the Criteria responses below.'),
+                ])
+                ->collapsible(),
+
+            Section::make('Evaluation Criteria & Responses')
+                ->description('Supplier responses and corresponding scores for each criterion defined on the Tender.')
+                ->hidden(fn (?\App\Models\Procurement\Bid $record) => !($record?->tender?->evaluationCriteria()->exists()))
+                ->schema([
+                    \Filament\Forms\Components\Repeater::make('criterionScores')
+                        ->relationship()
+                        ->schema([
+                            \Filament\Forms\Components\Select::make('criterion_id')
+                                ->relationship(
+                                    name: 'criterion',
+                                    titleAttribute: 'name',
+                                    modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query, $get) => 
+                                        $get('../../tender_id') 
+                                            ? $query->where('tender_id', $get('../../tender_id')) 
+                                            : $query->where('id', -1)
+                                )
+                                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} ({$record->weight}%)")
+                                ->required()
+                                ->label('Criterion')
+                                ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
+
+                            TextInput::make('score')
+                                ->label('Score')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->suffix('/ 100')
+                                ->nullable()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function ($get, $set, $state) {
+                                    $tenderId = $get('../../tender_id');
+                                    if (!$tenderId || $state === null) return;
+                                    
+                                    $tender = \App\Models\Procurement\Tender::find($tenderId);
+                                    if (!$tender || !$tender->evaluationCriteria()->exists()) return;
+                                    
+                                    $criteriaWeights = $tender->evaluationCriteria()->pluck('weight', 'id');
+                                    $allScores = $get('../../criterionScores') ?? [];
+                                    $weightedSum = 0;
+                                    $hasScores = false;
+                                    
+                                    foreach ($allScores as $rowKey => $row) {
+                                        $cId = $row['criterion_id'] ?? null;
+                                        $sVal = $row['score'] ?? null;
+                                        if ($cId && $sVal !== null && isset($criteriaWeights[$cId])) {
+                                            $weightedSum += ((float)$sVal * ((float)$criteriaWeights[$cId] / 100));
+                                            $hasScores = true;
+                                        }
+                                    }
+                                    
+                                    if ($hasScores) {
+                                        $set('../../composite_score', round($weightedSum, 2));
+                                    }
+                                }),
+
+                            Textarea::make('notes')
+                                ->label('Supplier Response')
+                                ->rows(3)
+                                ->columnSpanFull()
+                                ->required(),
+                        ])
+                        ->columns(2)
+                        ->collapsible()
+                        ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $record) {
+                            $data['bid_id'] = $record->id;
+                            if (isset($data['score']) && $data['score'] !== null) {
+                                $data['scored_by'] = auth()->id();
+                                $data['scored_at'] = now();
+                            }
+                            return $data;
+                        })
+                        ->mutateRelationshipDataBeforeSaveUsing(function (array $data, $record) {
+                            if (isset($data['score']) && $data['score'] !== null) {
+                                $data['scored_by'] = $data['scored_by'] ?? auth()->id();
+                                $data['scored_at'] = $data['scored_at'] ?? now();
+                            }
+                            return $data;
+                        })
                 ])
                 ->collapsible(),
 
@@ -353,19 +437,21 @@ class BidResource extends Resource
                                 Textarea::make('evaluation_notes')->label('Evaluation Notes')->rows(3)->nullable(),
                             ]);
                         } else {
-                            $fields = $criteria->map(fn ($crit) =>
-                                TextInput::make("crit_{$crit->id}")
+                            $fields = $criteria->map(function ($crit) use ($record) {
+                                $existingScore = BidCriterionScore::where('bid_id', $record->id)
+                                    ->where('criterion_id', $crit->id)
+                                    ->first();
+                                
+                                $supplierText = $existingScore && $existingScore->notes ? "\n\nSupplier Response:\n\"{$existingScore->notes}\"" : "";
+                                
+                                return TextInput::make("crit_{$crit->id}")
                                     ->label("{$crit->name} — {$crit->weight}% weight")
-                                    ->helperText($crit->description)
+                                    ->helperText($crit->description . $supplierText)
                                     ->numeric()->minValue(0)->maxValue(100)
                                     ->suffix('/ 100')
-                                    ->default(
-                                        BidCriterionScore::where('bid_id', $record->id)
-                                            ->where('criterion_id', $crit->id)
-                                            ->value('score') ?? 0
-                                    )
-                                    ->required()
-                            )->all();
+                                    ->default($existingScore->score ?? 0)
+                                    ->required();
+                            })->all();
 
                             $fields[] = Textarea::make('evaluation_notes')
                                 ->label('Overall Evaluation Notes')
@@ -402,7 +488,6 @@ class BidResource extends Resource
                                     'score'     => $score,
                                     'scored_by' => auth()->id(),
                                     'scored_at' => now(),
-                                    'notes'     => null,
                                 ]
                             );
                             $weightedSum += $score * ($crit->weight / 100);
@@ -452,6 +537,36 @@ class BidResource extends Resource
                             Notification::make()->title('Bid submitted for award — approval workflow started')->info()->send();
                         }
                     }),
+
+                // ── Notify winner by email ──
+                Action::make('send_award_email')
+                    ->label('Send Award Email')
+                    ->icon('heroicon-o-envelope')
+                    ->color('success')
+                    ->visible(fn (Bid $r) =>
+                        $r->status === 'Awarded'
+                        && !empty($r->supplier?->email)
+                        && auth()->user()->isProcurementOfficer()
+                    )
+                    ->requiresConfirmation()
+                    ->modalHeading('Send Award Notification Email')
+                    ->modalDescription(fn (Bid $r) => "Send the official award email to {$r->supplier->name} ({$r->supplier->email}). This will inform them of the contract award and next steps.")
+                    ->action(function (Bid $r) {
+                        try {
+                            Mail::to($r->supplier->email)
+                                ->send(new BidAwardedMail($r));
+                            Notification::make()
+                                ->title('Award email sent to ' . $r->supplier->email)
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Email failed: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
 
                 Action::make('workflow_approve')
                     ->label(fn (Bid $r) =>

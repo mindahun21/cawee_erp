@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreignId('criterion_id')
                   ->constrained('procurement_tender_evaluation_criteria')
                   ->cascadeOnDelete();
-            $table->decimal('score', 5, 2)->default(0); // 0–100
+            $table->decimal('score', 5, 2)->nullable(); // 0–100, null until evaluated
             $table->text('notes')->nullable();
             $table->foreignId('scored_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('scored_at')->nullable();
