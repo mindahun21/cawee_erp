@@ -176,14 +176,15 @@ class DepreciationLogResource extends Resource
                                     ->from('asset_models')
                                     ->join('depreciations', 'asset_models.depreciation_id', '=', 'depreciations.id')
                                     ->whereColumn('asset_models.id', 'assets.asset_model_id')
-                                    ->whereRaw("date(assets.purchase_date, '+' || depreciations.months || ' months') > ?", [$asOfStr]);
+                                    ->whereRaw("DATE_ADD(assets.purchase_date, INTERVAL depreciations.months MONTH) > ?", [$asOfStr]);
                             });
                     })
                     ->default(['period' => now()->format('Y-m')]),
                 Tables\Filters\SelectFilter::make('id')
                     ->label('Asset')
-                    ->options(Asset::query()->pluck('name', 'id'))
-                    ->searchable(),
+                    ->searchable()
+                    ->getSearchResultsUsing(fn (string $search): array => Asset::where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => Asset::find($value)?->name),
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Category')
                     ->relationship('assetModel.category', 'name')

@@ -160,7 +160,7 @@ class InventoryReport extends Page implements HasForms
                     ->from('asset_models')
                     ->join('depreciations', 'asset_models.depreciation_id', '=', 'depreciations.id')
                     ->whereColumn('asset_models.id', 'assets.asset_model_id')
-                    ->whereRaw("date(assets.purchase_date, '+' || depreciations.months || ' months') > ?", [$asOfStr]);
+                    ->whereRaw("DATE_ADD(assets.purchase_date, INTERVAL depreciations.months MONTH) > ?", [$asOfStr]);
             });
 
         $this->reportData = $query->get()->map(fn($a) => [
