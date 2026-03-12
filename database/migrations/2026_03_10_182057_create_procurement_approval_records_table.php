@@ -32,9 +32,9 @@ return new class extends Migration
             $table->timestamps();
 
             // One record per document per stage
-            $table->unique(['approvable_type', 'approvable_id', 'stage_order']);
+            $table->unique(['approvable_type', 'approvable_id', 'stage_order'], 'proc_approval_rec_type_id_stage_unique');
 
-            $table->index(['approvable_type', 'approvable_id', 'status']);
+            $table->index(['approvable_type', 'approvable_id', 'status'], 'proc_approval_rec_type_id_status_index');
         });
     }
 
