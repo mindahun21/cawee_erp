@@ -49,8 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Procurement')
-                    ->collapsible()
-                    ->icon('heroicon-o-shopping-bag'),
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
