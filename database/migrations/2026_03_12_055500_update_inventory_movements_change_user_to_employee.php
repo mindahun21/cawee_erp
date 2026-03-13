@@ -9,9 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('inventory_movements', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-            $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
+            if (Schema::hasColumn('inventory_movements', 'user_id')) {
+                try { $table->dropForeign(['user_id']); } catch (\Exception $e) {}
+                $table->dropColumn('user_id');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'employee_id')) {
+                $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
+            }
         });
     }
 

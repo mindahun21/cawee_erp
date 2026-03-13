@@ -12,20 +12,40 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('inventory_movements', function (Blueprint $table) {
-            $table->dropColumn('type');
-            $table->dropForeign(['asset_id']);
-            $table->dropColumn('asset_id');
-            $table->dropForeign(['from_location_id']);
-            $table->dropColumn('from_location_id');
-            $table->dropForeign(['to_location_id']);
-            $table->dropColumn('to_location_id');
+            // Drop old columns only if they exist
+            if (Schema::hasColumn('inventory_movements', 'type')) {
+                $table->dropColumn('type');
+            }
+            if (Schema::hasColumn('inventory_movements', 'asset_id')) {
+                $table->dropForeign(['asset_id']);
+                $table->dropColumn('asset_id');
+            }
+            if (Schema::hasColumn('inventory_movements', 'from_location_id')) {
+                $table->dropForeign(['from_location_id']);
+                $table->dropColumn('from_location_id');
+            }
 
-            $table->foreignId('item_id')->after('id')->constrained()->onDelete('cascade');
-            $table->foreignId('from_warehouse_id')->after('item_id')->constrained('warehouses')->onDelete('cascade');
-            $table->string('destination_type')->nullable()->after('from_warehouse_id'); // 'warehouse' or 'location_department'
-            $table->foreignId('to_warehouse_id')->nullable()->after('destination_type')->constrained('warehouses')->onDelete('set null');
-            $table->foreignId('to_location_id')->nullable()->after('to_warehouse_id')->constrained('locations')->onDelete('set null');
-            $table->foreignId('to_department_id')->nullable()->after('to_location_id')->constrained('departments')->onDelete('set null');
+            // Add new columns only if they don't exist
+            if (!Schema::hasColumn('inventory_movements', 'item_id')) {
+                $table->foreignId('item_id')->after('id')->constrained()->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'from_warehouse_id')) {
+                $table->foreignId('from_warehouse_id')->after('item_id')->constrained('warehouses')->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'destination_type')) {
+                $table->string('destination_type')->nullable()->after('from_warehouse_id');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'to_warehouse_id')) {
+                $table->foreignId('to_warehouse_id')->nullable()->after('destination_type')->constrained('warehouses')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'to_location_id')) {
+                // Use unsignedBigInteger to avoid FK to non-existent 'locations' table
+                $table->unsignedBigInteger('to_location_id')->nullable()->after('to_warehouse_id');
+            }
+            if (!Schema::hasColumn('inventory_movements', 'to_department_id')) {
+                // Use unsignedBigInteger to avoid FK to non-existent 'departments' table
+                $table->unsignedBigInteger('to_department_id')->nullable()->after('to_location_id');
+            }
         });
     }
 

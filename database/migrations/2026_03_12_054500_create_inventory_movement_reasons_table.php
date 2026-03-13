@@ -8,12 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('inventory_movement_reasons', function (Blueprint $blueprint) {
-            $blueprint->id();
-            $blueprint->string('name')->unique();
-            $blueprint->text('description')->nullable();
-            $blueprint->timestamps();
-        });
+        if (!Schema::hasTable('inventory_movement_reasons')) {
+            Schema::create('inventory_movement_reasons', function (Blueprint $blueprint) {
+                $blueprint->id();
+                $blueprint->string('name')->unique();
+                $blueprint->text('description')->nullable();
+                $blueprint->timestamps();
+            });
+        }
     }
 
     public function down(): void
