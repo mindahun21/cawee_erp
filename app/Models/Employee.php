@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -110,7 +111,15 @@ class Employee extends Model
     // ── Movements (Promotion / Demotion / Transfer) ─────────────────
     public function movements(): HasMany            { return $this->hasMany(EmployeeMovement::class); }
 
+    // ── Asset Assignments ──────────────────────────────────────────
+    public function assetAssignments(): HasMany { return $this->hasMany(AssetAssignment::class); }
+
     // ── Delegations ─────────────────────────────────────────────────
     public function delegationsGiven(): HasMany    { return $this->hasMany(Delegation::class, 'delegator_id'); }
     public function delegationsReceived(): HasMany { return $this->hasMany(Delegation::class, 'delegate_id'); }
+
+    public function warehouses(): BelongsToMany
+    {
+        return $this->belongsToMany(Warehouse::class, 'warehouse_employee');
+    }
 }

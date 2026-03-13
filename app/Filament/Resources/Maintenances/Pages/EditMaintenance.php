@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Filament\Resources\Maintenances\Pages;
+
+use App\Filament\Resources\Maintenances\MaintenanceResource;
+use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
+
+class EditMaintenance extends EditRecord
+{
+    protected static string $resource = MaintenanceResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            DeleteAction::make(),
+        ];
+    }
+}

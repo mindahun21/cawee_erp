@@ -6,9 +6,10 @@ use App\Filament\Resources\Inventory\Pages\ListInventory;
 use App\Filament\Resources\Inventory\Pages\CreateInventory;
 use App\Filament\Resources\Inventory\Pages\EditInventory;
 use App\Filament\Resources\Inventory\Pages\ViewInventory;
-use App\Filament\Resources\Assets\Schemas\AssetForm;
-use App\Filament\Resources\Assets\Tables\AssetsTable;
-use App\Models\Asset;
+use App\Filament\Resources\Inventory\Schemas\InventoryForm;
+use App\Filament\Resources\Inventory\Schemas\InventoryInfolist;
+use App\Filament\Resources\Inventory\Tables\InventoryTable;
+use App\Models\ItemWarehouse;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class InventoryResource extends Resource
 {
-    protected static ?string $model = Asset::class;
+    protected static ?string $model = ItemWarehouse::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-archive-box';
 
@@ -25,33 +26,33 @@ class InventoryResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $navigationLabel = 'Inventory / Consumables';
+    protected static ?string $navigationLabel = 'Inventory';
 
-    protected static ?string $pluralModelLabel = 'Inventory / Consumables';
+    protected static ?string $pluralModelLabel = 'Inventory';
 
     protected static ?string $modelLabel = 'Inventory Item';
 
-    protected static ?string $recordTitleAttribute = null;
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->where('is_fixed_asset', false);
-    }
+    protected static ?string $recordTitleAttribute = 'sku';
 
     public static function form(Schema $schema): Schema
     {
-        return AssetForm::configure($schema, isFixedAsset: false);
+        return InventoryForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return InventoryInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return AssetsTable::configure($table, isFixedAsset: false, resource: static::class);
+        return InventoryTable::configure($table);
     }
 
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\Assets\RelationManagers\StocksRelationManager::class,
+            //
         ];
     }
 

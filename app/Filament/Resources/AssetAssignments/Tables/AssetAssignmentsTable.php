@@ -31,8 +31,9 @@ class AssetAssignmentsTable
                                 class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
                         </div>
                     '), position: 'below'),
-                \Filament\Tables\Columns\TextColumn::make('user.name')
-                    ->label('Assigned User')
+                \Filament\Tables\Columns\TextColumn::make('employee.first_name')
+                    ->label('Assigned Staff')
+                    ->formatStateUsing(fn ($record) => $record->employee?->full_name)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('department.name')
@@ -72,9 +73,10 @@ class AssetAssignmentsTable
                     }),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('user_id')
-                    ->label('User')
-                    ->relationship('user', 'name'),
+                \Filament\Tables\Filters\SelectFilter::make('employee_id')
+                    ->label('Staff')
+                    ->relationship('employee', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name),
                 \Filament\Tables\Filters\TernaryFilter::make('returned_date')
                     ->label('Returned Status')
                     ->nullable()

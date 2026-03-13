@@ -8,7 +8,6 @@ use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\Department;
 use App\Models\InventoryMovement;
-use App\Models\DepreciationLog;
 use App\Models\AssetAssignment;
 
 use Filament\Forms\Contracts\HasForms;
@@ -131,18 +130,48 @@ class InventoryReport extends Page implements HasForms
                 'code' => $a->barcode,
                 'cost' => $a->purchase_cost,
                 'current' => $a->current_value,
-                'status' => $a->status,
+                'status' => $a->statusRecord?->name,
             ]),
         ];
     }
 
     protected function loadDepreciation(array $filters): void
     {
-        $query = DepreciationLog::with('asset');
-        if ($filters['fromDate'] ?? null) $query->where('period_date', '>=', $filters['fromDate']);
-        if ($filters['toDate'] ?? null) $query->where('period_date', '<=', $filters['toDate']);
-        
-        $this->reportData = $query->latest('period_date')->get();
+        $query = Asset::with(['assetModel.depreciation'])
+            ->where('is_fixed_asset', true)
+            ->whereHas('assetModel.depreciation');
+
+        if ($filters['categoryId'] ?? null) {
+            $query->whereHas('assetModel', fn($q) => $q->where('asset_category_id', $filters['categoryId']));
+        }
+
+        $asOf = now()->startOfMonth();
+        if ($filters['fromDate'] ?? null) {
+            $asOf = \Carbon\Carbon::parse($filters['fromDate'])->startOfMonth();
+        }
+
+        $asOfStr = $asOf->format('Y-m-d');
+        $endOfMonthStr = $asOf->copy()->endOfMonth()->format('Y-m-d');
+
+        // Apply range filtering: acquired before/during month, and not yet fully depreciated
+        $query->where('purchase_date', '<=', $endOfMonthStr)
+            ->whereExists(function ($sub) use ($asOfStr) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('asset_models')
+                    ->join('depreciations', 'asset_models.depreciation_id', '=', 'depreciations.id')
+                    ->whereColumn('asset_models.id', 'assets.asset_model_id')
+                    ->whereRaw("DATE_ADD(assets.purchase_date, INTERVAL depreciations.months MONTH) > ?", [$asOfStr]);
+            });
+
+        $this->reportData = $query->get()->map(fn($a) => [
+            'name'                 => $a->name,
+            'period'               => $asOf->format('M Y'),
+            'cost'                 => $a->purchase_cost,
+            'monthly_depreciation' => $a->getMonthlyDepreciationAsOf(),
+            'current_value'        => $a->getCurrentValueAsOf($asOf),
+            'remaining_value'      => (float) $a->purchase_cost - $a->getCurrentValueAsOf($asOf),
+            'remaining_months'     => $a->getRemainingMonthsAsOf($asOf),
+        ]);
     }
 
     protected function loadAging(array $filters): void
@@ -153,9 +182,9 @@ class InventoryReport extends Page implements HasForms
         $this->reportData = $query->whereNotNull('purchase_date')->get()->map(fn($a) => [
             'name' => $a->name,
             'purchase_date' => $a->purchase_date,
-            'age_years' => $a->purchase_date->diffInYears(now()),
-            'useful_life' => $a->useful_life,
-            'remaining_life' => max(0, $a->useful_life - $a->purchase_date->diffInYears(now())),
+            'age_months' => $a->purchase_date->diffInMonths(now()),
+            'useful_life_months' => $a->depreciation?->months ?? 0,
+            'remaining_months' => $a->remaining_months,
         ]);
     }
 
@@ -181,8 +210,8 @@ class InventoryReport extends Page implements HasForms
 
     protected function loadDamaged(array $filters): void
     {
-        $this->reportData = Asset::whereIn('status', ['lost'])
-            ->orWhereIn('condition', ['Poor', 'Broken'])
+        $this->reportData = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
+            ->orWhereHas('condition', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
             ->get();
     }
 
@@ -233,21 +262,31 @@ class InventoryReport extends Page implements HasForms
             case 'valuation':
                 $headers = ['Asset Name', 'Barcode', 'Purchase Cost', 'Current Value', 'Status'];
                 $data = Asset::all()->map(fn($a) => [
-                    $a->name, $a->barcode, number_format($a->purchase_cost, 2), number_format($a->current_value, 2), $a->status
+                    $a->name, $a->barcode, number_format($a->purchase_cost, 2), number_format($a->current_value, 2), $a->statusRecord?->name
                 ])->toArray();
                 $title = "ASSET VALUATION REPORT";
                 break;
             case 'depreciation':
-                $headers = ['Period Date', 'Asset Name', 'Depreciation Amount', 'Book Value'];
-                $data = DepreciationLog::with('asset')->get()->map(fn($l) => [
-                    $l->period_date->format('M Y'), $l->asset->name, number_format($l->depreciation_amount, 2), number_format($l->book_value, 2)
-                ])->toArray();
+                $headers = ['Asset Name', 'Period', 'Monthly Depreciation', 'Current Value', 'Remaining Value', 'Remaining Months'];
+                $asOf = now();
+                $data = Asset::with(['assetModel.depreciation'])
+                    ->where('is_fixed_asset', true)
+                    ->whereHas('assetModel.depreciation')
+                    ->get()
+                    ->map(fn($a) => [
+                        $a->name,
+                        $asOf->format('M Y'),
+                        number_format($a->getMonthlyDepreciationAsOf(), 2),
+                        number_format($a->getCurrentValueAsOf($asOf), 2),
+                        number_format((float) $a->purchase_cost - $a->getCurrentValueAsOf($asOf), 2),
+                        $a->getRemainingMonthsAsOf($asOf),
+                    ])->toArray();
                 $title = "DEPRECIATION REPORT";
                 break;
             case 'aging':
-                $headers = ['Asset Name', 'Purchase Date', 'Age (Years)', 'Remaining (Years)', 'Useful Life'];
+                $headers = ['Asset Name', 'Purchase Date', 'Age (Months)', 'Remaining (Months)', 'Useful Life (Months)'];
                 $data = Asset::whereNotNull('purchase_date')->get()->map(fn($a) => [
-                    $a->name, $a->purchase_date->format('d/m/Y'), $a->purchase_date->diffInYears(now()), max(0, $a->useful_life - $a->purchase_date->diffInYears(now())), $a->useful_life
+                    $a->name, $a->purchase_date->format('d/m/Y'), $a->purchase_date->diffInMonths(now()), $a->remaining_months, $a->depreciation?->months ?? 0
                 ])->toArray();
                 $title = "ASSET AGING REPORT";
                 break;
@@ -268,7 +307,7 @@ class InventoryReport extends Page implements HasForms
             case 'damaged':
                 $headers = ['Asset Name', 'Status', 'Condition', 'Location'];
                 $data = Asset::whereIn('status', ['lost'])->orWhereIn('condition', ['Poor', 'Broken'])->get()->map(fn($a) => [
-                    $a->name, $a->status, $a->condition, $a->location->location_name ?? 'N/A'
+                    $a->name, $a->statusRecord?->name, $a->condition?->name, $a->location->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "LOST/DAMAGED ASSET REPORT";
                 break;
