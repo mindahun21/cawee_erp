@@ -102,7 +102,7 @@
     </div>
     @endif
 
-    <form method="POST" action="{{ route('supplier.register.submit') }}">
+    <form method="POST" action="{{ route('supplier.register.submit') }}" enctype="multipart/form-data">
         @csrf
 
         {{-- ── 1. Company Identity ── --}}
@@ -239,7 +239,19 @@
             </div>
         </div>
 
-        {{-- ── 5. Account Credentials ── --}}
+        {{-- ── 5. Registration Documents (optional) ── --}}
+        <div class="reg-card">
+            <div class="reg-card-title"><span class="section-icon">📎</span> Supporting Documents</div>
+            <div class="form-group span2">
+                <label>Registration Documents</label>
+                <input type="file" name="attachments[]" multiple>
+                <div class="hint">You may upload registration certificates, licenses or other supporting documents (PDF, DOC, XLS, images, ZIP; max 10MB each).</div>
+                @error('attachments')<div class="err-msg">{{ $message }}</div>@enderror
+                @error('attachments.*')<div class="err-msg">{{ $message }}</div>@enderror
+            </div>
+        </div>
+
+        {{-- ── 6. Account Credentials ── --}}
         <div class="reg-card">
             <div class="reg-card-title"><span class="section-icon">🔐</span> Portal Account Credentials</div>
             <div class="form-grid-2">

@@ -15,7 +15,7 @@ class Supplier extends Authenticatable
 
     protected $fillable = [
         // Core identity
-        'name', 'code', 'vendor_code', 'category', 'status', 'notes',
+        'name', 'code', 'vendor_code', 'category', 'status', 'notes', 'attachments',
         // Auth
         'email', 'password', 'portal_access', 'email_verified_at',
         // Contact
@@ -45,6 +45,7 @@ class Supplier extends Authenticatable
             'email_verified_at'     => 'datetime',
             'registration_date'     => 'date',
             'contract_expiry_date'  => 'date',
+            'attachments'           => 'array',
             'password'              => 'hashed',
         ];
     }

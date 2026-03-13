@@ -24,6 +24,9 @@ class BidAwardedMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.bid-awarded');
+        return new Content(
+            view: 'emails.bid-awarded',
+            with: ['bid' => $this->bid],
+        );
     }
 }
