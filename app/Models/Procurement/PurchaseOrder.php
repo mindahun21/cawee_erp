@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PurchaseOrder extends Model
 {
@@ -112,6 +113,7 @@ class PurchaseOrder extends Model
     public function financeApprover(): BelongsTo  { return $this->belongsTo(User::class, 'finance_approved_by'); }
     public function directorApprover(): BelongsTo { return $this->belongsTo(User::class, 'director_approved_by'); }
     public function items(): HasMany           { return $this->hasMany(PurchaseOrderItem::class); }
+    public function contract(): HasOne         { return $this->hasOne(Contract::class); }
     public function goodsReceipts(): HasMany   { return $this->hasMany(GoodsReceipt::class); }
     public function invoices(): HasMany        { return $this->hasMany(Invoice::class); }
 

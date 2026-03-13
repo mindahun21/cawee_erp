@@ -15,10 +15,23 @@ class Bid extends Model
     protected $table = 'procurement_bids';
 
     protected $fillable = [
-        'tender_id', 'supplier_id', 'reference_number', 'submission_date',
-        'bid_amount', 'currency', 'delivery_days', 'status',
-        'technical_score', 'financial_score', 'composite_score',
-        'validity_date', 'bid_security', 'notes', 'attachments', 'conflict_of_interest_declared',
+        'tender_id',
+        'supplier_id',
+        'reference_number',
+        'submission_date',
+        'bid_amount',
+        'currency',
+        'delivery_days',
+        'status',
+        'technical_score',
+        'financial_score',
+        'composite_score',
+        'validity_date',
+        'bid_security',
+        'notes',
+        'attachments',
+        'conflict_of_interest_declared',
+        'award_email_sent_at',
     ];
 
     protected function casts(): array
@@ -32,6 +45,7 @@ class Bid extends Model
             'composite_score'              => 'decimal:2',
             'conflict_of_interest_declared' => 'boolean',
             'attachments'                   => 'array',
+            'award_email_sent_at'           => 'datetime',
         ];
     }
 

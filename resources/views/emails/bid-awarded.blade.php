@@ -43,29 +43,29 @@
 
     <div class="detail-box">
       <div class="detail-row">
-        <span class="detail-label">Tender Number</span>
+        <span class="detail-label">Tender Number:</span>
         <span class="detail-value">{{ $bid->tender->tender_number }}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Tender Title</span>
+        <span class="detail-label">Tender Title:</span>
         <span class="detail-value">{{ $bid->tender->title }}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Your Bid Amount</span>
+        <span class="detail-label">Your Bid Amount:</span>
         <span class="detail-value">{{ $bid->currency }} {{ number_format($bid->bid_amount, 2) }}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Delivery Period</span>
+        <span class="detail-label">Delivery Period:</span>
         <span class="detail-value">{{ $bid->delivery_days }} days</span>
       </div>
       @if($bid->composite_score)
       <div class="detail-row">
-        <span class="detail-label">Evaluation Score</span>
+        <span class="detail-label">Evaluation Score:</span>
         <span class="detail-value">{{ number_format($bid->composite_score, 1) }} / 100</span>
       </div>
       @endif
       <div class="detail-row">
-        <span class="detail-label">Award Date</span>
+        <span class="detail-label">Award Date:</span>
         <span class="detail-value">{{ now()->format('d F Y') }}</span>
       </div>
     </div>
@@ -80,7 +80,7 @@
     </div>
 
     <p>You may log in to the supplier portal to view your bid status and monitor further communications.</p>
-    <a href="{{ url('/portal') }}" class="cta">Visit Supplier Portal →</a>
+    <a href="{{ app()->environment('production') ? 'https://elisoft-erp.elisoftsolution.com/portal/' : url('/portal') }}" class="cta">Visit Supplier Portal →</a>
 
     <p style="margin-top:32px;font-size:14px;color:#6b7a90;">
       If you have questions, please contact our procurement office at

@@ -82,9 +82,21 @@ class SupplierAuthController extends Controller
             'bank_branch'           => ['nullable', 'string', 'max:150'],
             'payment_terms'         => ['nullable', 'string', 'max:100'],
             'currency'              => ['nullable', 'string', 'max:10'],
+            // Documents
+            'attachments'           => ['nullable', 'array'],
+            'attachments.*'         => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,zip,png,jpg,jpeg'],
             // Auth
             'password'              => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
         ]);
+
+        // Store uploaded registration documents (if any)
+        $paths = [];
+        foreach ($request->file('attachments', []) as $file) {
+            $paths[] = $file->store('procurement/suppliers/portal', 'local');
+        }
+        if (! empty($paths)) {
+            $data['attachments'] = $paths;
+        }
 
         $data['password']       = Hash::make($data['password']);
         $data['portal_access']  = false; // admin must approve

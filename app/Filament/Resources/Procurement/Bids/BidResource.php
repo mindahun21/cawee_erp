@@ -165,7 +165,30 @@ class BidResource extends Resource
                         ->suffix('/100')
                         ->label('Composite Score')
                         ->readOnly()
-                        ->helperText('Auto-calculated by scoring action or saved automatically from the Criteria responses below.'),
+                        ->helperText('Auto-calculated by scoring action or saved automatically from the Criteria responses below.')
+                        ->afterStateHydrated(function ($set, ?Bid $record) {
+                            if (! $record) return;
+                            $tender = $record->tender;
+                            if (! $tender || ! $tender->evaluationCriteria()->exists()) return;
+
+                            $criteria      = $tender->evaluationCriteria()->get();
+                            $criteriaWeights = $criteria->pluck('weight', 'id');
+                            $scores        = $record->criterionScores()->get()->keyBy('criterion_id');
+                            $weightedSum   = 0;
+                            $hasScores     = false;
+
+                            foreach ($criteria as $crit) {
+                                $scoreRow = $scores->get($crit->id);
+                                if ($scoreRow && $scoreRow->score !== null) {
+                                    $weightedSum += (float)$scoreRow->score * ((float)$criteriaWeights[$crit->id] / 100);
+                                    $hasScores = true;
+                                }
+                            }
+
+                            if ($hasScores) {
+                                $set('composite_score', round($weightedSum, 2));
+                            }
+                        }),
                 ])
                 ->collapsible(),
 
@@ -304,26 +327,48 @@ class BidResource extends Resource
                     ->searchable()
                     ->toggleable(),
 
+                // Show first criterion score (or flat technical_score if no criteria)
                 TextColumn::make('technical_score')
-                    ->label('Tech. Score')
+                    ->label('Tech. / Criterion 1 Score')
                     ->badge()
+                    ->getStateUsing(function (?Bid $record): mixed {
+                        if (! $record) return null;
+                        if ($record->tender?->evaluationCriteria()->exists()) {
+                            $firstCrit = $record->tender->evaluationCriteria()->first();
+                            return $firstCrit
+                                ? $record->criterionScores()->where('criterion_id', $firstCrit->id)->value('score')
+                                : null;
+                        }
+                        return $record->technical_score;
+                    })
                     ->color(fn ($state) => match (true) {
-                        $state === null     => 'gray',
-                        $state >= 80        => 'success',
-                        $state >= 60        => 'warning',
-                        default             => 'danger',
+                        $state === null => 'gray',
+                        $state >= 80    => 'success',
+                        $state >= 60    => 'warning',
+                        default         => 'danger',
                     })
                     ->suffix('/100')
                     ->placeholder('—'),
 
+                // Show second criterion score (or flat financial_score if no criteria)
                 TextColumn::make('financial_score')
-                    ->label('Fin. Score')
+                    ->label('Fin. / Criterion 2 Score')
                     ->badge()
+                    ->getStateUsing(function (?Bid $record): mixed {
+                        if (! $record) return null;
+                        if ($record->tender?->evaluationCriteria()->exists()) {
+                            $secondCrit = $record->tender->evaluationCriteria()->skip(1)->first();
+                            return $secondCrit
+                                ? $record->criterionScores()->where('criterion_id', $secondCrit->id)->value('score')
+                                : null;
+                        }
+                        return $record->financial_score;
+                    })
                     ->color(fn ($state) => match (true) {
                         $state === null => 'gray',
-                        $state >= 80   => 'success',
-                        $state >= 60   => 'warning',
-                        default        => 'danger',
+                        $state >= 80    => 'success',
+                        $state >= 60    => 'warning',
+                        default         => 'danger',
                     })
                     ->suffix('/100')
                     ->placeholder('—'),
@@ -420,10 +465,12 @@ class BidResource extends Resource
                         in_array($r->status, ['Submitted', 'Under Review', 'Shortlisted'])
                         && auth()->user()->isProcurementEvaluator()
                     )
-                    ->mountUsing(function (\Filament\Actions\Action $action, Bid $record) {
+                    // form() closure runs before mounting — Livewire properly binds the dynamic fields
+                    ->form(function (Bid $record): array {
                         $criteria = $record->tender->evaluationCriteria()->get();
+
                         if ($criteria->isEmpty()) {
-                            $action->form([
+                            return [
                                 TextInput::make('technical_score')
                                     ->label('Technical Score (0–100)')
                                     ->numeric()->minValue(0)->maxValue(100)->required(),
@@ -435,38 +482,63 @@ class BidResource extends Resource
                                     ->numeric()->minValue(0)->maxValue(100)->nullable()
                                     ->helperText('Leave blank to auto-calculate as average of tech + financial.'),
                                 Textarea::make('evaluation_notes')->label('Evaluation Notes')->rows(3)->nullable(),
-                            ]);
-                        } else {
-                            $fields = $criteria->map(function ($crit) use ($record) {
-                                $existingScore = BidCriterionScore::where('bid_id', $record->id)
-                                    ->where('criterion_id', $crit->id)
-                                    ->first();
-                                
-                                $supplierText = $existingScore && $existingScore->notes ? "\n\nSupplier Response:\n\"{$existingScore->notes}\"" : "";
-                                
-                                return TextInput::make("crit_{$crit->id}")
-                                    ->label("{$crit->name} — {$crit->weight}% weight")
-                                    ->helperText($crit->description . $supplierText)
-                                    ->numeric()->minValue(0)->maxValue(100)
-                                    ->suffix('/ 100')
-                                    ->default($existingScore->score ?? 0)
-                                    ->required();
-                            })->all();
-
-                            $fields[] = Textarea::make('evaluation_notes')
-                                ->label('Overall Evaluation Notes')
-                                ->rows(3)->nullable();
-
-                            $action->form($fields);
+                            ];
                         }
+
+                        // Per-criterion fields — named crit_{id} so action handler can reference them
+                        $fields = $criteria->map(function ($crit) use ($record): TextInput {
+                            $existingScore = BidCriterionScore::where('bid_id', $record->id)
+                                ->where('criterion_id', $crit->id)
+                                ->first();
+
+                            $helperText = (string) ($crit->description ?? '');
+                            if ($existingScore?->notes) {
+                                $helperText .= "\n\nSupplier Response: \"{$existingScore->notes}\"";
+                            }
+
+                            return TextInput::make("crit_{$crit->id}")
+                                ->label("{$crit->name} ({$crit->weight}% weight)")
+                                ->helperText($helperText ?: null)
+                                ->numeric()->minValue(0)->maxValue(100)
+                                ->suffix('/ 100')
+                                ->required();
+                        })->all();
+
+                        $fields[] = Textarea::make('evaluation_notes')
+                            ->label('Overall Evaluation Notes')
+                            ->rows(3)->nullable();
+
+                        return $fields;
+                    })
+                    // fillForm() pre-populates existing scores into the action form
+                    ->fillForm(function (Bid $record): array {
+                        $criteria = $record->tender->evaluationCriteria()->get();
+                        if ($criteria->isEmpty()) {
+                            return [
+                                'technical_score' => $record->technical_score,
+                                'financial_score' => $record->financial_score,
+                                'composite_score' => $record->composite_score,
+                            ];
+                        }
+
+                        $filled = [];
+                        foreach ($criteria as $crit) {
+                            $existing = BidCriterionScore::where('bid_id', $record->id)
+                                ->where('criterion_id', $crit->id)
+                                ->value('score');
+                            $filled["crit_{$crit->id}"] = $existing ?? 0;
+                        }
+                        $filled['evaluation_notes'] = $record->notes;
+                        return $filled;
                     })
                     ->action(function (Bid $r, array $data) {
                         $criteria = $r->tender->evaluationCriteria()->get();
 
                         if ($criteria->isEmpty()) {
                             // Fallback: 3-field scoring
-                            $composite = $data['composite_score']
-                                ?? round(((float)$data['technical_score'] + (float)$data['financial_score']) / 2, 2);
+                            $composite = $data['composite_score'] !== null && $data['composite_score'] !== ''
+                                ? (float) $data['composite_score']
+                                : round(((float)$data['technical_score'] + (float)$data['financial_score']) / 2, 2);
                             $r->update([
                                 'technical_score' => $data['technical_score'],
                                 'financial_score' => $data['financial_score'],
@@ -480,6 +552,7 @@ class BidResource extends Resource
 
                         // Per-criterion scoring
                         $weightedSum = 0;
+                        $totalWeight = 0;
                         foreach ($criteria as $crit) {
                             $score = (float) ($data["crit_{$crit->id}"] ?? 0);
                             BidCriterionScore::updateOrCreate(
@@ -490,19 +563,23 @@ class BidResource extends Resource
                                     'scored_at' => now(),
                                 ]
                             );
-                            $weightedSum += $score * ($crit->weight / 100);
+                            $weightedSum += $score * ((float)$crit->weight / 100);
+                            $totalWeight += (float)$crit->weight;
                         }
 
+                        $composite = round($weightedSum, 2);
                         $r->update([
-                            'composite_score' => round($weightedSum, 2),
+                            'composite_score' => $composite,
                             'status'          => 'Under Review',
                             'notes'           => $data['evaluation_notes'] ?? $r->notes,
                         ]);
 
-                        $totalWeight = $criteria->sum('weight');
+                        $weightWarning = $totalWeight != 100
+                            ? " ⚠️ Criteria weights sum to {$totalWeight}%, not 100% — scores may be misleading."
+                            : '';
+
                         Notification::make()
-                            ->title('Scores saved — Weighted composite: ' . round($weightedSum, 2) . '/100' .
-                                ($totalWeight != 100 ? " (⚠️ criteria weights sum to {$totalWeight}%, not 100%)" : ''))
+                            ->title("✅ Scores saved — composite: {$composite}/100{$weightWarning}")
                             ->success()
                             ->send();
                     }),
@@ -540,7 +617,7 @@ class BidResource extends Resource
 
                 // ── Notify winner by email ──
                 Action::make('send_award_email')
-                    ->label('Send Award Email')
+                    ->label(fn (Bid $r) => $r->award_email_sent_at ? 'Resend Award Email' : 'Send Award Email')
                     ->icon('heroicon-o-envelope')
                     ->color('success')
                     ->visible(fn (Bid $r) =>
@@ -549,19 +626,27 @@ class BidResource extends Resource
                         && auth()->user()->isProcurementOfficer()
                     )
                     ->requiresConfirmation()
-                    ->modalHeading('Send Award Notification Email')
-                    ->modalDescription(fn (Bid $r) => "Send the official award email to {$r->supplier->name} ({$r->supplier->email}). This will inform them of the contract award and next steps.")
+                    ->modalHeading(fn (Bid $r) => $r->award_email_sent_at ? 'Resend Award Notification Email' : 'Send Award Notification Email')
+                    ->modalDescription(fn (Bid $r) => $r->award_email_sent_at
+                        ? "This award email was already sent on {$r->award_email_sent_at->format('d M Y H:i')}. You can resend it to {$r->supplier->name} ({$r->supplier->email}) if they did not receive it."
+                        : "Send the official award email to {$r->supplier->name} ({$r->supplier->email}). This will inform them of the contract award and next steps."
+                    )
                     ->action(function (Bid $r) {
                         try {
                             Mail::to($r->supplier->email)
                                 ->send(new BidAwardedMail($r));
+
+                            $r->update(['award_email_sent_at' => now()]);
+
                             Notification::make()
-                                ->title('Award email sent to ' . $r->supplier->email)
+                                ->title(($r->award_email_sent_at ? 'Award email resent to ' : 'Award email sent to ') . $r->supplier->email)
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('Bid award email failed: ' . $e->getMessage());
                             Notification::make()
-                                ->title('Email failed: ' . $e->getMessage())
+                                ->title('Failed to send award email')
+                                ->body('There was a problem connecting to the email server. Please check your mail configuration. ' . str($e->getMessage())->limit(100))
                                 ->danger()
                                 ->send();
                         }
