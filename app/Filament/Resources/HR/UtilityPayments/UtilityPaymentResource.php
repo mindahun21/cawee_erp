@@ -43,6 +43,7 @@ class UtilityPaymentResource extends Resource
                 ->getOptionLabelFromRecordUsing(
                     fn ($record) => ($record->branch?->branch_name ?? 'Unknown Branch') . ' - ' . ($record->utilityType?->label ?? 'Utility')
                 )
+                ->preload()
                 ->searchable()
                 ->required(),
 
