@@ -9,8 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('inventory_movements', function (Blueprint $table) {
-            $table->foreignId('reason_id')->nullable()->constrained('inventory_movement_reasons')->nullOnDelete();
-            $table->foreignId('status_id')->nullable()->constrained('inventory_movement_statuses')->nullOnDelete();
+            if (!Schema::hasColumn('inventory_movements', 'reason_id')) {
+                $table->foreignId('reason_id')->nullable()->constrained('inventory_movement_reasons')->nullOnDelete();
+            }
+            if (!Schema::hasColumn('inventory_movements', 'status_id')) {
+                $table->foreignId('status_id')->nullable()->constrained('inventory_movement_statuses')->nullOnDelete();
+            }
         });
     }
 
