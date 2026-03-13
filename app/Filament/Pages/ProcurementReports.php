@@ -49,6 +49,7 @@ class ProcurementReports extends Page implements HasTable
         return $table
             ->heading($this->getSelectedReportHeading())
             ->description($this->getSelectedReportDescription())
+            ->defaultKeySort(fn (): bool => request()->query('report', 'invoices') !== 'cost-by-item')
             ->columns($this->getReportColumns())
             ->defaultSort($this->getReportDefaultSortColumn(), $this->getReportDefaultSortDirection());
     }
@@ -81,7 +82,7 @@ class ProcurementReports extends Page implements HasTable
                 }),
 
             'cost-by-item' => PurchaseOrderItem::query()
-                ->selectRaw('MIN(id) as id, description, unit, COUNT(*) as lines, SUM(quantity) as quantity, SUM(line_total) as total')
+                ->selectRaw('MIN(id) as id, description, unit, COUNT(*) as line_count, SUM(quantity) as quantity, SUM(line_total) as total')
                 ->whereHas('purchaseOrder', function (Builder $q) use ($currency, $startDate, $endDate) {
                     if ($currency !== 'ALL') {
                         $q->where('currency', $currency);
@@ -138,7 +139,7 @@ class ProcurementReports extends Page implements HasTable
             'cost-by-item' => [
                 TextColumn::make('description')->label('Description')->wrap()->searchable()->placeholder('—'),
                 TextColumn::make('unit')->label('Unit')->toggleable()->placeholder('—'),
-                TextColumn::make('lines')->label('Lines')->numeric()->alignEnd()->sortable(),
+                TextColumn::make('line_count')->label('Lines')->numeric()->alignEnd()->sortable(),
                 TextColumn::make('quantity')->label('Quantity')->numeric(decimalPlaces: 2)->alignEnd()->sortable(),
                 TextColumn::make('total')->label('Total Cost')->numeric(decimalPlaces: 2)->alignEnd()->sortable(),
             ],
@@ -177,6 +178,7 @@ class ProcurementReports extends Page implements HasTable
     {
         return match (request()->query('report', 'invoices')) {
             'purchase-orders' => 'order_date',
+            'line-items' => 'id',
             'cost-by-item' => 'total',
             'payments' => 'payment_date',
             'requisitions' => 'created_at',
