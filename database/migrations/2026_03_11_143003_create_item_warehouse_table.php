@@ -11,11 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('item_warehouse')) {
+            return; // Table already exists (e.g. imported from SQL dump)
+        }
+
         Schema::create('item_warehouse', function (Blueprint $table) {
             $table->id();
             $table->foreignId('item_id')->constrained()->onDelete('cascade');
             $table->foreignId('warehouse_id')->constrained()->onDelete('cascade');
-            
+
             $table->string('sku')->nullable();
             $table->foreignId('acquisition_type_id')->nullable()->constrained('acquisition_types')->onDelete('set null');
             $table->foreignId('currency_id')->nullable()->constrained('currencies')->onDelete('set null');
