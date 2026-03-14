@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class EmployeeMovementPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:EmployeeMovement');
     }
 
-    public function view(AuthUser $authUser, EmployeeMovement $record): bool
+    public function view(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('View:EmployeeMovement');
     }
@@ -26,22 +27,22 @@ class EmployeeMovementPolicy
         return $authUser->can('Create:EmployeeMovement');
     }
 
-    public function update(AuthUser $authUser, EmployeeMovement $record): bool
+    public function update(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('Update:EmployeeMovement');
     }
 
-    public function delete(AuthUser $authUser, EmployeeMovement $record): bool
+    public function delete(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('Delete:EmployeeMovement');
     }
 
-    public function restore(AuthUser $authUser, EmployeeMovement $record): bool
+    public function restore(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('Restore:EmployeeMovement');
     }
 
-    public function forceDelete(AuthUser $authUser, EmployeeMovement $record): bool
+    public function forceDelete(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('ForceDelete:EmployeeMovement');
     }
@@ -56,7 +57,7 @@ class EmployeeMovementPolicy
         return $authUser->can('RestoreAny:EmployeeMovement');
     }
 
-    public function replicate(AuthUser $authUser, EmployeeMovement $record): bool
+    public function replicate(AuthUser $authUser, EmployeeMovement $employeeMovement): bool
     {
         return $authUser->can('Replicate:EmployeeMovement');
     }
@@ -65,5 +66,5 @@ class EmployeeMovementPolicy
     {
         return $authUser->can('Reorder:EmployeeMovement');
     }
-}
 
+}

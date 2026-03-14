@@ -63,16 +63,30 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
             ])
             ->navigationItems([
-                \Filament\Navigation\NavigationItem::make('HR Settings')
+                \Filament\Navigation\NavigationItem::make('Leave Requests')
                     ->group('Human Resources')
-                    ->icon('heroicon-o-cog-6-tooth')
+                    ->icon('heroicon-o-calendar-days')
                     ->sort(90)
-                    ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl()),
+                    ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('view_any_hr::leave::request')),
+                \Filament\Navigation\NavigationItem::make('Timesheet Management')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-clock')
+                    ->sort(91)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Timesheets\TimesheetResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('view_any_hr::timesheet')),
                 \Filament\Navigation\NavigationItem::make('Car & Rent Management')
                     ->group('Human Resources')
                     ->icon('heroicon-o-truck')
-                    ->sort(91)
-                    ->url(fn (): string => \App\Filament\Resources\HR\Branches\BranchResource::getUrl()),
+                    ->sort(92)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Branches\BranchResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('view_any_hr::branch')),
+                \Filament\Navigation\NavigationItem::make('HR Settings')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(93)
+                    ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('view_any_hr::department')),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

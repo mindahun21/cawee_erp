@@ -16,6 +16,8 @@ use App\Filament\Resources\HR\Settings\JobPositionResource;
 use App\Filament\Resources\HR\Settings\LandlordResource;
 use App\Filament\Resources\HR\Settings\LayoffChecklistResource;
 use App\Filament\Resources\HR\Settings\TrainingTypeResource;
+use App\Filament\Resources\HR\Settings\HolidayResource;
+use App\Filament\Resources\HR\Settings\LeaveTypeResource;
 use Filament\Navigation\NavigationItem;
 
 trait HasHrSettingsNavigation
@@ -92,6 +94,16 @@ trait HasHrSettingsNavigation
                 ->icon('heroicon-o-home-modern')
                 ->url(LandlordResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(LandlordResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Holidays')
+                ->icon('heroicon-o-calendar-days')
+                ->url(HolidayResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(HolidayResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Leave Types')
+                ->icon('heroicon-o-adjustments-horizontal')
+                ->url(LeaveTypeResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(LeaveTypeResource::getRouteBaseName() . '.*')),
         ];
     }
 }

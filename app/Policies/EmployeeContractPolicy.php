@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -10,13 +11,13 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class EmployeeContractPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:EmployeeContract');
     }
 
-    public function view(AuthUser $authUser, EmployeeContract $record): bool
+    public function view(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('View:EmployeeContract');
     }
@@ -26,22 +27,22 @@ class EmployeeContractPolicy
         return $authUser->can('Create:EmployeeContract');
     }
 
-    public function update(AuthUser $authUser, EmployeeContract $record): bool
+    public function update(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('Update:EmployeeContract');
     }
 
-    public function delete(AuthUser $authUser, EmployeeContract $record): bool
+    public function delete(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('Delete:EmployeeContract');
     }
 
-    public function restore(AuthUser $authUser, EmployeeContract $record): bool
+    public function restore(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('Restore:EmployeeContract');
     }
 
-    public function forceDelete(AuthUser $authUser, EmployeeContract $record): bool
+    public function forceDelete(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('ForceDelete:EmployeeContract');
     }
@@ -56,7 +57,7 @@ class EmployeeContractPolicy
         return $authUser->can('RestoreAny:EmployeeContract');
     }
 
-    public function replicate(AuthUser $authUser, EmployeeContract $record): bool
+    public function replicate(AuthUser $authUser, EmployeeContract $employeeContract): bool
     {
         return $authUser->can('Replicate:EmployeeContract');
     }
@@ -65,5 +66,5 @@ class EmployeeContractPolicy
     {
         return $authUser->can('Reorder:EmployeeContract');
     }
-}
 
+}
