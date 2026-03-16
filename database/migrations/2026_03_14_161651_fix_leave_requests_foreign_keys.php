@@ -15,6 +15,12 @@ return new class extends Migration
         // For production safety, we don't just drop the table.
         // We ensure data is preserved if it exists.
         if (Schema::hasTable('hr_leave_requests')) {
+            Schema::table('hr_leave_requests', function (Blueprint $table) {
+                $table->dropForeign(['employee_id']);
+                $table->dropForeign(['hr_leave_type_id']);
+                $table->dropForeign(['supervisor_id']);
+            });
+
             // Rename to backup
             Schema::rename('hr_leave_requests', 'hr_leave_requests_old_v1');
         }
