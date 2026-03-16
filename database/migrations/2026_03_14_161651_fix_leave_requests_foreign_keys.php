@@ -28,6 +28,9 @@ return new class extends Migration
             $shouldCopy = true;
         }
 
+        // Ensure any stale table is removed before creating the fresh schema
+        // Ensure the backup table has no conflicting constraints before rebuilding
+        $this->ensureBackupConstraintsDropped($backupTable);
         Schema::dropIfExists('hr_leave_requests');
 
         Schema::create('hr_leave_requests', function (Blueprint $table) {
@@ -60,6 +63,17 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('hr_leave_requests');
+    }
+
+    private function ensureBackupConstraintsDropped(string $backupTable): void
+    {
+        if (! Schema::hasTable($backupTable)) {
+            return;
+        }
+
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_employee_id_foreign');
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_hr_leave_type_id_foreign');
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_supervisor_id_foreign');
     }
 
     private function dropForeignKeyIfExists(string $table, string $constraint): void
