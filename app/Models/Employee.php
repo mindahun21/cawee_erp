@@ -93,12 +93,12 @@ class Employee extends Model
     public function fieldOfStudy(): BelongsTo  { return $this->belongsTo(FieldOfStudy::class); }
 
     // ── Leave ──────────────────────────────────────────────────────
-    public function leaveRequests(): HasMany { return $this->hasMany(LeaveRequest::class); }
+    public function leaveRequests(): HasMany { return $this->hasMany(HrLeaveRequest::class, 'employee_id'); }
     public function leaveBalance(): HasMany  { return $this->hasMany(LeaveBalance::class); }
 
     // ── Time ───────────────────────────────────────────────────────
     public function timeRecords(): HasMany { return $this->hasMany(TimeRecord::class); }
-    public function timesheets(): HasMany  { return $this->hasMany(Timesheet::class); }
+    public function timesheets(): HasMany  { return $this->hasMany(HrTimesheet::class, 'employee_id'); }
 
     // ── Appraisals / Performance ───────────────────────────────────
     public function performanceEvaluations(): HasMany { return $this->hasMany(PerformanceEvaluation::class); }

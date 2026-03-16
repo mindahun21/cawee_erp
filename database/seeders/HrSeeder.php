@@ -14,6 +14,7 @@ class HrSeeder extends Seeder
     {
         $this->seedOnboardingChecklist();
         $this->seedAppraisalTemplates();
+        $this->call(HrTimesheetSeeder::class);
     }
 
     private function seedOnboardingChecklist(): void

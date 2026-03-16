@@ -22,6 +22,8 @@ class BranchResource extends Resource
 {
     protected static ?string $model = HrBranch::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
@@ -77,7 +79,7 @@ class BranchResource extends Resource
                 TextColumn::make('branchType.label')->label('Type')->badge(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'Active' => 'success',
                         'Pending Agreement' => 'warning',
                         'Closed' => 'danger',
