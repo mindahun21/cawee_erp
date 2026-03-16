@@ -19,8 +19,13 @@ class InventoryMovementObserver
      */
     public function updated(InventoryMovement $inventoryMovement): void
     {
-        $statusWasCompleted = strtolower(trim($inventoryMovement->getOriginal('status'))) === 'completed';
-        $statusIsCompleted = strtolower(trim($inventoryMovement->status)) === 'completed';
+        $oldStatusName = $inventoryMovement->getOriginal('status_id') 
+            ? \App\Models\InventoryMovementStatus::find($inventoryMovement->getOriginal('status_id'))?->name 
+            : null;
+        $newStatusName = $inventoryMovement->movementStatus?->name;
+
+        $statusWasCompleted = $oldStatusName === 'Completed / Received';
+        $statusIsCompleted = $newStatusName === 'Completed / Received';
 
         // 1. Status changed to completed
         if (!$statusWasCompleted && $statusIsCompleted) {
@@ -36,7 +41,7 @@ class InventoryMovementObserver
 
         // 3. Status remains completed but key fields changed
         if ($statusWasCompleted && $statusIsCompleted) {
-            $keys = ['asset_id', 'type', 'quantity', 'from_location_id', 'to_location_id'];
+            $keys = ['item_id', 'quantity', 'from_warehouse_id', 'to_warehouse_id', 'to_location_id', 'to_department_id'];
             if ($inventoryMovement->wasChanged($keys)) {
                 // Revert with old values, then apply new ones
                 $this->revertMovement($inventoryMovement, true);
@@ -50,15 +55,17 @@ class InventoryMovementObserver
      */
     public function deleted(InventoryMovement $inventoryMovement): void
     {
-        if (strtolower(trim($inventoryMovement->status)) === 'completed') {
+        if ($inventoryMovement->movementStatus?->name === 'Completed / Received') {
             $this->revertMovement($inventoryMovement);
         }
     }
 
     protected function processMovement(InventoryMovement $inventoryMovement, bool $useOriginal = false): void
     {
-        $status = $useOriginal ? $inventoryMovement->getOriginal('status') : $inventoryMovement->status;
-        if (strtolower(trim($status)) !== 'completed') {
+        $status_id = $useOriginal ? $inventoryMovement->getOriginal('status_id') : $inventoryMovement->status_id;
+        $statusName = \App\Models\InventoryMovementStatus::find($status_id)?->name;
+
+        if ($statusName !== 'Completed / Received') {
             return;
         }
 
@@ -72,91 +79,50 @@ class InventoryMovementObserver
 
     protected function adjustStock(InventoryMovement $movement, bool $useOriginal, bool $isRevert): void
     {
-        $assetId = $useOriginal ? $movement->getOriginal('asset_id') : $movement->asset_id;
-        $type = $useOriginal ? $movement->getOriginal('type') : $movement->type;
+        $itemId = $useOriginal ? $movement->getOriginal('item_id') : $movement->item_id;
         $quantity = $useOriginal ? $movement->getOriginal('quantity') : $movement->quantity;
-        $fromId = $useOriginal ? $movement->getOriginal('from_location_id') : $movement->from_location_id;
-        $toId = $useOriginal ? $movement->getOriginal('to_location_id') : $movement->to_location_id;
+        $fromId = $useOriginal ? $movement->getOriginal('from_warehouse_id') : $movement->from_warehouse_id;
+        
+        $destinationType = $useOriginal ? $movement->getOriginal('destination_type') : $movement->destination_type;
+        $toWarehouseId = $useOriginal ? $movement->getOriginal('to_warehouse_id') : $movement->to_warehouse_id;
 
-        $asset = \App\Models\Asset::find($assetId);
-        if (!$asset) return;
-
-        // Fixed assets logic
-        if ($asset->is_fixed_asset) {
-            if ($type === 'Transfer') {
-                $locationId = $isRevert ? $fromId : $toId;
-                if ($locationId) {
-                    $asset->update(['location_id' => $locationId]);
-                }
-            }
-
-            // Status Management for Fixed Assets
-            $newStatus = null;
-            $reason = $useOriginal ? $movement->getOriginal('reason') : $movement->reason;
-
-            if (!$isRevert) {
-                if ($reason === 'Issue/Assignment') {
-                    $newStatus = 'assigned';
-                } elseif ($type === 'Return' || $reason === 'Return') {
-                    $newStatus = 'available';
-                } elseif ($type === 'Damage' || $reason === 'Damage/Breakage') {
-                    $newStatus = 'maintenance';
-                } elseif ($type === 'Disposal') {
-                    $newStatus = 'disposed';
-                }
-            } else {
-                // Reverting: mostly back to available unless it was a return
-                if ($reason === 'Issue/Assignment') {
-                    $newStatus = 'available';
-                } elseif ($type === 'Return' || $reason === 'Return') {
-                    $newStatus = 'assigned'; // Reverting a return means it's back to being assigned? Or just available. Assigned is more accurate if it was previously assigned.
-                }
-            }
-
-            if ($newStatus) {
-                \Illuminate\Support\Facades\Log::info('Fixed Asset ' . $asset->id . ' status update to ' . $newStatus . ' from movement ' . $movement->id);
-                $updated = $asset->update(['status' => $newStatus]);
-                \Illuminate\Support\Facades\Log::info('Update result: ' . ($updated ? 'SUCCESS' : 'FAIL'));
-            }
-            return;
-        }
+        $item = \App\Models\Item::find($itemId);
+        if (!$item) return;
 
         // Helper to adjust stock record
         $change = $isRevert ? -$quantity : $quantity;
 
-        switch ($type) {
-            case 'Transfer':
-                if ($fromId && $toId) {
-                    // Adjust source (decrement normally, increment if revert)
-                    $this->updateStock($asset, $fromId, -$change);
-                    // Adjust destination
-                    $this->updateStock($asset, $toId, $change);
-                }
-                break;
-            case 'Stock In':
-            case 'Return':
-                if ($toId) {
-                    $this->updateStock($asset, $toId, $change);
-                }
-                break;
-            case 'Stock Out':
-            case 'Damage':
-            case 'Disposal':
-            case 'Issue/Assignment':
-                if ($fromId) {
-                    $this->updateStock($asset, $fromId, -$change);
-                }
-                break;
+        // Decrease stock from source warehouse
+        if ($fromId) {
+            $this->updateStock($item, $fromId, -$change);
         }
+
+        // Increase stock in destination (if warehouse)
+        if ($destinationType === 'warehouse' && $toWarehouseId) {
+            $this->updateStock($item, $toWarehouseId, $change);
+        }
+        
+        // Note: For 'location_department', it doesn't currently update any 'item_location' table 
+        // as per the requirement in conversation c2a36021 which focused on item_warehouse.
     }
 
-    protected function updateStock($asset, $locationId, $amount): void
+    protected function updateStock($item, $warehouseId, $amount): void
     {
-        $stock = $asset->stocks()->firstOrCreate(
-            ['location_id' => $locationId],
-            ['department_id' => null, 'quantity' => 0]
-        );
+        $itemWarehouse = \App\Models\ItemWarehouse::where('item_id', $item->id)
+            ->where('warehouse_id', $warehouseId)
+            ->first();
 
-        $stock->increment('quantity', $amount);
+        if ($itemWarehouse) {
+            $itemWarehouse->increment('quantity', $amount);
+        } else {
+            // If it doesn't exist, we might want to create it if it's an increase
+            if ($amount > 0) {
+                \App\Models\ItemWarehouse::create([
+                    'item_id' => $item->id,
+                    'warehouse_id' => $warehouseId,
+                    'quantity' => $amount,
+                ]);
+            }
+        }
     }
 }

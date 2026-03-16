@@ -7,46 +7,61 @@ use Illuminate\Database\Eloquent\Model;
 class Asset extends Model
 {
     protected $fillable = [
-        'asset_category_id',
+        'asset_condition_id',
+        'asset_status_id',
+        'acquisition_type_id',
         'currency_id',
         'donor_id',
         'supplier_id',
         'location_id',
         'department_id',
+        'asset_model_id',
         'name',
-        'model',
+        'notes',
         'serial_number',
         'barcode',
-        'acquisition_type',
         'purchase_cost',
         'purchase_date',
-        'useful_life',
-        'residual_value',
-        'status',
-        'condition',
         'description',
         'is_fixed_asset',
         'quantity',
-        'min_stock_level',
         'qr_code',
         'rfid_tag',
         'warranty_expiry_date',
+        'unit_id',
         'contract_details',
-        'depreciation_method',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'purchase_cost' => 'decimal:2',
-        'residual_value' => 'decimal:2',
-        'is_fixed_asset' => 'boolean',
         'warranty_expiry_date' => 'date',
         'contract_details' => 'json',
     ];
 
-    public function assetCategory()
+    public function getAssetCategoryAttribute()
     {
-        return $this->belongsTo(AssetCategory::class);
+        return $this->assetModel?->category;
+    }
+
+    public function assetModel()
+    {
+        return $this->belongsTo(AssetModel::class, 'asset_model_id');
+    }
+
+    public function condition()
+    {
+        return $this->belongsTo(AssetCondition::class, 'asset_condition_id');
+    }
+
+    public function statusRecord()
+    {
+        return $this->belongsTo(AssetStatus::class, 'asset_status_id');
+    }
+
+    public function acquisitionTypeRecord()
+    {
+        return $this->belongsTo(AcquisitionType::class, 'acquisition_type_id');
     }
 
 
@@ -75,6 +90,16 @@ class Asset extends Model
         return $this->belongsTo(\App\Models\Procurement\Supplier::class);
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function getDepreciationAttribute()
+    {
+        return $this->assetModel?->depreciation;
+    }
+
     public function assignments()
     {
         return $this->hasMany(AssetAssignment::class);
@@ -90,92 +115,148 @@ class Asset extends Model
         return $this->hasMany(AssetStock::class);
     }
 
-    public function vehicleDetail()
-    {
-        return $this->hasOne(VehicleDetail::class);
-    }
 
-    public function depreciationLogs()
-    {
-        return $this->hasMany(DepreciationLog::class);
-    }
+
 
     /**
-     * Calculate straight-line depreciation.
-     * Annual = (Cost - Residual) / Useful Life
+     * Calculate monthly depreciation.
      */
-    public function getAnnualDepreciationAttribute()
+    public function getMonthlyDepreciationAttribute()
     {
-        if (!$this->useful_life || $this->useful_life <= 0) {
+        if (!$this->depreciation || !$this->depreciation->months || $this->depreciation->months <= 0) {
             return 0;
         }
 
-        return ($this->purchase_cost - $this->residual_value) / $this->useful_life;
+        return $this->purchase_cost / $this->depreciation->months;
+    }
+
+    /**
+     * Calculate annual depreciation.
+     */
+    public function getAnnualDepreciationAttribute()
+    {
+        return $this->monthly_depreciation * 12;
     }
 
     public function getCurrentValueAttribute()
     {
-        if (!$this->purchase_date || !$this->useful_life) {
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
             return $this->purchase_cost;
         }
 
-        $yearsOwned = $this->purchase_date->diffInYears(now());
+        $monthsOwned = $this->purchase_date->diffInMonths(now());
         
-        if ($yearsOwned >= $this->useful_life) {
-            return $this->residual_value;
+        if ($monthsOwned >= $this->depreciation->months) {
+            return 0;
         }
 
-        return $this->purchase_cost - ($this->annual_depreciation * $yearsOwned);
+        return max(0, $this->purchase_cost - ($this->monthly_depreciation * $monthsOwned));
+    }
+
+    public function getRemainingMonthsAttribute()
+    {
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
+            return 0;
+        }
+
+        $monthsOwned = $this->purchase_date->diffInMonths(now());
+        return max(0, $this->depreciation->months - $monthsOwned);
     }
 
     public function getQuantityAttribute()
     {
-        // For fixed assets, quantity is always strictly 1 (or 0 if disposed)
-        // for inventory items, we now sum up the quantities mapped in the asset_stocks pivot table
-        if ($this->is_fixed_asset) {
-            // we check if it has a global quantity over 0 to determine if it exists, but max is 1 since fixed
-            return ($this->attributes['quantity'] ?? 0) > 0 ? 1 : 0;
-        }
-
         // If there are stock records, sum them up. Otherwise fallback to the master quantity
         // This is a graceful fallback for existing data before the pivot migration
         $stockSum = $this->exists ? $this->stocks()->sum('quantity') : 0;
         return $stockSum > 0 ? $stockSum : ($this->attributes['quantity'] ?? 0);
     }
 
-    public function getIsLowStockAttribute()
+
+    /**
+     * Calculate current value as of a specific date (defaults to now).
+     */
+    public function getCurrentValueAsOf(?\Carbon\Carbon $asOf = null): float
     {
-        if ($this->is_fixed_asset) return false;
-        return $this->quantity <= $this->min_stock_level;
+        $asOf = $asOf ?? now();
+
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
+            return (float) ($this->purchase_cost ?? 0);
+        }
+
+        $monthsOwned = (int) $this->purchase_date->diffInMonths($asOf);
+
+        if ($monthsOwned >= $this->depreciation->months) {
+            return 0;
+        }
+
+        return max(0, (float) $this->purchase_cost - ($this->getMonthlyDepreciationAsOf() * $monthsOwned));
     }
 
     /**
-     * Post depreciation for a specific period.
+     * Monthly depreciation amount (not date-dependent, but kept parallel for clarity).
      */
-    public function postDepreciation($periodDate = null)
+    public function getMonthlyDepreciationAsOf(): float
     {
-        $periodDate = $periodDate ? \Carbon\Carbon::parse($periodDate) : now();
-        
-        // Prevent double posting for the same month/year
-        $exists = $this->depreciationLogs()
-            ->whereMonth('period_date', $periodDate->month)
-            ->whereYear('period_date', $periodDate->year)
-            ->exists();
+        if (!$this->depreciation || !$this->depreciation->months || $this->depreciation->months <= 0) {
+            return 0;
+        }
 
-        if ($exists) {
+        return (float) $this->purchase_cost / $this->depreciation->months;
+    }
+
+    /**
+     * Remaining months as of a specific date.
+     */
+    public function getRemainingMonthsAsOf(?\Carbon\Carbon $asOf = null): int
+    {
+        $asOf = $asOf ?? now();
+
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
+            return 0;
+        }
+
+        $monthsOwned = (int) $this->purchase_date->diffInMonths($asOf);
+        return max(0, $this->depreciation->months - $monthsOwned);
+    }
+
+    public function getEolDateAttribute()
+    {
+        if (!$this->purchase_date || !$this->depreciation || !$this->depreciation->months) {
             return null;
         }
 
-        $depreciationAmount = $this->annual_depreciation / 12;
-        $lastLog = $this->depreciationLogs()->orderBy('period_date', 'desc')->first();
-        $currentBookValue = $lastLog ? $lastLog->book_value : $this->purchase_cost;
-        
-        $newBookValue = max($this->residual_value, $currentBookValue - $depreciationAmount);
+        return $this->purchase_date->copy()->addMonths($this->depreciation->months);
+    }
 
-        return $this->depreciationLogs()->create([
-            'period_date' => $periodDate,
-            'depreciation_amount' => $depreciationAmount,
-            'book_value' => $newBookValue,
-        ]);
+    public function getCheckedOutStatusAttribute()
+    {
+        // An asset is checked out if it has any active assignment without a returned_date
+        $activeAssignments = $this->assignments()->whereNull('returned_date')->count();
+        return $activeAssignments > 0 ? 'Checked Out' : 'Available';
+    }
+
+    public function getRemainingValueAttribute()
+    {
+        return (float) $this->purchase_cost - (float) $this->current_value;
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($asset) {
+            if ($asset->serial_number) {
+                \App\Models\PrefixSetting::updateNextNumberFromCode('asset_serial_number', $asset->serial_number);
+            }
+            if ($asset->barcode) {
+                \App\Models\PrefixSetting::updateNextNumberFromCode('asset_barcode', $asset->barcode);
+            }
+            if ($asset->qr_code) {
+                \App\Models\PrefixSetting::updateNextNumberFromCode('asset_qr_code', $asset->qr_code);
+            }
+            if ($asset->rfid_tag) {
+                \App\Models\PrefixSetting::updateNextNumberFromCode('asset_rfid_tag', $asset->rfid_tag);
+            }
+        });
     }
 }

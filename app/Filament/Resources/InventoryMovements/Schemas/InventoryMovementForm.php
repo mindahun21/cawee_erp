@@ -6,9 +6,12 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Checkbox;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
+use App\Models\ItemWarehouse;
 
 class InventoryMovementForm
 {
@@ -20,127 +23,148 @@ class InventoryMovementForm
                 Section::make('Movement Details')
                     ->columns(2)
                     ->schema([
-                        Select::make('asset_id')
-                            ->relationship('asset', 'name')
+                        Select::make('item_id')
+                            ->relationship('item', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->live(),
-                        Select::make('type')
-                            ->options([
-                                'Stock In' => 'Stock In',
-                                'Stock Out' => 'Stock Out',
-                                'Transfer' => 'Transfer',
-                                'Return' => 'Return',
-                                'Adjustment' => 'Adjustment',
-                                'Damage' => 'Damage',
-                                'Disposal' => 'Disposal',
-                            ])
+                        
+                        Select::make('from_warehouse_id')
+                            ->label('From Warehouse')
+                            ->relationship('fromWarehouse', 'name', function ($query, Get $get) {
+                                $itemId = $get('item_id');
+                                if ($itemId) {
+                                    $query->whereHas('items', function ($q) use ($itemId) {
+                                        $q->where('items.id', $itemId)
+                                          ->where('item_warehouse.quantity', '>', 0);
+                                    });
+                                }
+                            })
                             ->required()
-                            ->live(),
-                        Select::make('reason')
-                            ->options([
-                                'New Purchase' => 'New Purchase',
-                                'Donation' => 'Donation',
-                                'Return' => 'Return',
-                                'Issue/Assignment' => 'Issue/Assignment',
-                                'Damage/Breakage' => 'Damage/Breakage',
-                                'Expired' => 'Expired',
-                                'Disposal' => 'Disposal',
-                                'Lost/Stolen' => 'Lost/Stolen',
-                                'Audit Adjustment' => 'Audit Adjustment',
-                                'Other' => 'Other',
-                            ])
                             ->searchable()
+                            ->preload()
+                            ->live(),
+
+                        Select::make('reason_id')
+                            ->label('Reason')
+                            ->relationship('movementReason', 'name')
+                            ->searchable()
+                            ->preload()
                             ->required(),
+
                         TextInput::make('quantity')
                             ->numeric()
                             ->default(1)
                             ->required()
+                            ->live()
                             ->rules([
                                 function (Get $get) {
                                     return function (string $attribute, $value, $fail) use ($get) {
-                                        $type = $get('type');
-                                        if (!in_array($type, ['Transfer', 'Stock Out', 'Damage', 'Disposal', 'Return', 'Issue/Assignment'])) {
+                                        $itemId = $get('item_id');
+                                        $fromId = $get('from_warehouse_id');
+
+                                        if (!$itemId || !$fromId) {
                                             return;
                                         }
 
-                                        $assetId = $get('asset_id');
-                                        $fromId = $get('from_location_id');
-
-                                        if (!$assetId || !$fromId) {
-                                            return;
-                                        }
-
-                                        $stock = \App\Models\AssetStock::where('asset_id', $assetId)
-                                            ->where('location_id', $fromId)
+                                        $itemWarehouse = ItemWarehouse::where('item_id', $itemId)
+                                            ->where('warehouse_id', $fromId)
                                             ->first();
 
-                                        $available = $stock ? $stock->quantity : 0;
+                                        $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
 
                                         if ($value > $available) {
-                                            $fail("The quantity cannot exceed the available stock ($available) in the selected location.");
+                                            $fail("The quantity cannot exceed the available stock ($available) in the selected warehouse.");
                                         }
                                     };
                                 },
                             ]),
+
                         DatePicker::make('date')
                             ->default(now())
                             ->required(),
-                        Select::make('status')
-                            ->options([
-                                'pending' => 'Pending Approval',
-                                'in_transit' => 'In Transit',
-                                'completed' => 'Completed / Received',
-                                'rejected' => 'Rejected',
-                             ])
-                            ->default('completed')
+
+                        Select::make('status_id')
+                            ->label('Status')
+                            ->relationship('movementStatus', 'name')
+                            ->searchable()
+                            ->preload()
                             ->required(),
+
                         TextInput::make('reference_no')
                             ->label('Reference Number / Ticket')
                             ->maxLength(255),
-                        Select::make('supplier_id')
-                            ->label('Supplier')
-                            ->relationship('supplier', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->visible(fn (Get $get) => in_array($get('type'), ['Stock In', 'Adjustment'])),
-                        Select::make('user_id')
+
+                        Select::make('employee_id')
                             ->label('Handled By')
-                            ->relationship('user', 'name')
+                            ->relationship('employee', 'first_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
                             ->searchable()
                             ->preload()
                             ->required(),
-                    ]),
-                Section::make('Location Information')
-                    ->columns(2)
-                    ->hidden(fn (Get $get) => blank($get('type')))
-                    ->schema([
-                        Select::make('from_location_id')
-                            ->label('From Location')
-                            ->relationship('fromLocation', 'location_name', function ($query, Get $get) {
-                                $assetId = $get('asset_id');
-                                $type = $get('type');
-                                
-                                if ($assetId && in_array($type, ['Transfer', 'Stock Out', 'Damage', 'Disposal', 'Return', 'Issue/Assignment'])) {
-                                    $query->whereHas('stocks', function($q) use ($assetId) {
-                                        $q->where('asset_id', $assetId)->where('quantity', '>', 0);
-                                    });
+                        
+                        Checkbox::make('confirm_min_stock')
+                            ->label('Acknowledge: Stock will drop below minimum level')
+                            ->visible(function (Get $get) {
+                                $itemId = $get('item_id');
+                                $fromId = $get('from_warehouse_id');
+                                $quantity = (int) $get('quantity');
+
+                                if (!$itemId || !$fromId || !$quantity) {
+                                    return false;
                                 }
+
+                                $itemWarehouse = ItemWarehouse::where('item_id', $itemId)
+                                    ->where('warehouse_id', $fromId)
+                                    ->first();
+
+                                if (!$itemWarehouse) {
+                                    return false;
+                                }
+
+                                return ($itemWarehouse->quantity - $quantity) < $itemWarehouse->min_stock_value;
                             })
+                            ->required()
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Destination Information')
+                    ->columns(2)
+                    ->schema([
+                        Radio::make('destination_type')
+                            ->options([
+                                'warehouse' => 'Warehouse',
+                                'location_department' => 'Location & Department'
+                            ])
+                            ->required()
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Select::make('to_warehouse_id')
+                            ->label('To Warehouse')
+                            ->relationship('toWarehouse', 'name')
                             ->searchable()
                             ->preload()
-                            ->live()
-                            ->required(fn (Get $get) => in_array($get('type'), ['Stock Out', 'Damage', 'Disposal', 'Transfer']))
-                            ->hidden(fn (Get $get) => $get('type') === 'Stock In'),
+                            ->visible(fn (Get $get) => $get('destination_type') === 'warehouse')
+                            ->required(fn (Get $get) => $get('destination_type') === 'warehouse'),
+
                         Select::make('to_location_id')
                             ->label('To Location')
                             ->relationship('toLocation', 'location_name')
                             ->searchable()
                             ->preload()
-                            ->required(fn (Get $get) => in_array($get('type'), ['Stock In', 'Transfer']))
-                            ->hidden(fn (Get $get) => in_array($get('type'), ['Stock Out', 'Damage', 'Disposal'])),
+                            ->visible(fn (Get $get) => $get('destination_type') === 'location_department')
+                            ->required(fn (Get $get) => $get('destination_type') === 'location_department'),
+
+                        Select::make('to_department_id')
+                            ->label('To Department')
+                            ->relationship('toDepartment', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn (Get $get) => $get('destination_type') === 'location_department'),
                     ]),
+
                 Section::make('Remarks')
                     ->schema([
                         Textarea::make('remarks')

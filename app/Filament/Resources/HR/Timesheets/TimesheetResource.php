@@ -24,6 +24,8 @@ class TimesheetResource extends Resource
 {
     protected static ?string $model = HrTimesheet::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     protected static string|UnitEnum|null $navigationGroup = 'Human Resources';

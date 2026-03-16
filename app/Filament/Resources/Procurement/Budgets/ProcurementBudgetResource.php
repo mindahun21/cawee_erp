@@ -25,9 +25,13 @@ class ProcurementBudgetResource extends Resource
 {
     protected static ?string $model = ProcurementBudget::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Procurement';
+
+    protected static ?string $navigationParentItem = 'Settings';
 
     protected static ?string $navigationLabel = 'Budget Lines';
 

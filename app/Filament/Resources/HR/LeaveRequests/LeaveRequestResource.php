@@ -21,6 +21,8 @@ class LeaveRequestResource extends Resource
 {
     protected static ?string $model = HrLeaveRequest::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
     protected static string|UnitEnum|null $navigationGroup = 'Human Resources';
@@ -82,7 +84,7 @@ class LeaveRequestResource extends Resource
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'pending' => 'gray',
                         'approved' => 'success',
                         'rejected' => 'danger',

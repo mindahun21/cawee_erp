@@ -7,33 +7,40 @@ use Illuminate\Database\Eloquent\Model;
 class InventoryMovement extends Model
 {
     protected $fillable = [
-        'asset_id',
-        'supplier_id',
-        'from_location_id',
+        'item_id',
+        'from_warehouse_id',
+        'destination_type',
+        'to_warehouse_id',
         'to_location_id',
-        'user_id',
-        'type',
+        'to_department_id',
+        'employee_id',
         'reason',
         'quantity',
         'date',
         'reference_no',
         'remarks',
         'status',
-        'reason',
+        'reason_id',
+        'status_id',
     ];
 
     protected $casts = [
         'date' => 'date',
     ];
 
-    public function asset()
+    public function item()
     {
-        return $this->belongsTo(Asset::class);
+        return $this->belongsTo(Item::class);
     }
 
-    public function fromLocation()
+    public function fromWarehouse()
     {
-        return $this->belongsTo(Location::class, 'from_location_id');
+        return $this->belongsTo(Warehouse::class, 'from_warehouse_id');
+    }
+
+    public function toWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'to_warehouse_id');
     }
 
     public function toLocation()
@@ -41,13 +48,28 @@ class InventoryMovement extends Model
         return $this->belongsTo(Location::class, 'to_location_id');
     }
 
-    public function user()
+    public function toDepartment()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Department::class, 'to_department_id');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 
     public function supplier()
     {
         return $this->belongsTo(\App\Models\Procurement\Supplier::class);
+    }
+
+    public function movementReason()
+    {
+        return $this->belongsTo(InventoryMovementReason::class, 'reason_id');
+    }
+
+    public function movementStatus()
+    {
+        return $this->belongsTo(InventoryMovementStatus::class, 'status_id');
     }
 }

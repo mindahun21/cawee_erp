@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,7 +23,7 @@ class Employee extends Model
         'date_of_employment', 'date_transferred', 'date_resigned',
         'basic_salary', 'transport_allowance', 'house_allowance',
         'communication_allowance', 'overtime_allowance', 'incentive', 'other_allowances',
-        'salary_grade_id', 'grade', 'step',
+        'salary_grade_id', 'grade_id', 'step',
         'bank_account_awash', 'bank_account_orocoop', 'bank_account_other',
         'remarks', 'location_id', 'project_id',
     ];
@@ -43,6 +44,21 @@ class Employee extends Model
             'other_allowances'        => 'decimal:2',
             'extra_attributes'        => 'array',
         ];
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($employee) {
+            $numericFields = [
+                'basic_salary', 'transport_allowance', 'house_allowance',
+                'communication_allowance', 'overtime_allowance', 'incentive', 'other_allowances'
+            ];
+            foreach ($numericFields as $field) {
+                if ($employee->$field === null) {
+                    $employee->$field = 0;
+                }
+            }
+        });
     }
 
     // ── Computed ───────────────────────────────────────────────────
@@ -66,6 +82,7 @@ class Employee extends Model
     public function location(): BelongsTo    { return $this->belongsTo(Location::class); }
     public function project(): BelongsTo     { return $this->belongsTo(Project::class); }
     public function salaryGrade(): BelongsTo { return $this->belongsTo(SalaryGrade::class); }
+    public function grade(): BelongsTo       { return $this->belongsTo(Grade::class); }
 
     // ── HR Settings ────────────────────────────────────────────────
     public function user(): BelongsTo           { return $this->belongsTo(\Illuminate\Foundation\Auth\User::class); }
@@ -110,7 +127,15 @@ class Employee extends Model
     // ── Movements (Promotion / Demotion / Transfer) ─────────────────
     public function movements(): HasMany            { return $this->hasMany(EmployeeMovement::class); }
 
+    // ── Asset Assignments ──────────────────────────────────────────
+    public function assetAssignments(): HasMany { return $this->hasMany(AssetAssignment::class); }
+
     // ── Delegations ─────────────────────────────────────────────────
     public function delegationsGiven(): HasMany    { return $this->hasMany(Delegation::class, 'delegator_id'); }
     public function delegationsReceived(): HasMany { return $this->hasMany(Delegation::class, 'delegate_id'); }
+
+    public function warehouses(): BelongsToMany
+    {
+        return $this->belongsToMany(Warehouse::class, 'warehouse_employee');
+    }
 }

@@ -7,12 +7,15 @@ use App\Filament\Resources\Procurement\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Procurement\Suppliers\Pages\ListSuppliers;
 use App\Models\Procurement\Supplier;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -36,28 +39,141 @@ class SupplierResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Supplier Information')->columns(2)->schema([
-                TextInput::make('name')->required()->maxLength(200),
-                TextInput::make('code')->maxLength(50)->nullable()->unique(ignoreRecord: true)
-                    ->helperText('Optional unique supplier code / ID'),
+            // 1. Company Identity (mirror portal registration)
+            Section::make('Company Identity')->columns(2)->schema([
+                TextInput::make('name')
+                    ->label('Legal Company Name')
+                    ->required()
+                    ->maxLength(200),
 
-                TextInput::make('email')->email()->maxLength(150)->nullable(),
-                TextInput::make('phone')->tel()->maxLength(50)->nullable(),
-
-                TextInput::make('contact_person')->maxLength(150)->nullable(),
-                TextInput::make('tin_number')->label('TIN Number')->maxLength(50)->nullable(),
+                TextInput::make('code')
+                    ->maxLength(50)
+                    ->nullable()
+                    ->unique(ignoreRecord: true)
+                    ->helperText('Optional internal supplier code / ID'),
 
                 Select::make('category')
-                    ->options([
-                        'Goods'       => 'Goods',
-                        'Services'    => 'Services',
-                        'Works'       => 'Works',
-                        'Consultancy' => 'Consultancy',
-                        'General'     => 'General',
-                    ])
-                    ->default('General')
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::where('is_active', true)->pluck('name', 'name')->toArray())
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
+                TextInput::make('tin_number')
+                    ->label('TIN / Tax ID Number')
+                    ->maxLength(50)
+                    ->nullable(),
+
+                TextInput::make('vat_number')
+                    ->label('VAT Registration Number')
+                    ->maxLength(50)
+                    ->nullable(),
+
+                TextInput::make('website')
+                    ->label('Company Website')
+                    ->url()
+                    ->maxLength(200)
+                    ->nullable(),
+            ]),
+
+            // 2. Contact Information
+            Section::make('Contact Information')->columns(2)->schema([
+                TextInput::make('contact_person')
+                    ->label('Contact Person Full Name')
+                    ->maxLength(150)
+                    ->nullable(),
+
+                TextInput::make('contact_person_title')
+                    ->label('Title / Position')
+                    ->maxLength(50)
+                    ->nullable(),
+
+                TextInput::make('email')
+                    ->label('Official Email')
+                    ->email()
+                    ->maxLength(150)
+                    ->nullable(),
+
+                TextInput::make('phone')
+                    ->label('Company Phone')
+                    ->tel()
+                    ->maxLength(50)
+                    ->nullable(),
+
+                TextInput::make('contact_phone')
+                    ->label('Contact Direct Phone')
+                    ->maxLength(50)
+                    ->nullable(),
+            ]),
+
+            // 3. Business Address
+            Section::make('Business Address')->columns(3)->schema([
+                TextInput::make('country')
+                    ->maxLength(100)
+                    ->nullable(),
+
+                TextInput::make('city')
+                    ->maxLength(100)
+                    ->nullable(),
+
+                TextInput::make('state')
+                    ->label('State / Region')
+                    ->maxLength(100)
+                    ->nullable(),
+
+                TextInput::make('zip_code')
+                    ->label('ZIP / Postal Code')
+                    ->maxLength(20)
+                    ->nullable(),
+
+                Textarea::make('address')
+                    ->label('Street Address')
+                    ->rows(2)
+                    ->columnSpanFull()
+                    ->nullable(),
+            ]),
+
+            // 4. Banking & Payment Details
+            Section::make('Banking & Payment Details')->columns(2)->schema([
+                TextInput::make('bank_name')
+                    ->label('Bank Name')
+                    ->maxLength(100)
+                    ->nullable(),
+
+                TextInput::make('bank_account')
+                    ->label('Account Number')
+                    ->maxLength(100)
+                    ->nullable(),
+
+                TextInput::make('bank_branch')
+                    ->label('Branch Name')
+                    ->maxLength(150)
+                    ->nullable(),
+
+                Select::make('payment_terms')
+                    ->label('Payment Terms')
+                    ->options([
+                        'Net 30'          => 'Net 30',
+                        'Net 60'          => 'Net 60',
+                        'Net 90'          => 'Net 90',
+                        'Advance Payment' => 'Advance Payment',
+                        '50% Advance'     => '50% Advance',
+                        'Upon Delivery'   => 'Upon Delivery',
+                    ])
+                    ->nullable(),
+
+                Select::make('currency')
+                    ->label('Preferred Currency')
+                    ->options([
+                        'ETB' => 'ETB',
+                        'USD' => 'USD',
+                        'EUR' => 'EUR',
+                        'GBP' => 'GBP',
+                    ])
+                    ->nullable(),
+            ])->collapsible(),
+
+            // 5. Portal Settings & Internal Notes
+            Section::make('Portal Settings & Notes')->columns(2)->schema([
                 Select::make('status')
                     ->options([
                         'Active'      => 'Active',
@@ -67,13 +183,21 @@ class SupplierResource extends Resource
                     ->default('Active')
                     ->required(),
 
-                Textarea::make('address')->rows(2)->columnSpanFull()->nullable(),
-                Textarea::make('notes')->rows(2)->columnSpanFull()->nullable(),
-            ]),
+                Toggle::make('portal_access')
+                    ->label('Portal Access Granted')
+                    ->helperText('Allow this supplier to log in to the vendor portal and submit bids.'),
 
-            Section::make('Banking Details')->columns(2)->schema([
-                TextInput::make('bank_name')->maxLength(100)->nullable(),
-                TextInput::make('bank_account')->maxLength(100)->nullable()->label('Account Number'),
+                Textarea::make('notes')
+                    ->rows(3)
+                    ->columnSpanFull()
+                    ->nullable(),
+
+                \Filament\Forms\Components\FileUpload::make('attachments')
+                    ->label('Registration Documents')
+                    ->multiple()
+                    ->disk('local')
+                    ->directory('procurement/suppliers')
+                    ->columnSpanFull(),
             ])->collapsible(),
         ]);
     }
@@ -100,14 +224,20 @@ class SupplierResource extends Resource
                         default       => 'gray',
                     }),
 
-                TextColumn::make('status')
+                \Filament\Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                        'Active'      => 'Active',
+                        'Inactive'    => 'Inactive',
+                        'Blacklisted' => 'Blacklisted',
+                    ])
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('portal_access')
+                    ->label('Portal')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Active'      => 'success',
-                        'Inactive'    => 'gray',
-                        'Blacklisted' => 'danger',
-                        default       => 'gray',
-                    }),
+                    ->getStateUsing(fn (Supplier $r) => $r->portal_access ? 'Enabled' : 'Disabled')
+                    ->color(fn ($state) => $state === 'Enabled' ? 'success' : 'gray'),
 
                 TextColumn::make('created_at')->label('Since')->date()->sortable()->toggleable(),
             ])
@@ -116,9 +246,26 @@ class SupplierResource extends Resource
                 SelectFilter::make('status')
                     ->options(['Active' => 'Active', 'Inactive' => 'Inactive', 'Blacklisted' => 'Blacklisted']),
                 SelectFilter::make('category')
-                    ->options(['Goods' => 'Goods', 'Services' => 'Services', 'Works' => 'Works', 'Consultancy' => 'Consultancy', 'General' => 'General']),
+                    ->options(fn () => \App\Models\Procurement\ProcurementCategory::pluck('name', 'name')->toArray()),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([
+                Action::make('grant_portal')
+                    ->label(fn (Supplier $r) => $r->portal_access ? 'Revoke Portal' : 'Grant Portal')
+                    ->icon(fn (Supplier $r) => $r->portal_access ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
+                    ->color(fn (Supplier $r) => $r->portal_access ? 'danger' : 'success')
+                    ->requiresConfirmation()
+                    ->action(function (Supplier $r) {
+                        $r->update([
+                            'portal_access' => ! $r->portal_access,
+                            'status'        => ! $r->portal_access ? 'Active' : $r->status,
+                        ]);
+                        Notification::make()
+                            ->title($r->fresh()->portal_access ? 'Portal access granted to '.$r->name : 'Portal access revoked for '.$r->name)
+                            ->success()
+                            ->send();
+                    }),
+                EditAction::make(), DeleteAction::make(),
+            ])
             ->bulkActions([DeleteBulkAction::make()]);
     }
 

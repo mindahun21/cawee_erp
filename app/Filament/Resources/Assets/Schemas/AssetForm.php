@@ -2,6 +2,10 @@
 
 namespace App\Filament\Resources\Assets\Schemas;
 
+use App\Models\Asset;
+use App\Models\AssetModel;
+use App\Models\AssetStatus;
+use App\Models\AcquisitionType;
 use App\Models\AssetCategory;
 use App\Models\Department;
 use App\Models\Location;
@@ -17,7 +21,7 @@ use Filament\Schemas\Schema;
 
 class AssetForm
 {
-    public static function configure(Schema $schema, bool $isFixedAsset = true): Schema
+    public static function configure(Schema $schema): Schema
     {
         return $schema
             ->columns(1)
@@ -26,91 +30,113 @@ class AssetForm
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                        TextInput::make('quantity')
+                            ->label('Total Quantity')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
                             ->required()
-                            ->maxLength(255),
-                        Select::make('asset_category_id')
-                            ->label('Category')
-                            ->relationship('assetCategory', 'name')
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                if ($state > 1) {
+                                    $set('serial_number', null);
+                                    $set('barcode', null);
+                                    $set('qr_code', null);
+                                    $set('rfid_tag', null);
+                                } elseif ($state == 1) {
+                                    $set('serial_number', \App\Models\PrefixSetting::where('key', 'asset_serial_number')->value('next_number'));
+                                    $set('barcode', \App\Models\PrefixSetting::where('key', 'asset_barcode')->value('next_number'));
+                                    $set('qr_code', \App\Models\PrefixSetting::where('key', 'asset_qr_code')->value('next_number'));
+                                    $set('rfid_tag', \App\Models\PrefixSetting::where('key', 'asset_rfid_tag')->value('next_number'));
+                                }
+                            }),
+                        Select::make('asset_model_id')
+                            ->label('Model')
+                            ->relationship('assetModel', 'name')
                             ->required()
                             ->preload()
-                            ->searchable()
-                            ->reactive(),
-                        TextInput::make('model')
-                            ->maxLength(255),
+                            ->searchable(),
+                        Select::make('unit_id')
+                            ->relationship('unit', 'name')
+                            ->required()
+                            ->preload()
+                            ->searchable(),
                         TextInput::make('serial_number')
                             ->label('Serial Number')
-                            ->maxLength(255)
-                            ->required($isFixedAsset)
-                            ->visible($isFixedAsset),
+                            ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_serial_number'))
+                            ->default(fn () => \App\Models\PrefixSetting::where('key', 'asset_serial_number')->value('next_number'))
+                            ->dehydrateStateUsing(fn ($state) => $state ? \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state : null)
+                            ->unique(Asset::class, 'serial_number', ignoreRecord: true)
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => $get('quantity') <= 1)
+                            ->hint(fn ($state, $record) => $state ? (Asset::where('serial_number', \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('serial_number', \App\Models\PrefixSetting::getPrefix('asset_serial_number') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('barcode')
                             ->label('Barcode')
-                            ->default(fn () => 'BC-' . strtoupper(bin2hex(random_bytes(4))))
-                            ->disabled()
+                            ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_barcode'))
+                            ->default(fn () => \App\Models\PrefixSetting::where('key', 'asset_barcode')->value('next_number'))
+                            ->dehydrateStateUsing(fn ($state) => $state ? \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state : null)
                             ->dehydrated()
-                            ->unique(ignoreRecord: true)
-                            ->visible($isFixedAsset),
+                            ->unique(Asset::class, 'barcode', ignoreRecord: true)
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => $get('quantity') <= 1)
+                            ->hint(fn ($state, $record) => $state ? (Asset::where('barcode', \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('barcode', \App\Models\PrefixSetting::getPrefix('asset_barcode') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('qr_code')
                             ->label('QR Code')
-                            ->default(fn () => 'QR-' . strtoupper(bin2hex(random_bytes(4))))
-                            ->disabled()
+                            ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_qr_code'))
+                            ->default(fn () => \App\Models\PrefixSetting::where('key', 'asset_qr_code')->value('next_number'))
+                            ->dehydrateStateUsing(fn ($state) => $state ? \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state : null)
                             ->dehydrated()
-                            ->unique(ignoreRecord: true)
-                            ->visible($isFixedAsset),
+                            ->unique(Asset::class, 'qr_code', ignoreRecord: true)
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => $get('quantity') <= 1)
+                            ->hint(fn ($state, $record) => $state ? (Asset::where('qr_code', \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('qr_code', \App\Models\PrefixSetting::getPrefix('asset_qr_code') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         TextInput::make('rfid_tag')
                             ->label('RFID Tag')
-                            ->default(fn () => 'RFID-' . strtoupper(bin2hex(random_bytes(4))))
-                            ->disabled()
+                            ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('asset_rfid_tag'))
+                            ->default(fn () => \App\Models\PrefixSetting::where('key', 'asset_rfid_tag')->value('next_number'))
+                            ->dehydrateStateUsing(fn ($state) => $state ? \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state : null)
                             ->dehydrated()
-                            ->unique(ignoreRecord: true)
-                            ->visible($isFixedAsset),
+                            ->unique(Asset::class, 'rfid_tag', ignoreRecord: true)
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => $get('quantity') <= 1)
+                            ->hint(fn ($state, $record) => $state ? (Asset::where('rfid_tag', \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
+                            ->hintColor(fn ($state, $record) => $state ? (Asset::where('rfid_tag', \App\Models\PrefixSetting::getPrefix('asset_rfid_tag') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray'),
                         Textarea::make('description')
                             ->columnSpanFull(),
                     ]),
 
-                Section::make($isFixedAsset ? 'Classification & Location' : 'Classification')
+                Section::make('Classification & Location')
                     ->columns(2)
                     ->schema([
-                        Select::make('location_id')
-                            ->relationship('location', 'location_name')
+                        Select::make('asset_condition_id')
+                            ->label('Condition')
+                            ->relationship('condition', 'name')
                             ->preload()
-                            ->searchable()
-                            ->visible($isFixedAsset),
-                        Select::make('department_id')
-                            ->relationship('department', 'name')
-                            ->preload()
-                            ->searchable()
-                            ->visible($isFixedAsset),
-                        Select::make('condition')
-                            ->options([
-                                'New' => 'New',
-                                'Good' => 'Good',
-                                'Fair' => 'Fair',
-                                'Poor' => 'Poor',
-                                'Broken' => 'Broken',
-                            ]),
-                        Select::make('status')
-                            ->options([
-                                'available' => 'Available',
-                                'assigned' => 'Assigned',
-                                'maintenance' => 'Maintenance',
-                                'disposed' => 'Disposed',
-                                'lost' => 'Lost',
-                            ])
+                            ->searchable(),
+                        Select::make('asset_status_id')
+                            ->label('Status')
+                            ->relationship('statusRecord', 'name')
                             ->required()
-                            ->default('available'),
+                            ->preload()
+                            ->searchable()
+                            ->default(fn () => AssetStatus::where('name', 'Available')->first()?->id),
                     ]),
 
                 Section::make('Acquisition & Valuation')
                     ->columns(2)
                     ->schema([
-                        Select::make('acquisition_type')
-                            ->options([
-                                'Purchase' => 'Purchase',
-                                'Donation' => 'Donation',
-                                'Lease' => 'Lease',
-                            ])
+                        Select::make('acquisition_type_id')
+                            ->label('Acquisition Type')
+                            ->relationship('acquisitionTypeRecord', 'name')
                             ->live()
-                            ->required(),
+                            ->required()
+                            ->preload()
+                            ->searchable(),
                         Select::make('currency_id')
                             ->relationship('currency', 'code')
                             ->searchable()
@@ -118,21 +144,20 @@ class AssetForm
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         Select::make('donor_id')
                             ->label('Donor')
-                            ->relationship('donor', 'id') // Assuming ID is what we want to use, or name if available
+                            ->relationship('donor', 'id')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Get $get) => $get('acquisition_type') === 'Donation'),
+                            ->visible(fn (Get $get) => AcquisitionType::find($get('acquisition_type_id'))?->name === 'Donation'),
                         TextInput::make('purchase_cost')
                             ->numeric()
                             ->prefix('Amount')
                             ->default(0)
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         DatePicker::make('purchase_date')
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
+                            ->hidden(fn (Get $get) => AcquisitionType::find($get('acquisition_type_id'))?->name === 'Donation'),
                         DatePicker::make('warranty_expiry_date')
                             ->label('Warranty Expiry')
-                            ->visible($isFixedAsset)
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
                         Select::make('supplier_id')
                             ->label('Supplier')
@@ -140,34 +165,16 @@ class AssetForm
                             ->searchable()
                             ->preload()
                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        TextInput::make('useful_life')
-                            ->label('Useful Life (Years)')
-                            ->numeric()
-                            ->visible($isFixedAsset)
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        TextInput::make('residual_value')
-                            ->numeric()
-                            ->prefix('INR')
-                            ->default(0)
-                            ->visible($isFixedAsset)
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
-                        Select::make('depreciation_method')
-                            ->options([
-                                'straight-line' => 'Straight Line',
-                                'declining-balance' => 'Declining Balance',
-                            ])
-                            ->default('straight-line')
-                            ->visible($isFixedAsset)
-                            ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
+                        Textarea::make('notes')
+                            ->label('Notes')
+                            ->columnSpanFull(),
                         Textarea::make('contract_details')
                             ->label('Contract / Lease Details')
-                            ->columnSpanFull()
-                            ->visible($isFixedAsset),
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Stock Allocation')
                     ->description('Allocate stock across multiple locations')
-                    ->visible(!$isFixedAsset)
                     ->hiddenOn(['edit', 'view'])
                     ->schema([
                         \Filament\Forms\Components\Repeater::make('stocks')
@@ -200,68 +207,51 @@ class AssetForm
                                     ->numeric()
                                     ->default(1)
                                     ->required()
-                                    ->live(onBlur: true)
+                                    ->live()
                                     ->afterStateUpdated(function (Get $get, Set $set) {
-                                        $stocks = $get('../../stocks') ?? [];
-                                        $total = collect($stocks)->sum('quantity');
-                                        $set('../../quantity', $total);
+                                        // Use relative path to repeater items
+                                        $stocks = $get('../../') ?? [];
+                                        $total = collect($stocks)->sum(fn ($item) => (float) ($item['quantity'] ?? 0));
+                                        $set('../../../quantity', $total);
+                                        
+                                        // Sync unique fields
+                                        if ($total > 1) {
+                                            $set('../../../serial_number', null);
+                                            $set('../../../barcode', null);
+                                            $set('../../../qr_code', null);
+                                            $set('../../../rfid_tag', null);
+                                        } elseif ($total == 1) {
+                                            $set('../../../serial_number', \App\Models\PrefixSetting::where('key', 'asset_serial_number')->value('next_number'));
+                                            $set('../../../barcode', \App\Models\PrefixSetting::where('key', 'asset_barcode')->value('next_number'));
+                                            $set('../../../qr_code', \App\Models\PrefixSetting::where('key', 'asset_qr_code')->value('next_number'));
+                                            $set('../../../rfid_tag', \App\Models\PrefixSetting::where('key', 'asset_rfid_tag')->value('next_number'));
+                                        }
                                     }),
                             ])
                             ->columns(3)
                             ->defaultItems(1)
                             ->addActionLabel('Add Location Stock')
                             ->columnSpanFull()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                $stocks = $get('stocks') ?? [];
-                                $total = collect($stocks)->sum('quantity');
-                                $set('quantity', $total);
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                $total = collect($state)->sum(fn ($item) => (float) ($item['quantity'] ?? 0));
+                                $set('../quantity', $total);
+
+                                // Sync unique fields
+                                if ($total > 1) {
+                                    $set('../serial_number', null);
+                                    $set('../barcode', null);
+                                    $set('../qr_code', null);
+                                    $set('../rfid_tag', null);
+                                } elseif ($total == 1) {
+                                    $set('../serial_number', \App\Models\PrefixSetting::where('key', 'asset_serial_number')->value('next_number'));
+                                    $set('../barcode', \App\Models\PrefixSetting::where('key', 'asset_barcode')->value('next_number'));
+                                    $set('../qr_code', \App\Models\PrefixSetting::where('key', 'asset_qr_code')->value('next_number'));
+                                    $set('../rfid_tag', \App\Models\PrefixSetting::where('key', 'asset_rfid_tag')->value('next_number'));
+                                }
                             }),
                     ]),
 
-                Section::make('Inventory Settings')
-                    ->visible(!$isFixedAsset)
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('quantity')
-                            ->label('Total Quantity')
-                            ->numeric()
-                            ->default(1)
-                            ->required()
-                            ->readOnly()
-                            ->helperText('Automatically calculated from stock allocation'),
-                        TextInput::make('min_stock_level')
-                            ->numeric()
-                            ->default(0)
-                            ->required(),
-                    ]),
-                
-                Toggle::make('is_fixed_asset')
-                    ->default($isFixedAsset)
-                    ->dehydrated()
-                    ->hidden(),
 
-                Section::make('Vehicle / Machinery Details')
-                    ->relationship('vehicleDetail')
-                    ->columns(3)
-                    ->visible(fn (Get $get) => $isFixedAsset && in_array(\App\Models\AssetCategory::find($get('asset_category_id'))?->name, ['Vehicles', 'Machinery']))
-                    ->schema([
-                        TextInput::make('plate_number')
-                            ->unique(ignoreRecord: true),
-                        TextInput::make('chassis_number'),
-                        TextInput::make('motor_number'),
-                        TextInput::make('engine_size'),
-                        TextInput::make('fuel_type'),
-                        TextInput::make('capacity'),
-                        TextInput::make('color'),
-                        TextInput::make('horsepower'),
-                        TextInput::make('year_manufactured'),
-                        TextInput::make('manufacturer'),
-                        TextInput::make('insurance_company'),
-                        TextInput::make('insurance_policy_no'),
-                        DatePicker::make('insurance_expiration_date'),
-                        DatePicker::make('technical_inspection_date'),
-                        DatePicker::make('technical_inspection_expiration_date'),
-                    ]),
             ]);
     }
 }

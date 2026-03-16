@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('procurement_tenders', function (Blueprint $table) {
+            $table->enum('status', [
+                'Draft', 'Pending Approval', 'Approved', 'Rejected', 
+                'Published', 'Closed', 'Evaluation', 'Awarded', 'Cancelled',
+            ])->default('Draft')->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('procurement_tenders', function (Blueprint $table) {
+            $table->enum('status', [
+                'Draft', 'Published', 'Closed', 'Evaluation', 'Awarded', 'Cancelled',
+            ])->default('Draft')->change();
+        });
+    }
+};

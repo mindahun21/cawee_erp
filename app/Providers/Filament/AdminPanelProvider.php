@@ -49,8 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Procurement')
-                    ->collapsible()
-                    ->icon('heroicon-o-shopping-bag'),
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
@@ -87,6 +86,22 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(93)
                     ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('view_any_hr::department')),
+
+                \Filament\Navigation\NavigationItem::make('Settings')
+                    ->group('Procurement')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(99)
+                    ->url(fn (): string => \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs([
+                        \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\ProcurementCategoryResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\ProcurementMethodResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\ProcurementUnitResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\BidSecurityResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\ContractTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Settings\ApprovalWorkflowResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Procurement\Budgets\ProcurementBudgetResource::getRouteBaseName() . '.*',
+                    ])),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

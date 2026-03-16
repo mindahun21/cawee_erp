@@ -20,7 +20,7 @@ class InventoryMovementsTable
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->date()
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('asset.name')
+                \Filament\Tables\Columns\TextColumn::make('item.name')
                     ->searchable()
                     ->sortable()
                     ->description(fn ($record) => new \Illuminate\Support\HtmlString('
@@ -34,66 +34,81 @@ class InventoryMovementsTable
                                 class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
                         </div>
                     '), position: 'below'),
-                \Filament\Tables\Columns\TextColumn::make('type')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Stock In' => 'success',
-                        'Stock Out' => 'danger',
-                        'Transfer' => 'info',
-                        'Return' => 'warning',
-                        'Adjustment' => 'gray',
-                        'Damage' => 'danger',
-                        'Disposal' => 'black',
-                        default => 'gray',
-                    })
+                \Filament\Tables\Columns\TextColumn::make('fromWarehouse.name')
+                    ->label('From')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('reason')
-                    ->searchable()
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('supplier.name')
-                    ->label('Supplier')
-                    ->sortable()
-                    ->toggleable(),
-                \Filament\Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'in_transit' => 'info',
-                        'completed' => 'success',
-                        'rejected' => 'danger',
-                        default => 'gray',
-                    })
-                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('destination')
+                    ->label('To')
+                    ->state(function ($record) {
+                        if ($record->destination_type === 'warehouse') {
+                            return $record->toWarehouse?->name;
+                        }
+                        return ($record->toLocation?->location_name ?: '') . 
+                               ($record->toDepartment?->name ? ' (' . $record->toDepartment->name . ')' : '');
+                    }),
                 \Filament\Tables\Columns\TextColumn::make('quantity')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('fromLocation.location_name')
-                    ->label('From'),
-                \Filament\Tables\Columns\TextColumn::make('toLocation.location_name')
-                    ->label('To'),
+                \Filament\Tables\Columns\TextColumn::make('movementStatus.name')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Pending Approval' => 'warning',
+                        'In Transit' => 'info',
+                        'Completed / Received' => 'success',
+                        'Rejected' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('movementReason.name')
+                    ->label('Reason')
+                    ->sortable()
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('reference_no')
                     ->label('Ref #')
                     ->searchable(),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('type')
-                    ->options([
-                        'Stock In' => 'Stock In',
-                        'Stock Out' => 'Stock Out',
-                        'Transfer' => 'Transfer',
-                        'Return' => 'Return',
-                        'Adjustment' => 'Adjustment',
-                    ]),
-                \Filament\Tables\Filters\SelectFilter::make('supplier_id')
-                    ->label('Supplier')
-                    ->relationship('supplier', 'name')
+                \Filament\Tables\Filters\SelectFilter::make('item_id')
+                    ->label('Item')
+                    ->relationship('item', 'name')
                     ->searchable()
                     ->preload(),
-                \Filament\Tables\Filters\SelectFilter::make('from_location_id')
-                    ->label('From Location')
-                    ->relationship('fromLocation', 'location_name'),
+                \Filament\Tables\Filters\SelectFilter::make('reason_id')
+                    ->label('Reason')
+                    ->relationship('movementReason', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('status_id')
+                    ->label('Status')
+                    ->relationship('movementStatus', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('from_warehouse_id')
+                    ->label('From Warehouse')
+                    ->relationship('fromWarehouse', 'name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('to_warehouse_id')
+                    ->label('To Warehouse')
+                    ->relationship('toWarehouse', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('to_location_id')
                     ->label('To Location')
-                    ->relationship('toLocation', 'location_name'),
+                    ->relationship('toLocation', 'location_name')
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('employee_id')
+                    ->label('Handled By')
+                    ->relationship('employee', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\SelectFilter::make('to_department_id')
+                    ->label('To Department')
+                    ->relationship('toDepartment', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(3)
@@ -103,22 +118,37 @@ class InventoryMovementsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('info')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->type === 'Transfer' && $record->status === 'pending')
-                    ->action(fn ($record) => $record->update(['status' => 'in_transit'])),
+                    ->visible(fn ($record) => $record->movementStatus?->name === 'Pending Approval')
+                    ->action(function ($record) {
+                        $status = \App\Models\InventoryMovementStatus::where('name', 'In Transit')->first();
+                        if ($status) {
+                            $record->update(['status_id' => $status->id]);
+                        }
+                    }),
                 \Filament\Actions\Action::make('receive')
                     ->label('Receive')
                     ->icon('heroicon-o-inbox-arrow-down')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->type === 'Transfer' && $record->status === 'in_transit')
-                    ->action(fn ($record) => $record->update(['status' => 'completed'])),
+                    ->visible(fn ($record) => $record->movementStatus?->name === 'In Transit')
+                    ->action(function ($record) {
+                        $status = \App\Models\InventoryMovementStatus::where('name', 'Completed / Received')->first();
+                        if ($status) {
+                            $record->update(['status_id' => $status->id]);
+                        }
+                    }),
                 \Filament\Actions\Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->type === 'Transfer' && $record->status === 'pending')
-                    ->action(fn ($record) => $record->update(['status' => 'rejected'])),
+                    ->visible(fn ($record) => $record->movementStatus?->name === 'Pending Approval')
+                    ->action(function ($record) {
+                        $status = \App\Models\InventoryMovementStatus::where('name', 'Rejected')->first();
+                        if ($status) {
+                            $record->update(['status_id' => $status->id]);
+                        }
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

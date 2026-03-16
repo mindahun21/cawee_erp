@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('sku')->nullable();
-            $table->decimal('unit_price', 15, 2)->nullable();
-            $table->text('description')->nullable();
+            $table->foreignId('asset_model_id')->constrained('asset_models')->onDelete('cascade');
+            $table->foreignId('unit_id')->nullable()->constrained('units')->onDelete('set null');
+            $table->text('note')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

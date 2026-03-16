@@ -24,9 +24,10 @@ class AssetAssignmentForm
                             ->required()
                             ->searchable()
                             ->preload(),
-                        Select::make('user_id')
-                            ->label('Assigned To User')
-                            ->relationship('user', 'name')
+                        Select::make('employee_id')
+                            ->label('Assigned to staff')
+                            ->relationship('employee', 'first_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable()
                             ->preload(),
                         Select::make('department_id')
