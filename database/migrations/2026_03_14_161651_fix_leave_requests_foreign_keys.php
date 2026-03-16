@@ -14,10 +14,24 @@ return new class extends Migration
     {
         // For production safety, we don't just drop the table.
         // We ensure data is preserved if it exists.
-        if (Schema::hasTable('hr_leave_requests')) {
+        $backupTable = 'hr_leave_requests_old_v1';
+        $hasBackup = Schema::hasTable($backupTable);
+        $shouldCopy = $hasBackup;
+
+        if (Schema::hasTable('hr_leave_requests') && ! $hasBackup) {
+            $this->dropForeignKeyIfExists('hr_leave_requests', 'hr_leave_requests_employee_id_foreign');
+            $this->dropForeignKeyIfExists('hr_leave_requests', 'hr_leave_requests_hr_leave_type_id_foreign');
+            $this->dropForeignKeyIfExists('hr_leave_requests', 'hr_leave_requests_supervisor_id_foreign');
+
             // Rename to backup
-            Schema::rename('hr_leave_requests', 'hr_leave_requests_old_v1');
+            Schema::rename('hr_leave_requests', $backupTable);
+            $shouldCopy = true;
         }
+
+        // Ensure any stale table is removed before creating the fresh schema
+        // Ensure the backup table has no conflicting constraints before rebuilding
+        $this->ensureBackupConstraintsDropped($backupTable);
+        Schema::dropIfExists('hr_leave_requests');
 
         Schema::create('hr_leave_requests', function (Blueprint $table) {
             $table->id();
@@ -33,13 +47,13 @@ return new class extends Migration
         });
 
         // Copy data back if it existed
-        if (Schema::hasTable('hr_leave_requests_old_v1')) {
+        if ($shouldCopy && Schema::hasTable($backupTable)) {
             // We use DB::table to avoid model dependency issues during migrations
-            $oldData = DB::table('hr_leave_requests_old_v1')->get();
+            $oldData = DB::table($backupTable)->get();
             foreach ($oldData as $row) {
                 DB::table('hr_leave_requests')->insert((array) $row);
             }
-            Schema::dropIfExists('hr_leave_requests_old_v1');
+            Schema::dropIfExists($backupTable);
         }
     }
 
@@ -49,5 +63,32 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('hr_leave_requests');
+    }
+
+    private function ensureBackupConstraintsDropped(string $backupTable): void
+    {
+        if (! Schema::hasTable($backupTable)) {
+            return;
+        }
+
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_employee_id_foreign');
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_hr_leave_type_id_foreign');
+        $this->dropForeignKeyIfExists($backupTable, 'hr_leave_requests_supervisor_id_foreign');
+    }
+
+    private function dropForeignKeyIfExists(string $table, string $constraint): void
+    {
+        $database = DB::connection()->getDatabaseName();
+        $exists = DB::table('information_schema.table_constraints')
+            ->where('constraint_schema', $database)
+            ->where('table_name', $table)
+            ->where('constraint_name', $constraint)
+            ->exists();
+
+        if ($exists) {
+            Schema::table($table, function (Blueprint $tableBlueprint) use ($constraint) {
+                $tableBlueprint->dropForeign($constraint);
+            });
+        }
     }
 };
