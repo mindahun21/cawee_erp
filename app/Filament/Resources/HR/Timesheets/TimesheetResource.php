@@ -106,12 +106,11 @@ class TimesheetResource extends Resource
                             'projects' => \App\Models\Project::get(['id', 'project_name', 'project_code']),
                             'leaveTypes' => \App\Models\HrLeaveType::where('is_active', true)->get(['id', 'name']),
                         ])
-                        ->default([
-                            'projects' => [],
-                            'leaves' => [],
-                            'daily_details' => [],
-                            'holidays' => [],
-                        ]),
+                        ->default(fn (callable $get) => \App\Models\HrTimesheet::generatePreviewData(
+                            $get('employee_id'),
+                            $get('month') ?? date('n'),
+                            $get('year') ?? date('Y')
+                        )),
 
                     Placeholder::make('info')
                         ->content('Leave requests are handled in a separate HR Leave module. Timesheets only track work hours.')
