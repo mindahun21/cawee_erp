@@ -147,6 +147,13 @@ class EmployeeResource extends Resource
                                 ->nullable()
                                 ->helperText('Filter by department above to narrow the list.'),
 
+                            Select::make('grade_id')
+                                ->label('Grade')
+                                ->relationship('grade', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
+
                             Select::make('contract_type_id')
                                 ->label('Contract Type')
                                 ->relationship('contractType', 'name')

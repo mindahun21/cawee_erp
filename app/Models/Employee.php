@@ -23,7 +23,7 @@ class Employee extends Model
         'date_of_employment', 'date_transferred', 'date_resigned',
         'basic_salary', 'transport_allowance', 'house_allowance',
         'communication_allowance', 'overtime_allowance', 'incentive', 'other_allowances',
-        'salary_grade_id', 'grade', 'step',
+        'salary_grade_id', 'grade_id', 'step',
         'bank_account_awash', 'bank_account_orocoop', 'bank_account_other',
         'remarks', 'location_id', 'project_id',
     ];
@@ -67,6 +67,7 @@ class Employee extends Model
     public function location(): BelongsTo    { return $this->belongsTo(Location::class); }
     public function project(): BelongsTo     { return $this->belongsTo(Project::class); }
     public function salaryGrade(): BelongsTo { return $this->belongsTo(SalaryGrade::class); }
+    public function grade(): BelongsTo       { return $this->belongsTo(Grade::class); }
 
     // ── HR Settings ────────────────────────────────────────────────
     public function user(): BelongsTo           { return $this->belongsTo(\Illuminate\Foundation\Auth\User::class); }

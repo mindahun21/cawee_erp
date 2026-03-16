@@ -51,10 +51,12 @@ class JobPositionResource extends Resource
                     ->preload()
                     ->nullable(),
 
-                TextInput::make('grade')
+                Select::make('grade_id')
                     ->label('Grade / Level')
-                    ->maxLength(20)
-                    ->placeholder('e.g. P3, M2, Senior'),
+                    ->relationship('grade', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
             ]),
         ]);
     }
@@ -65,7 +67,7 @@ class JobPositionResource extends Resource
             ->columns([
                 TextColumn::make('title')->searchable()->sortable()->weight('semibold'),
                 TextColumn::make('department.name')->label('Department')->badge()->color('info'),
-                TextColumn::make('grade')->badge()->color('gray'),
+                TextColumn::make('grade.name')->label('Grade')->badge()->color('gray')->sortable(),
                 TextColumn::make('employees_count')->label('Employees')
                     ->counts('employees')->alignCenter(),
             ])
