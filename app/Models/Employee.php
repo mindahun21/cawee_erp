@@ -46,6 +46,21 @@ class Employee extends Model
         ];
     }
 
+    protected static function booted()
+    {
+        static::saving(function ($employee) {
+            $numericFields = [
+                'basic_salary', 'transport_allowance', 'house_allowance',
+                'communication_allowance', 'overtime_allowance', 'incentive', 'other_allowances'
+            ];
+            foreach ($numericFields as $field) {
+                if ($employee->$field === null) {
+                    $employee->$field = 0;
+                }
+            }
+        });
+    }
+
     // ── Computed ───────────────────────────────────────────────────
     public function getFullNameAttribute(): string
     {

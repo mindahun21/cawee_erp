@@ -55,6 +55,11 @@ class EmployeeResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['first_name', 'last_name', 'email', 'phone_number', 'national_id'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -207,37 +212,44 @@ class EmployeeResource extends Resource
                             TextInput::make('basic_salary')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0)
                                 ->required(),
 
                             TextInput::make('transport_allowance')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
 
                             TextInput::make('house_allowance')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
 
                             TextInput::make('communication_allowance')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
 
                             TextInput::make('overtime_allowance')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
 
                             TextInput::make('incentive')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
 
                             TextInput::make('other_allowances')
                                 ->numeric()
                                 ->prefix('ETB')
+                                ->default(0)
                                 ->minValue(0),
                         ]),
                     ]),
@@ -291,7 +303,8 @@ class EmployeeResource extends Resource
                     })
                     ->formatStateUsing(fn ($state) => $state === 'M' ? 'Male' : 'Female'),
 
-                TextColumn::make('position')
+                TextColumn::make('jobPosition.title')
+                    ->label('Position')
                     ->searchable()
                     ->sortable(),
 
