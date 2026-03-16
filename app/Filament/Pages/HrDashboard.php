@@ -9,7 +9,7 @@ use App\Filament\Widgets\HR\StaffByDepartmentChart;
 use App\Filament\Widgets\HR\StaffByJobPositionChart;
 use App\Filament\Widgets\HR\StaffStatusByMonthChart;
 use App\Models\Employee;
-use App\Models\LeaveRequest;
+use App\Models\HrLeaveRequest;
 use Illuminate\Support\Facades\Cache;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -71,11 +71,11 @@ class HrDashboard extends Page
                 'birthdaysMonth' => Employee::whereNull('date_resigned')
                     ->whereMonth('date_of_birth', now()->month)
                     ->count(),
-                'onLeave' => LeaveRequest::where('approval_status', 'Approved')
+                'onLeave' => HrLeaveRequest::where('approval_status', 'Approved')
                     ->whereDate('start_date', '<=', today())
                     ->whereDate('end_date', '>=', today())
                     ->count(),
-                'pendingLeave' => LeaveRequest::where('approval_status', 'Pending')->count(),
+                'pendingLeave' => HrLeaveRequest::where('approval_status', 'Pending')->count(),
             ];
         });
 

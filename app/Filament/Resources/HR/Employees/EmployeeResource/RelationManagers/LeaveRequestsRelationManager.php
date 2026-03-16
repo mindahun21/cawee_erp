@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\HR\Employees\EmployeeResource\RelationManagers;
 
-use App\Models\LeaveRequest;
+use App\Models\HrLeaveRequest;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -118,13 +118,13 @@ class LeaveRequestsRelationManager extends RelationManager
                     ->label('Supervisor ✓')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn (LeaveRequest $record) =>
+                    ->visible(fn (HrLeaveRequest $record) =>
                         $record->canSupervisorApprove() && auth()->user()->isHrSupervisor()
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Approve at Supervisor Level')
                     ->modalSubmitActionLabel('Approve')
-                    ->action(fn (LeaveRequest $record) => $record->update([
+                    ->action(fn (HrLeaveRequest $record) => $record->update([
                         'supervisor_status'      => 'Approved',
                         'supervisor_approved_at' => now(),
                     ]) && Notification::make()->title('Forwarded to HR')->success()->send()),
@@ -133,13 +133,13 @@ class LeaveRequestsRelationManager extends RelationManager
                     ->label('HR ✓')
                     ->icon('heroicon-o-check-badge')
                     ->color('info')
-                    ->visible(fn (LeaveRequest $record) =>
+                    ->visible(fn (HrLeaveRequest $record) =>
                         $record->canHrApprove() && auth()->user()->isHrOfficer()
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Approve at HR Level')
                     ->modalSubmitActionLabel('Approve')
-                    ->action(fn (LeaveRequest $record) => $record->update([
+                    ->action(fn (HrLeaveRequest $record) => $record->update([
                         'hr_status'      => 'Approved',
                         'hr_approved_at' => now(),
                     ]) && Notification::make()->title('Forwarded to Director')->success()->send()),
@@ -148,13 +148,13 @@ class LeaveRequestsRelationManager extends RelationManager
                     ->label('Authorize ✓')
                     ->icon('heroicon-o-shield-check')
                     ->color('primary')
-                    ->visible(fn (LeaveRequest $record) =>
+                    ->visible(fn (HrLeaveRequest $record) =>
                         $record->canDirectorApprove() && auth()->user()->isHrDirector()
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Final Authorization')
                     ->modalSubmitActionLabel('Authorize')
-                    ->action(fn (LeaveRequest $record) => $record->update([
+                    ->action(fn (HrLeaveRequest $record) => $record->update([
                         'approval_status'      => 'Approved',
                         'director_approved_at' => now(),
                         'approval_date'        => now()->toDateString(),
@@ -164,7 +164,7 @@ class LeaveRequestsRelationManager extends RelationManager
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (LeaveRequest $record) =>
+                    ->visible(fn (HrLeaveRequest $record) =>
                         ! $record->isRejected()
                         && ! $record->isFullyApproved()
                         && auth()->user()->isHrSupervisor()
@@ -172,7 +172,7 @@ class LeaveRequestsRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->modalHeading('Reject Leave Request')
                     ->modalSubmitActionLabel('Reject')
-                    ->action(function (LeaveRequest $record) {
+                    ->action(function (HrLeaveRequest $record) {
                         if ($record->supervisor_status === 'Pending') {
                             $record->update(['supervisor_status' => 'Rejected', 'supervisor_approved_at' => now()]);
                         } else {
