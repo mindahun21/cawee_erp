@@ -5,8 +5,12 @@ namespace App\Filament\Resources\Procurement\Requisitions;
 use App\Filament\Resources\Procurement\Requisitions\Pages\CreateRequisition;
 use App\Filament\Resources\Procurement\Requisitions\Pages\EditRequisition;
 use App\Filament\Resources\Procurement\Requisitions\Pages\ListRequisitions;
+use App\Filament\Resources\Procurement\Tenders\TenderResource;
+use App\Models\Currency;
 use App\Models\Procurement\ProcurementBudget;
 use App\Models\Procurement\Requisition;
+use App\Models\Procurement\Supplier;
+use App\Models\Procurement\Tender;
 use App\Services\Procurement\ProcurementApprovalService;
 use BackedEnum;
 use Filament\Forms\Components\Placeholder;
@@ -14,6 +18,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -305,6 +310,140 @@ class RequisitionResource extends Resource
                         ProcurementApprovalService::reject($r, 'requisition', $pending->stage_order, $user, $data['notes'] ?? null);
                         $r->update(['overall_status' => Requisition::STATUS_REJECTED]);
                         Notification::make()->title("Requisition rejected at {$pending->stage_name}")->danger()->send();
+                    }),
+
+                Action::make('share_to_vendors')
+                    ->label(fn (Requisition $r) => $r->tender ? 'View Tender' : 'Share to Vendors')
+                    ->icon('heroicon-o-megaphone')
+                    ->color('primary')
+                    ->visible(fn (Requisition $r) =>
+                        $r->isFullyApproved()
+                        && auth()->user()->isProcurementOfficer()
+                    )
+                    ->modalHeading('Share Requisition to Vendors')
+                    ->modalDescription('Create a Tender/RFQ linked to the approved requisition and control supplier access.')
+                    ->form(fn (Requisition $r) => $r->tender ? [] : [
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(300)
+                            ->default(fn (Requisition $record) => "Tender for {$record->requisition_number}"),
+
+                        Select::make('method')
+                            ->label('Procurement Method')
+                            ->options(fn () => \App\Models\Procurement\ProcurementMethod::where('is_active', true)->pluck('name', 'name')->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->default(fn (Requisition $record) => $record->procurement_method),
+
+                        Select::make('visibility')
+                            ->label('Visibility')
+                            ->options([
+                                'public' => 'Public (all suppliers)',
+                                'invite_only' => 'Invite-only',
+                            ])
+                            ->default('invite_only')
+                            ->required()
+                            ->live(),
+
+                        Select::make('invited_suppliers')
+                            ->label('Invited Suppliers')
+                            ->options(fn () => Supplier::where('status', 'Active')->pluck('name', 'id')->toArray())
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->required(fn (Get $get) => $get('visibility') === 'invite_only')
+                            ->visible(fn (Get $get) => $get('visibility') === 'invite_only')
+                            ->helperText('Only invited suppliers will see this tender in the supplier portal.')
+                            ->columnSpanFull(),
+
+                        TextInput::make('estimated_value')
+                            ->label('Estimated Value')
+                            ->numeric()
+                            ->prefix(fn (Get $get) => Currency::symbolFor($get('currency')))
+                            ->required()
+                            ->default(function (Requisition $record) {
+                                $sum = (float) $record->items()->sum('estimated_total');
+                                return $sum > 0 ? $sum : null;
+                            }),
+
+                        Select::make('currency')
+                            ->label('Currency')
+                            ->options(fn () => Currency::procurementOptions())
+                            ->default(fn () => Currency::procurementDefault())
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+
+                        DatePicker::make('issue_date')
+                            ->required()
+                            ->default(fn () => now()->toDateString()),
+
+                        DatePicker::make('submission_deadline')
+                            ->required()
+                            ->default(fn () => now()->addDays(7)->toDateString()),
+
+                        DatePicker::make('opening_date')
+                            ->required()
+                            ->default(fn () => now()->addDays(8)->toDateString()),
+
+                        DatePicker::make('award_date')
+                            ->required()
+                            ->default(fn () => now()->addDays(14)->toDateString()),
+
+                        Textarea::make('description')
+                            ->rows(3)
+                            ->required()
+                            ->default(fn (Requisition $record) => $record->justification),
+
+                        Textarea::make('terms_and_conditions')
+                            ->rows(3)
+                            ->required(),
+
+                        FileUpload::make('attachments')
+                            ->label('Tender Documents')
+                            ->multiple()
+                            ->disk('local')
+                            ->directory('procurement/tenders')
+                            ->nullable(),
+                    ])
+                    ->action(function (Requisition $r, array $data) {
+                        if ($r->tender) {
+                            return redirect(TenderResource::getUrl('edit', ['record' => $r->tender]));
+                        }
+
+                        $workflowActive = \App\Models\Procurement\ProcurementApprovalWorkflow::activeFor('tender');
+                        $status = $workflowActive ? 'Draft' : 'Published';
+                        $visibility = $data['visibility'] ?? 'public';
+
+                        $tender = Tender::create([
+                            'requisition_id'       => $r->id,
+                            'title'                => $data['title'],
+                            'description'          => $data['description'],
+                            'method'               => $data['method'],
+                            'status'               => $status,
+                            'visibility'           => $visibility,
+                            'issue_date'           => $status === 'Published' ? now()->toDateString() : $data['issue_date'],
+                            'submission_deadline'  => $data['submission_deadline'],
+                            'opening_date'         => $data['opening_date'],
+                            'award_date'           => $data['award_date'],
+                            'estimated_value'      => $data['estimated_value'],
+                            'currency'             => $data['currency'],
+                            'terms_and_conditions' => $data['terms_and_conditions'],
+                            'attachments'          => $data['attachments'] ?? [],
+                        ]);
+
+                        if ($visibility === 'invite_only' && ! empty($data['invited_suppliers'])) {
+                            $tender->invitedSuppliers()->sync($data['invited_suppliers']);
+                        }
+
+                        if ($status === 'Published') {
+                            Notification::make()->title('Tender published — visible to suppliers.')->success()->send();
+                        } else {
+                            Notification::make()->title('Tender created in Draft — submit for tender approval, then publish.')->info()->send();
+                        }
+
+                        return redirect(TenderResource::getUrl('edit', ['record' => $tender]));
                     }),
 
                 EditAction::make(),

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Procurement\Supplier;
 
 class Tender extends Model
 {
@@ -15,7 +17,7 @@ class Tender extends Model
     protected $table = 'procurement_tenders';
 
     protected $fillable = [
-        'tender_number', 'requisition_id', 'title', 'description', 'method', 'status',
+        'tender_number', 'requisition_id', 'title', 'description', 'method', 'status', 'visibility',
         'issue_date', 'submission_deadline', 'opening_date', 'award_date',
         'estimated_value', 'currency', 'evaluation_criteria', 'terms_and_conditions',
         'attachments', 'created_by',
@@ -53,6 +55,10 @@ class Tender extends Model
     public function creator(): BelongsTo      { return $this->belongsTo(User::class, 'created_by'); }
     public function bids(): HasMany            { return $this->hasMany(Bid::class); }
     public function evaluationCriteria(): HasMany { return $this->hasMany(TenderEvaluationCriterion::class)->orderBy('sort_order'); }
+    public function invitedSuppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'procurement_tender_invites');
+    }
 
     // ── Computed ────────────────────────────────────────────────────
     public function isOpen(): bool            { return $this->status === 'Published'; }

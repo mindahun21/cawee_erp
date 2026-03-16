@@ -31,6 +31,10 @@ class SupplierPortalController extends Controller
                        ->get();
 
         $openTenders = Tender::where('status', 'Published')
+                             ->where(function ($q) use ($supplier) {
+                                 $q->where('visibility', 'public')
+                                   ->orWhereHas('invitedSuppliers', fn ($sub) => $sub->where('supplier_id', $supplier->id));
+                             })
                              ->where('submission_deadline', '>=', now())
                              ->latest('submission_deadline')
                              ->take(4)
@@ -42,7 +46,12 @@ class SupplierPortalController extends Controller
     // ── Tender Index ───────────────────────────────────────────────
     public function tenders(Request $request)
     {
+        $supplier = $this->supplier();
         $query = Tender::where('status', 'Published')
+                       ->where(function ($q) use ($supplier) {
+                           $q->where('visibility', 'public')
+                             ->orWhereHas('invitedSuppliers', fn ($sub) => $sub->where('supplier_id', $supplier->id));
+                       })
                        ->with('evaluationCriteria');
 
         if ($search = $request->get('search')) {
@@ -63,7 +72,11 @@ class SupplierPortalController extends Controller
     // ── Tender Detail ──────────────────────────────────────────────
     public function tenderShow(Tender $tender)
     {
-        abort_unless($tender->status === 'Published', 404);
+        $supplier = $this->supplier();
+        $isVisible = $tender->visibility === 'public'
+            || $tender->invitedSuppliers()->where('supplier_id', $supplier->id)->exists();
+
+        abort_unless($tender->status === 'Published' && $isVisible, 404);
 
         $tender->load('evaluationCriteria', 'requisition');
         $myBid = Bid::where('supplier_id', $this->supplier()->id)
@@ -76,7 +89,11 @@ class SupplierPortalController extends Controller
     // ── Submit Bid ─────────────────────────────────────────────────
     public function bidCreate(Tender $tender)
     {
-        abort_unless($tender->status === 'Published', 403, 'This tender is not open for bids.');
+        $supplier = $this->supplier();
+        $isVisible = $tender->visibility === 'public'
+            || $tender->invitedSuppliers()->where('supplier_id', $supplier->id)->exists();
+
+        abort_unless($tender->status === 'Published' && $isVisible, 403, 'This tender is not open for bids.');
         abort_unless($tender->submission_deadline >= now()->toDateString(), 403, 'Submission deadline has passed.');
 
         $existing = Bid::where('supplier_id', $this->supplier()->id)
@@ -92,7 +109,11 @@ class SupplierPortalController extends Controller
 
     public function bidStore(Request $request, Tender $tender)
     {
-        abort_unless($tender->status === 'Published', 403);
+        $supplier = $this->supplier();
+        $isVisible = $tender->visibility === 'public'
+            || $tender->invitedSuppliers()->where('supplier_id', $supplier->id)->exists();
+
+        abort_unless($tender->status === 'Published' && $isVisible, 403);
         abort_unless($tender->submission_deadline >= now()->toDateString(), 403, 'Submission deadline has passed.');
 
         $data = $request->validate([
@@ -210,7 +231,8 @@ class SupplierPortalController extends Controller
     // ── Public tender listing (no login required) ──────────────────
     public function publicTenders(Request $request)
     {
-        $query = Tender::where('status', 'Published');
+        $query = Tender::where('status', 'Published')
+            ->where('visibility', 'public');
 
         if ($search = $request->get('search')) {
             $query->where(fn ($q) => $q->where('title', 'like', "%$search%")
@@ -224,7 +246,7 @@ class SupplierPortalController extends Controller
 
     public function publicTenderShow(Tender $tender)
     {
-        abort_unless($tender->status === 'Published', 404);
+        abort_unless($tender->status === 'Published' && $tender->visibility === 'public', 404);
         $tender->load('evaluationCriteria');
         return view('supplier.public.tender-detail', compact('tender'));
     }
