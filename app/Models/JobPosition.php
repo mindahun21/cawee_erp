@@ -11,4 +11,14 @@ class JobPosition extends Model
     protected $table = 'hr_job_positions';
 
     protected $fillable = ['department_id', 'title', 'grade'];
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

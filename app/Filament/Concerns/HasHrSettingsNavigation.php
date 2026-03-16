@@ -16,6 +16,7 @@ use App\Filament\Resources\HR\Settings\JobPositionResource;
 use App\Filament\Resources\HR\Settings\LandlordResource;
 use App\Filament\Resources\HR\Settings\LayoffChecklistResource;
 use App\Filament\Resources\HR\Settings\TrainingTypeResource;
+use App\Filament\Resources\HR\Settings\GradeResource;
 use Filament\Navigation\NavigationItem;
 
 trait HasHrSettingsNavigation
@@ -32,6 +33,11 @@ trait HasHrSettingsNavigation
                 ->icon('heroicon-o-briefcase')
                 ->url(JobPositionResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(JobPositionResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Grades')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->url(GradeResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(GradeResource::getRouteBaseName() . '.*')),
 
             NavigationItem::make('Contract Types')
                 ->icon('heroicon-o-document-text')

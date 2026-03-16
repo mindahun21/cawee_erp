@@ -71,6 +71,27 @@ class TenderResource extends Resource
                     ->preload()
                     ->required(),
 
+                Select::make('visibility')
+                    ->label('Visibility')
+                    ->options([
+                        'public' => 'Public (all suppliers)',
+                        'invite_only' => 'Invite-only',
+                    ])
+                    ->default('public')
+                    ->required()
+                    ->live(),
+
+                Select::make('invitedSuppliers')
+                    ->label('Invited Suppliers')
+                    ->relationship('invitedSuppliers', 'name', fn ($query) => $query->where('status', 'Active'))
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->required(fn (Get $get) => $get('visibility') === 'invite_only')
+                    ->visible(fn (Get $get) => $get('visibility') === 'invite_only')
+                    ->helperText('Only invited suppliers will see this tender in the supplier portal.')
+                    ->columnSpanFull(),
+
                 TextInput::make('estimated_value')->numeric()->prefix(fn (Get $get) => Currency::symbolFor($get('currency')))->required(),
                 Select::make('currency')
                     ->label('Currency')

@@ -291,6 +291,7 @@ class EmployeeResource extends Resource
                 TextColumn::make('employment_type')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
+                        'Permanent'   => 'success',
                         'Contract'    => 'warning',
                         'Temporary'   => 'info',
                         'Consultancy' => 'primary',
@@ -345,6 +346,7 @@ class EmployeeResource extends Resource
 
                 SelectFilter::make('employment_type')
                     ->options([
+                        'Permanent'   => 'Permanent',
                         'Contract'    => 'Contract',
                         'Temporary'   => 'Temporary',
                         'Consultancy' => 'Consultancy',
