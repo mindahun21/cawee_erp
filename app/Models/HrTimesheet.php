@@ -133,10 +133,13 @@ class HrTimesheet extends Model
             $date = $h->holiday_date;
             if (!$date) continue;
             
-            if ($h->is_recurring && $date->month == $monthInt) {
-                $data['holidays'][$date->day] = $h->name;
-            } elseif (!$h->is_recurring && $date->month == $monthInt && $date->year == $yearInt) {
-                $data['holidays'][$date->day] = $h->name;
+            // Ensure it's a Carbon instance
+            $carbonDate = \Illuminate\Support\Carbon::parse($date);
+            
+            if ($h->is_recurring && $carbonDate->month == $monthInt) {
+                $data['holidays'][$carbonDate->day] = $h->name;
+            } elseif (!$h->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                $data['holidays'][$carbonDate->day] = $h->name;
             }
         }
 
@@ -144,10 +147,12 @@ class HrTimesheet extends Model
         $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
         foreach ($leaveTypeHolidays as $lty) {
             $date = $lty->holiday_date;
-            if ($lty->is_recurring && $date->month == $monthInt) {
-                $data['holidays'][$date->day] = $lty->name;
-            } elseif (!$lty->is_recurring && $date->month == $monthInt && $date->year == $yearInt) {
-                $data['holidays'][$date->day] = $lty->name;
+            $carbonDate = \Illuminate\Support\Carbon::parse($date);
+            
+            if ($lty->is_recurring && $carbonDate->month == $monthInt) {
+                $data['holidays'][$carbonDate->day] = $lty->name;
+            } elseif (!$lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                $data['holidays'][$carbonDate->day] = $lty->name;
             }
         }
 
@@ -232,10 +237,12 @@ class HrTimesheet extends Model
             $date = $h->holiday_date;
             if (!$date) continue;
 
-            if ($h->is_recurring && $date->month == $monthInt) {
-                $data['holidays'][$date->day] = $h->name;
-            } elseif (!$h->is_recurring && $date->month == $monthInt && $date->year == $yearInt) {
-                $data['holidays'][$date->day] = $h->name;
+            $carbonDate = \Illuminate\Support\Carbon::parse($date);
+
+            if ($h->is_recurring && $carbonDate->month == $monthInt) {
+                $data['holidays'][$carbonDate->day] = $h->name;
+            } elseif (!$h->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                $data['holidays'][$carbonDate->day] = $h->name;
             }
         }
 
@@ -243,10 +250,12 @@ class HrTimesheet extends Model
         $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
         foreach ($leaveTypeHolidays as $lty) {
             $date = $lty->holiday_date;
-            if ($lty->is_recurring && $date->month == $monthInt) {
-                $data['holidays'][$date->day] = $lty->name;
-            } elseif (!$lty->is_recurring && $date->month == $monthInt && $date->year == $yearInt) {
-                $data['holidays'][$date->day] = $lty->name;
+            $carbonDate = \Illuminate\Support\Carbon::parse($date);
+            
+            if ($lty->is_recurring && $carbonDate->month == $monthInt) {
+                $data['holidays'][$carbonDate->day] = $lty->name;
+            } elseif (!$lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                $data['holidays'][$carbonDate->day] = $lty->name;
             }
         }
 
