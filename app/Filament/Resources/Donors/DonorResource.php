@@ -42,6 +42,11 @@ class DonorResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['first_name', 'last_name', 'organization_name', 'email', 'phone'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
