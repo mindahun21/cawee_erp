@@ -25,11 +25,9 @@ class VehicleMaintenanceRecordResource extends Resource
 {
     protected static ?string $model = VehicleMaintenanceRecord::class;
 
+    protected static ?string $cluster = \App\Filament\Clusters\CarRentManagement::class;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
-
-    protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
-
-    protected static ?string $navigationParentItem = 'Car & Rent Management';
 
     protected static ?string $navigationLabel = 'Vehicle Maintenance';
 

@@ -74,12 +74,6 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(91)
                     ->url(fn (): string => \App\Filament\Resources\HR\Timesheets\TimesheetResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:HrTimesheet')),
-                \Filament\Navigation\NavigationItem::make('Car & Rent Management')
-                    ->group('Human Resources')
-                    ->icon('heroicon-o-truck')
-                    ->sort(92)
-                    ->url(fn (): string => \App\Filament\Resources\HR\Branches\BranchResource::getUrl())
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:HrBranch')),
                 \Filament\Navigation\NavigationItem::make('HR Settings')
                     ->group('Human Resources')
                     ->icon('heroicon-o-cog-6-tooth')
