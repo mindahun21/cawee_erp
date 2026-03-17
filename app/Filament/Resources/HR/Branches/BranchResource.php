@@ -22,13 +22,11 @@ class BranchResource extends Resource
 {
     protected static ?string $model = HrBranch::class;
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $cluster = \App\Filament\Clusters\CarRentManagement::class;
+
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
-
-    protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
-
-    protected static ?string $navigationParentItem = 'Car & Rent Management';
 
     protected static ?string $navigationLabel = 'Branches';
 
