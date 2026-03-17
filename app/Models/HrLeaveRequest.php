@@ -74,6 +74,11 @@ class HrLeaveRequest extends Model
         return $this->belongsTo(Employee::class, 'supervisor_id');
     }
 
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_id');
+    }
+
     public function supervisorApprover(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'supervisor_approved_by');
