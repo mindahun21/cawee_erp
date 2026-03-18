@@ -52,17 +52,17 @@ class VehicleServiceRequestResource extends Resource
 
             Select::make('service_type_option_id')
                 ->label('Service Type')
-                ->options(fn () => HrSettingOption::optionsFor('vehicle_service_type'))
+                ->options(HrSettingOption::optionsFor('vehicle_service_type'))
                 ->required(),
 
             Select::make('urgency_option_id')
                 ->label('Urgency')
-                ->options(fn () => HrSettingOption::optionsFor('vehicle_urgency'))
+                ->options(HrSettingOption::optionsFor('vehicle_urgency'))
                 ->required(),
 
             Select::make('provider_option_id')
                 ->label('Service Provider')
-                ->options(fn () => HrSettingOption::optionsFor('service_provider'))
+                ->options(HrSettingOption::optionsFor('service_provider'))
                 ->nullable(),
 
             Textarea::make('problem_description')->required()->rows(3)->columnSpanFull(),
@@ -100,13 +100,13 @@ class VehicleServiceRequestResource extends Resource
                 TextColumn::make('provider.label')->label('Provider')->toggleable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'Approved' => 'info',
-                        'In Service' => 'warning',
-                        'Completed' => 'success',
-                        'Rejected' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->colors([
+                        'info' => 'Approved',
+                        'warning' => 'In Service',
+                        'success' => 'Completed',
+                        'danger' => 'Rejected',
+                        'gray' => 'Pending',
+                    ]),
                 TextColumn::make('requested_at')->since()->label('Requested'),
             ])
             ->filters([

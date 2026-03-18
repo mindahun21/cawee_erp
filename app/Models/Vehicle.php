@@ -64,12 +64,12 @@ class Vehicle extends Model
 
     public function type()
     {
-        return $this->belongsTo(VehicleType::class, 'vehicle_type_id');
+        return $this->belongsTo(VehicleSetting::class, 'vehicle_type_id');
     }
 
     public function statusRecord()
     {
-        return $this->belongsTo(VehicleStatus::class, 'vehicle_status_id');
+        return $this->belongsTo(VehicleSetting::class, 'vehicle_status_id');
     }
 
     public function supplier()

@@ -37,12 +37,12 @@ class VehicleAssignmentsTable
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Active' => 'success',
-                        'Completed' => 'info',
-                        'Cancelled' => 'danger',
-                        default => 'gray',
-                    })
+                    ->colors([
+                        'success' => 'Active',
+                        'info' => 'Completed',
+                        'danger' => 'Cancelled',
+                        'gray' => static fn (string $state) => true,
+                    ])
                     ->searchable(),
             ])
             ->filters([

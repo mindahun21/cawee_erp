@@ -58,17 +58,17 @@ class VehicleServiceRequest extends Model
 
     public function serviceType(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'service_type_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'service_type_option_id');
     }
 
     public function urgencyLevel(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'urgency_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'urgency_option_id');
     }
 
     public function provider(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'provider_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'provider_option_id');
     }
 
     public function requester(): BelongsTo

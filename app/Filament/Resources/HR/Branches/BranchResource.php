@@ -46,7 +46,7 @@ class BranchResource extends Resource
 
             Select::make('branch_type_option_id')
                 ->label('Branch Type')
-                ->options(fn () => HrSettingOption::optionsFor('branch_type'))
+                ->options(HrSettingOption::optionsFor('branch_type'))
                 ->searchable()
                 ->required(),
 
@@ -77,12 +77,12 @@ class BranchResource extends Resource
                 TextColumn::make('branchType.label')->label('Type')->badge(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Active' => 'success',
-                        'Pending Agreement' => 'warning',
-                        'Closed' => 'danger',
-                        default => 'info',
-                    }),
+                    ->colors([
+                        'success' => 'Active',
+                        'warning' => 'Pending Agreement',
+                        'danger' => 'Closed',
+                        'info' => 'Requested',
+                    ]),
                 TextColumn::make('agreements_count')->counts('agreements')->label('Agreements'),
             ])
             ->filters([

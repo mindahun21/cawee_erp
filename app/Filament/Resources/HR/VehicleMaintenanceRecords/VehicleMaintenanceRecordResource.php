@@ -60,12 +60,12 @@ class VehicleMaintenanceRecordResource extends Resource
 
             Select::make('service_type_option_id')
                 ->label('Service Type')
-                ->options(fn () => HrSettingOption::optionsFor('vehicle_service_type'))
+                ->options(HrSettingOption::optionsFor('vehicle_service_type'))
                 ->nullable(),
 
             Select::make('provider_option_id')
                 ->label('Service Provider')
-                ->options(fn () => HrSettingOption::optionsFor('service_provider'))
+                ->options(HrSettingOption::optionsFor('service_provider'))
                 ->nullable(),
 
             DatePicker::make('service_date')->required(),
@@ -96,12 +96,14 @@ class VehicleMaintenanceRecordResource extends Resource
                 TextColumn::make('next_service_date')
                     ->date()
                     ->sortable()
-                    ->color(fn ($state) => $state && now()->diffInDays($state, false) <= 30 ? 'warning' : null),
+                    ->colors([
+                        'warning' => static fn ($state) => $state && now()->diffInDays($state, false) <= 30,
+                    ]),
             ])
             ->filters([
                 SelectFilter::make('service_type_option_id')
                     ->label('Service Type')
-                    ->options(fn () => HrSettingOption::optionsFor('vehicle_service_type')),
+                    ->options(HrSettingOption::optionsFor('vehicle_service_type')),
             ])
             ->defaultSort('service_date', 'desc')
             ->recordActions([EditAction::make(), DeleteAction::make()])

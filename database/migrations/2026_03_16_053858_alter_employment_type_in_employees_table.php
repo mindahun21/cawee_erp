@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE employees MODIFY COLUMN employment_type ENUM('Contract', 'Temporary', 'Consultancy', 'Other', 'Permanent') NULL");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            Schema::table('employees', function (Blueprint $table) {
+                $table->string('employment_type')->nullable()->change();
+            });
+        } else {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE employees MODIFY COLUMN employment_type ENUM('Contract', 'Temporary', 'Consultancy', 'Other', 'Permanent') NULL");
+        }
     }
 
     /**
@@ -19,6 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE employees MODIFY COLUMN employment_type ENUM('Contract', 'Temporary', 'Consultancy', 'Other') NULL");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            Schema::table('employees', function (Blueprint $table) {
+                $table->string('employment_type')->nullable()->change();
+            });
+        } else {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE employees MODIFY COLUMN employment_type ENUM('Contract', 'Temporary', 'Consultancy', 'Other') NULL");
+        }
     }
 };

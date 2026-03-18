@@ -82,20 +82,19 @@ class VehicleLicenseResource extends Resource
                 TextColumn::make('days_until_expiry')
                     ->label('Days Left')
                     ->badge()
-                    ->color(fn ($state) => match (true) {
-                        $state < 0 => 'danger',
-                        $state <= 7 => 'danger',
-                        $state <= 30 => 'warning',
-                        $state <= 60 => 'info',
-                        default => 'success',
-                    }),
+                    ->colors([
+                        'danger' => static fn ($state) => $state < 0 || $state <= 7,
+                        'warning' => static fn ($state) => $state <= 30,
+                        'info' => static fn ($state) => $state <= 60,
+                        'success' => static fn ($state) => $state > 60,
+                    ]),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'Valid' => 'success',
-                        'Expiring' => 'warning',
-                        default => 'danger',
-                    }),
+                    ->colors([
+                        'success' => 'Valid',
+                        'warning' => 'Expiring',
+                        'danger' => 'Expired',
+                    ]),
             ])
             ->filters([
                 SelectFilter::make('status')->options([

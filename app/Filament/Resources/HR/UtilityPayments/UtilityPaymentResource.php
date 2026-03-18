@@ -76,11 +76,11 @@ class UtilityPaymentResource extends Resource
                 TextColumn::make('amount')->money('ETB', true)->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'Paid' => 'success',
-                        'Overdue' => 'danger',
-                        default => 'warning',
-                    }),
+                    ->colors([
+                        'success' => 'Paid',
+                        'danger' => 'Overdue',
+                        'warning' => 'Pending',
+                    ]),
                 TextColumn::make('paid_at')->date()->placeholder('-'),
             ])
             ->filters([
