@@ -18,6 +18,7 @@ use App\Filament\Resources\HR\Settings\LayoffChecklistResource;
 use App\Filament\Resources\HR\Settings\TrainingTypeResource;
 use App\Filament\Resources\HR\Settings\HolidayResource;
 use App\Filament\Resources\HR\Settings\LeaveTypeResource;
+use App\Filament\Resources\HR\Settings\LeavePolicyResource;
 use App\Filament\Resources\HR\Settings\GradeResource;
 use Filament\Navigation\NavigationItem;
 
@@ -110,6 +111,11 @@ trait HasHrSettingsNavigation
                 ->icon('heroicon-o-adjustments-horizontal')
                 ->url(LeaveTypeResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(LeaveTypeResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Leave Policy Settings')
+                ->icon('heroicon-o-scale')
+                ->url(LeavePolicyResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(LeavePolicyResource::getRouteBaseName() . '.*')),
         ];
     }
 }
