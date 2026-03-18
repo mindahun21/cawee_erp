@@ -27,15 +27,10 @@ class LeaveRequestsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make('leave_type')
-                ->options([
-                    'Annual'    => 'Annual',
-                    'Sick'      => 'Sick',
-                    'Maternity' => 'Maternity',
-                    'Field'     => 'Field',
-                    'Unpaid'    => 'Unpaid',
-                    'Other'     => 'Other',
-                ])
+            Select::make('hr_leave_type_id')
+                ->relationship('leaveType', 'name')
+                ->searchable()
+                ->preload()
                 ->required(),
 
             DatePicker::make('start_date')->required(),
@@ -56,20 +51,15 @@ class LeaveRequestsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                TextColumn::make('leave_type')->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Annual'    => 'info',
-                        'Sick'      => 'danger',
-                        'Maternity' => 'pink',
-                        'Field'     => 'success',
-                        'Unpaid'    => 'gray',
-                        default     => 'gray',
-                    }),
+                TextColumn::make('leaveType.name')
+                    ->label('Leave type')
+                    ->badge()
+                    ->color('info'),
 
                 TextColumn::make('start_date')->date()->sortable(),
                 TextColumn::make('end_date')->date()->sortable(),
 
-                TextColumn::make('duration_in_days')->label('Days')->badge()->color('gray'),
+                TextColumn::make('duration_days')->label('Days')->badge()->color('gray'),
 
                 TextColumn::make('supervisor_status')
                     ->label('Supervisor')
