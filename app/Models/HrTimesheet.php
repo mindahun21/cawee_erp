@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 
 class HrTimesheet extends Model
@@ -96,7 +97,7 @@ class HrTimesheet extends Model
 
         // 3. Load approved leaves from HR Leave module
         $approvedLeaves = HrLeaveRequest::where('employee_id', $this->employee_id)
-            ->where('status', 'approved')
+            ->where('approval_status', HrLeaveRequest::STATUS_APPROVED)
             ->where(function ($query) {
                 $query->whereMonth('start_date', $this->month)
                       ->whereYear('start_date', $this->year)
@@ -144,15 +145,20 @@ class HrTimesheet extends Model
         }
 
         // From Leave Types which act as holidays (Fixed Dates)
-        $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
-        foreach ($leaveTypeHolidays as $lty) {
-            $date = $lty->holiday_date;
-            $carbonDate = \Illuminate\Support\Carbon::parse($date);
-            
-            if ($lty->is_recurring && $carbonDate->month == $monthInt) {
-                $data['holidays'][$carbonDate->day] = $lty->name;
-            } elseif (!$lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
-                $data['holidays'][$carbonDate->day] = $lty->name;
+        if (Schema::hasColumn('hr_leave_types', 'holiday_date')) {
+            $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
+            foreach ($leaveTypeHolidays as $lty) {
+                $date = $lty->holiday_date;
+                if (! $date) {
+                    continue;
+                }
+                $carbonDate = \Illuminate\Support\Carbon::parse($date);
+
+                if ($lty->is_recurring && $carbonDate->month == $monthInt) {
+                    $data['holidays'][$carbonDate->day] = $lty->name;
+                } elseif (! $lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                    $data['holidays'][$carbonDate->day] = $lty->name;
+                }
             }
         }
 
@@ -247,15 +253,20 @@ class HrTimesheet extends Model
         }
 
         // From Leave Types which act as holidays (Fixed Dates)
-        $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
-        foreach ($leaveTypeHolidays as $lty) {
-            $date = $lty->holiday_date;
-            $carbonDate = \Illuminate\Support\Carbon::parse($date);
-            
-            if ($lty->is_recurring && $carbonDate->month == $monthInt) {
-                $data['holidays'][$carbonDate->day] = $lty->name;
-            } elseif (!$lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
-                $data['holidays'][$carbonDate->day] = $lty->name;
+        if (Schema::hasColumn('hr_leave_types', 'holiday_date')) {
+            $leaveTypeHolidays = HrLeaveType::whereNotNull('holiday_date')->get();
+            foreach ($leaveTypeHolidays as $lty) {
+                $date = $lty->holiday_date;
+                if (! $date) {
+                    continue;
+                }
+                $carbonDate = \Illuminate\Support\Carbon::parse($date);
+
+                if ($lty->is_recurring && $carbonDate->month == $monthInt) {
+                    $data['holidays'][$carbonDate->day] = $lty->name;
+                } elseif (! $lty->is_recurring && $carbonDate->month == $monthInt && $carbonDate->year == $yearInt) {
+                    $data['holidays'][$carbonDate->day] = $lty->name;
+                }
             }
         }
 
@@ -263,7 +274,7 @@ class HrTimesheet extends Model
 
         // 2. Load Employee-specific data (Leaves & Previous Projects)
         $approvedLeaves = HrLeaveRequest::where('employee_id', $employeeId)
-            ->where('status', 'approved')
+            ->where('approval_status', HrLeaveRequest::STATUS_APPROVED)
             ->where(function ($query) use ($month, $year) {
                 $query->whereMonth('start_date', $month)->whereYear('start_date', $year)
                       ->orWhereMonth('end_date', $month)->whereYear('end_date', $year);
