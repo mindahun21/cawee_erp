@@ -126,8 +126,14 @@ class HrTimesheetSeeder extends Seeder
                 'start_date' => Carbon::now()->startOfMonth()->addDays(10), // Day 11
                 'end_date' => Carbon::now()->startOfMonth()->addDays(12),   // Day 13
                 'reason' => 'Test leave info',
-                'status' => 'approved',
-                'approved_at' => now(),
+                'approval_status' => HrLeaveRequest::STATUS_APPROVED,
+                'approval_date' => now()->toDateString(),
+                'supervisor_status' => HrLeaveRequest::STATUS_APPROVED,
+                'supervisor_approved_at' => now(),
+                'hr_status' => HrLeaveRequest::STATUS_APPROVED,
+                'hr_approved_at' => now(),
+                'director_status' => HrLeaveRequest::STATUS_APPROVED,
+                'director_approved_at' => now(),
             ]);
         }
 
