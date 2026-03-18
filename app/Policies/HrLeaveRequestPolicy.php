@@ -14,57 +14,57 @@ class HrLeaveRequestPolicy
     
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:LeaveRequest');
+        return $authUser->can('ViewAny:HrLeaveRequest');
     }
 
     public function view(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('View:LeaveRequest');
+        return $authUser->can('View:HrLeaveRequest');
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:LeaveRequest');
+        return $authUser->can('Create:HrLeaveRequest');
     }
 
     public function update(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('Update:LeaveRequest');
+        return $authUser->can('Update:HrLeaveRequest');
     }
 
     public function delete(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('Delete:LeaveRequest');
+        return $authUser->can('Delete:HrLeaveRequest');
     }
 
     public function restore(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('Restore:LeaveRequest');
+        return $authUser->can('Restore:HrLeaveRequest');
     }
 
     public function forceDelete(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('ForceDelete:LeaveRequest');
+        return $authUser->can('ForceDelete:HrLeaveRequest');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:LeaveRequest');
+        return $authUser->can('ForceDeleteAny:HrLeaveRequest');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:LeaveRequest');
+        return $authUser->can('RestoreAny:HrLeaveRequest');
     }
 
     public function replicate(AuthUser $authUser, HrLeaveRequest $hrLeaveRequest): bool
     {
-        return $authUser->can('Replicate:LeaveRequest');
+        return $authUser->can('Replicate:HrLeaveRequest');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
-        return $authUser->can('Reorder:LeaveRequest');
+        return $authUser->can('Reorder:HrLeaveRequest');
     }
 
 }
