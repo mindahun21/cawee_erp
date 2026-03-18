@@ -69,6 +69,15 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(90)
                     ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
+
+                \Filament\Navigation\NavigationItem::make('Leave Balance Report')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-chart-bar')
+                    ->sort(91)
+                    ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveBalanceReportResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
+
+
                 \Filament\Navigation\NavigationItem::make('Timesheet Management')
                     ->group('Human Resources')
                     ->icon('heroicon-o-clock')
