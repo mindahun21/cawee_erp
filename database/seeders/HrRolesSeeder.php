@@ -54,7 +54,9 @@ class HrRolesSeeder extends Seeder
             ->orWhere('name', 'like', '%payroll%')
             ->orWhere('name', 'like', '%location%')
             ->orWhere('name', 'like', '%project%')
+            ->orWhere('name', 'like', '%recruitment%')
             ->pluck('name')
+            ->unique()
             ->toArray();
 
         $readOnlyHrPermissions = Permission::where('name', 'like', 'view_%')
@@ -74,9 +76,11 @@ class HrRolesSeeder extends Seeder
                   ->orWhere('name', 'like', '%salary%')
                   ->orWhere('name', 'like', '%onboarding%')
                   ->orWhere('name', 'like', '%location%')
-                  ->orWhere('name', 'like', '%project%');
+                  ->orWhere('name', 'like', '%project%')
+                  ->orWhere('name', 'like', '%recruitment%');
             })
             ->pluck('name')
+            ->unique()
             ->toArray();
 
         // ── Role: super_admin ─────────────────────────────────────────

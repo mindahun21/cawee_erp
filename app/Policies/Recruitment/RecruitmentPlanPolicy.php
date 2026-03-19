@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Policies;
+namespace App\Policies\Recruitment;
 
 use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\RecruitmentPlan;
+use App\Models\Recruitment\RecruitmentPlan;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RecruitmentPlanPolicy

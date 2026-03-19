@@ -49,6 +49,8 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Recruitment')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Procurement')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
@@ -97,6 +99,16 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Resources\Procurement\Settings\ApprovalWorkflowResource::getRouteBaseName() . '.*',
                         \App\Filament\Resources\Procurement\Budgets\ProcurementBudgetResource::getRouteBaseName() . '.*',
                     ])),
+
+                \Filament\Navigation\NavigationItem::make('Settings')
+                    ->group('Recruitment')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(99)
+                    ->url(fn (): string => \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs([
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getRouteBaseName() . '.*',
+                    ]))
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill')),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
