@@ -30,12 +30,14 @@ class MeLocationMapPlaceholderWidget extends BaseWidget
         $locations = $this->getLocationStats()->keys()->values()->all();
 
         $query = MeIndicatorReport::query()
-            ->selectRaw('MIN(id) as id, scope_location')
-            ->whereNotNull('scope_location')
             ->when($locations === [], fn (Builder $builder) => $builder->whereRaw('1 = 0'))
-            ->when($locations !== [], fn (Builder $builder) => $builder->whereIn('scope_location', $locations))
-            ->groupBy('scope_location')
-            ->orderBy('scope_location');
+            ->when($locations !== [], fn (Builder $builder) => $builder->whereIn('id', function ($sub) use ($locations) {
+                $sub->selectRaw('MIN(id)')
+                    ->from('me_indicator_reports')
+                    ->whereNotNull('scope_location')
+                    ->whereIn('scope_location', $locations)
+                    ->groupBy('scope_location');
+            }));
 
         return $table
             ->query($query)
