@@ -6,6 +6,7 @@ use App\Filament\Resources\ME\ProjectResource\Pages\CreateProject;
 use App\Filament\Resources\ME\ProjectResource\Pages\EditProject;
 use App\Filament\Resources\ME\ProjectResource\Pages\ListProjects;
 use App\Filament\Resources\ME\ProjectResource\Pages\ViewProject;
+use App\Filament\Resources\ME\ProjectResource\RelationManagers\FeedbackRelationManager;
 use App\Filament\Resources\ME\Support\MeAuditTrail;
 use App\Models\ME\MeProject;
 use BackedEnum;
@@ -119,14 +120,20 @@ class ProjectResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            FeedbackRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => ListProjects::route('/'),
+            'index'  => ListProjects::route('/'),
             'create' => CreateProject::route('/create'),
-            'view' => ViewProject::route('/{record}'),
-            'edit' => EditProject::route('/{record}/edit'),
+            'view'   => ViewProject::route('/{record}'),
+            'edit'   => EditProject::route('/{record}/edit'),
         ];
     }
 }
-

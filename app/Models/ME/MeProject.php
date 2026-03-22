@@ -31,4 +31,24 @@ class MeProject extends Model
     {
         return $this->hasMany(MeIndicator::class, 'project_id');
     }
+
+    public function feedbacks(): HasMany
+    {
+        return $this->hasMany(MeBeneficiaryFeedback::class, 'project_id');
+    }
+
+    public function reportingPeriods(): HasMany
+    {
+        return $this->hasMany(MeReportingPeriod::class, 'project_id');
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(MeBeneficiaryEnrollment::class, 'project_id');
+    }
+
+    public function baselineAssessments(): HasMany
+    {
+        return $this->hasMany(MeBaselineAssessment::class, 'project_id');
+    }
 }

@@ -18,11 +18,15 @@ class MeIndicatorTarget extends Model
 
     protected $fillable = [
         'indicator_id',
+        'reporting_period_id',
         'period_start',
         'period_end',
+        'target_min',
+        'target_max',
         'target_value',
         'scope_location',
         'scope_project',
+        'notes',
     ];
 
     protected $casts = [
@@ -90,5 +94,10 @@ class MeIndicatorTarget extends Model
     public function indicator(): BelongsTo
     {
         return $this->belongsTo(MeIndicator::class, 'indicator_id');
+    }
+
+    public function reportingPeriod(): BelongsTo
+    {
+        return $this->belongsTo(MeReportingPeriod::class, 'reporting_period_id');
     }
 }
