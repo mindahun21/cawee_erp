@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -15,18 +16,22 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('vehicles', function (Blueprint $table) {
-            try {
-                $table->dropForeign(['vehicle_type_id']);
-            } catch (\Exception $e) {
-                // Ignore if FK doesn't exist
-            }
-            try {
-                $table->dropForeign(['vehicle_status_id']);
-            } catch (\Exception $e) {
-                // Ignore if FK doesn't exist
-            }
+        $schema = DB::getDatabaseName();
+        $fks = DB::table('information_schema.TABLE_CONSTRAINTS')
+            ->where('TABLE_SCHEMA', $schema)
+            ->where('TABLE_NAME', 'vehicles')
+            ->where('CONSTRAINT_TYPE', 'FOREIGN KEY')
+            ->pluck('CONSTRAINT_NAME')
+            ->all();
 
+        if (in_array('vehicles_vehicle_type_id_foreign', $fks, true)) {
+            DB::statement('ALTER TABLE `vehicles` DROP FOREIGN KEY `vehicles_vehicle_type_id_foreign`');
+        }
+        if (in_array('vehicles_vehicle_status_id_foreign', $fks, true)) {
+            DB::statement('ALTER TABLE `vehicles` DROP FOREIGN KEY `vehicles_vehicle_status_id_foreign`');
+        }
+
+        Schema::table('vehicles', function (Blueprint $table) {
             if (Schema::hasColumn('vehicles', 'vehicle_type_id')) {
                 $table->foreign('vehicle_type_id')->references('id')->on('hr_setting_options');
             }
@@ -45,18 +50,22 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('vehicles', function (Blueprint $table) {
-            try {
-                $table->dropForeign(['vehicle_type_id']);
-            } catch (\Exception $e) {
-                // Ignore if FK doesn't exist
-            }
-            try {
-                $table->dropForeign(['vehicle_status_id']);
-            } catch (\Exception $e) {
-                // Ignore if FK doesn't exist
-            }
+        $schema = DB::getDatabaseName();
+        $fks = DB::table('information_schema.TABLE_CONSTRAINTS')
+            ->where('TABLE_SCHEMA', $schema)
+            ->where('TABLE_NAME', 'vehicles')
+            ->where('CONSTRAINT_TYPE', 'FOREIGN KEY')
+            ->pluck('CONSTRAINT_NAME')
+            ->all();
 
+        if (in_array('vehicles_vehicle_type_id_foreign', $fks, true)) {
+            DB::statement('ALTER TABLE `vehicles` DROP FOREIGN KEY `vehicles_vehicle_type_id_foreign`');
+        }
+        if (in_array('vehicles_vehicle_status_id_foreign', $fks, true)) {
+            DB::statement('ALTER TABLE `vehicles` DROP FOREIGN KEY `vehicles_vehicle_status_id_foreign`');
+        }
+
+        Schema::table('vehicles', function (Blueprint $table) {
             if (Schema::hasColumn('vehicles', 'vehicle_type_id')) {
                 $table->foreign('vehicle_type_id')->references('id')->on('vehicle_types');
             }
