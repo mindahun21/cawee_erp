@@ -171,15 +171,18 @@ class EmployeeResource extends Resource
                                 ->preload()
                                 ->nullable(),
 
-                            Select::make('employment_type_id')
+                            Select::make('employment_type')
                                 ->label('Employment Type')
-                                ->relationship('employmentType', 'name')
+                                ->options([
+                                    'Contract'    => 'Contract',
+                                    'Temporary'   => 'Temporary',
+                                    'Consultancy' => 'Consultancy',
+                                    'Other'       => 'Other',
+                                ])
                                 ->searchable()
                                 ->preload()
                                 ->nullable()
-                                ->createOptionForm([
-                                    TextInput::make('name')->required()->unique('employment_types', 'name'),
-                                ]),
+                                ->native(false),
 
                             DatePicker::make('date_of_employment')
                                 ->required(),
@@ -318,10 +321,10 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('employmentType.name')
+                TextColumn::make('employment_type')
                     ->label('Employment Type')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Permanent'   => 'success',
                         'Contract'    => 'warning',
                         'Temporary'   => 'info',
@@ -378,9 +381,14 @@ class EmployeeResource extends Resource
                         'F' => 'Female',
                     ]),
 
-                SelectFilter::make('employment_type_id')
+                SelectFilter::make('employment_type')
                     ->label('Employment Type')
-                    ->relationship('employmentType', 'name'),
+                    ->options([
+                        'Contract'    => 'Contract',
+                        'Temporary'   => 'Temporary',
+                        'Consultancy' => 'Consultancy',
+                        'Other'       => 'Other',
+                    ]),
 
                 SelectFilter::make('location_id')
                     ->label('Location')
