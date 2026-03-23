@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Migrate data from projects to hr_projects if projects table exists
-        if (Schema::hasTable('projects')) {
+        if (Schema::hasTable('projects') && Schema::hasTable('hr_projects')) {
             $projects = DB::table('projects')->get();
             foreach ($projects as $project) {
                 // Determine the ID (it's project_id in the legacy table)
@@ -33,7 +33,7 @@ return new class extends Migration
         }
 
         // 2. Fix asset_assignments foreign key
-        if (Schema::hasTable('asset_assignments')) {
+        if (Schema::hasTable('asset_assignments') && Schema::hasTable('hr_projects')) {
             Schema::table('asset_assignments', function (Blueprint $table) {
                 try {
                     $table->dropForeign(['project_id']);
@@ -46,10 +46,7 @@ return new class extends Migration
             });
         }
 
-        // 3. Drop the legacy projects table
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('projects');
-        Schema::enableForeignKeyConstraints();
+        // 3. Do not drop legacy projects table automatically to avoid data loss.
     }
 
     /**

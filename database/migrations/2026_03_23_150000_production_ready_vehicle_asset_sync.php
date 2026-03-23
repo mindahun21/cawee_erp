@@ -28,7 +28,18 @@ return new class extends Migration
             $indexes = Schema::getIndexes('assets');
             $hasIndex = collect($indexes)->contains('name', $indexName);
 
-            if (!$hasIndex) {
+            $hasDuplicates = false;
+            if (Schema::hasColumn('assets', 'asset_tag')) {
+                $hasDuplicates = DB::table('assets')
+                    ->select('asset_tag')
+                    ->whereNotNull('asset_tag')
+                    ->groupBy('asset_tag')
+                    ->havingRaw('COUNT(*) > 1')
+                    ->limit(1)
+                    ->exists();
+            }
+
+            if (!$hasIndex && !$hasDuplicates && Schema::hasColumn('assets', 'asset_tag')) {
                  Schema::table('assets', function (Blueprint $table) use ($indexName) {
                      $table->unique('asset_tag', $indexName);
                  });
