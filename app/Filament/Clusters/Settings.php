@@ -16,5 +16,5 @@ class Settings extends Cluster
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 1000;
 }

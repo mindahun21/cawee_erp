@@ -49,6 +49,24 @@ class PrefixSettingSeeder extends Seeder
                 'prefix' => 'RFID-',
                 'next_number' => 1,
             ],
+            [
+                'key' => 'item_code',
+                'display_name' => 'Item Code',
+                'prefix' => 'ITEM-',
+                'next_number' => 1,
+            ],
+            [
+                'key' => 'asset_tag',
+                'display_name' => 'Asset Tag',
+                'prefix' => 'TAG-',
+                'next_number' => 1,
+            ],
+            [
+                'key' => 'asset_assignment_no',
+                'display_name' => 'Asset Assignment No',
+                'prefix' => 'ASN-',
+                'next_number' => 1,
+            ],
         ];
 
         foreach ($settings as $setting) {

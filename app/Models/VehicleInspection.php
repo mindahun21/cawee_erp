@@ -13,6 +13,7 @@ class VehicleInspection extends Model
     protected $table = 'hr_vehicle_inspections';
 
     protected $fillable = [
+        'vehicle_id',
         'asset_id',
         'inspection_date',
         'inspection_expiry_date',
@@ -39,6 +40,11 @@ class VehicleInspection extends Model
     }
 
     public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    }
+
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }

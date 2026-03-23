@@ -24,7 +24,7 @@ class AssetResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $navigationLabel = 'Assets';
 

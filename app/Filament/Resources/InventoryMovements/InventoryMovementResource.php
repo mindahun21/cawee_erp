@@ -23,7 +23,7 @@ class InventoryMovementResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $recordTitleAttribute = 'reference_no';
 

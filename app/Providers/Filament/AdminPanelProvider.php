@@ -92,7 +92,6 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(93)
                     ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:Department')),
-
                 \Filament\Navigation\NavigationItem::make('Settings')
                     ->group('Procurement')
                     ->icon('heroicon-o-cog-6-tooth')

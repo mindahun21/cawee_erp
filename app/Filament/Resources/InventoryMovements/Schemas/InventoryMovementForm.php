@@ -18,11 +18,22 @@ class InventoryMovementForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->columns(1)
+            ->columns(['default' => 1])
             ->components([
                 Section::make('Movement Details')
-                    ->columns(2)
+                    ->columns(['default' => 2])
                     ->schema([
+                        Select::make('movement_type')
+                            ->label('Movement Type')
+                            ->options([
+                                'in' => 'Stock In (from Supplier)',
+                                'out' => 'Stock Out (to Usage)',
+                                'transfer' => 'Internal Transfer',
+                            ])
+                            ->required()
+                            ->live()
+                            ->columnSpanFull(),
+
                         Select::make('item_id')
                             ->relationship('item', 'name')
                             ->required()
@@ -41,24 +52,28 @@ class InventoryMovementForm
                                     });
                                 }
                             })
-                            ->required()
+                            ->required(fn (Get $get) => in_array($get('movement_type'), ['out', 'transfer']))
+                            ->visible(fn (Get $get) => in_array($get('movement_type'), ['out', 'transfer']))
                             ->searchable()
                             ->preload()
                             ->live(),
 
                         Select::make('reason_id')
                             ->label('Reason')
-                            ->relationship('movementReason', 'name')
+                            ->relationship('reason', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')->required()->unique('inventory_movement_reasons', 'name'),
+                            ]),
 
                         TextInput::make('quantity')
                             ->numeric()
                             ->default(1)
                             ->required()
                             ->live()
-                            ->rules([
+                            ->rule(
                                 function (Get $get) {
                                     return function (string $attribute, $value, $fail) use ($get) {
                                         $itemId = $get('item_id');
@@ -79,7 +94,7 @@ class InventoryMovementForm
                                         }
                                     };
                                 },
-                            ]),
+                            ),
 
                         DatePicker::make('date')
                             ->default(now())
@@ -87,10 +102,13 @@ class InventoryMovementForm
 
                         Select::make('status_id')
                             ->label('Status')
-                            ->relationship('movementStatus', 'name')
+                            ->relationship('status', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')->required()->unique('inventory_movement_statuses', 'name'),
+                            ]),
 
                         TextInput::make('reference_no')
                             ->label('Reference Number / Ticket')
@@ -103,6 +121,14 @@ class InventoryMovementForm
                             ->searchable()
                             ->preload()
                             ->required(),
+
+                        Select::make('approved_by_id')
+                            ->label('Approved By')
+                            ->relationship('approvedBy', 'first_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
+                            ->searchable()
+                            ->preload()
+                            ->hint('Required for large movements'),
                         
                         Checkbox::make('confirm_min_stock')
                             ->label('Acknowledge: Stock will drop below minimum level')
@@ -130,7 +156,7 @@ class InventoryMovementForm
                     ]),
 
                 Section::make('Destination Information')
-                    ->columns(2)
+                    ->columns(['default' => 2])
                     ->schema([
                         Radio::make('destination_type')
                             ->options([
@@ -165,9 +191,13 @@ class InventoryMovementForm
                             ->visible(fn (Get $get) => $get('destination_type') === 'location_department'),
                     ]),
 
-                Section::make('Remarks')
+                Section::make('Remarks & Attachments')
                     ->schema([
                         Textarea::make('remarks')
+                            ->columnSpanFull(),
+                        \Filament\Forms\Components\FileUpload::make('attachments')
+                            ->multiple()
+                            ->directory('movements')
                             ->columnSpanFull(),
                     ]),
             ]);

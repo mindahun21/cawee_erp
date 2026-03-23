@@ -10,6 +10,6 @@ class AssetCategory extends Model
 
     public function assets()
     {
-        return $this->hasMany(Asset::class);
+        return $this->hasManyThrough(Asset::class, AssetModel::class);
     }
 }

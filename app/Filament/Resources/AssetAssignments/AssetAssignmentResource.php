@@ -23,7 +23,7 @@ class AssetAssignmentResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 50;
 
     protected static ?string $recordTitleAttribute = 'id';
 

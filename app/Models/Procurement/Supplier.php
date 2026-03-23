@@ -30,7 +30,7 @@ class Supplier extends Authenticatable
         // Bank
         'bank_name', 'bank_account', 'bank_branch', 'bank_swift', 'bank_iban',
         // Financial
-        'currency', 'payment_terms', 'return_policy', 'default_language',
+        'currency', 'payment_terms', 'payment_term_id', 'return_policy', 'default_language',
         // Meta
         'logo_path', 'registration_date', 'contract_expiry_date',
     ];
@@ -58,6 +58,11 @@ class Supplier extends Authenticatable
     public function purchaseOrders(): HasMany { return $this->hasMany(PurchaseOrder::class); }
     public function invoices(): HasMany     { return $this->hasMany(Invoice::class); }
     public function payments(): HasMany     { return $this->hasMany(Payment::class); }
+
+    public function paymentTerm()
+    {
+        return $this->belongsTo(PaymentTerm::class, 'payment_term_id');
+    }
 
     // ── Computed ────────────────────────────────────────────────────
     public function getStatusColorAttribute(): string

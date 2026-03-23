@@ -79,7 +79,7 @@ class GenerateHrCarRentAlerts extends Command
                 ->get();
 
             foreach ($licenses as $license) {
-                $plate = $license->vehicle?->vehicleDetail?->plate_number ?? 'Unknown Plate';
+                $plate = $license->vehicle?->plate_number ?? 'Unknown Plate';
                 $key = 'hr_alert_bolo_' . $license->id . '_' . $days . '_' . now()->toDateString();
                 $this->sendUnique(
                     $key,
@@ -102,7 +102,7 @@ class GenerateHrCarRentAlerts extends Command
                 ->get();
 
             foreach ($inspections as $inspection) {
-                $plate = $inspection->vehicle?->vehicleDetail?->plate_number ?? 'Unknown Plate';
+                $plate = $inspection->vehicle?->plate_number ?? 'Unknown Plate';
                 $key = 'hr_alert_inspection_' . $inspection->id . '_' . $days . '_' . now()->toDateString();
                 $this->sendUnique(
                     $key,
@@ -163,7 +163,7 @@ class GenerateHrCarRentAlerts extends Command
             ->get();
 
         foreach ($records as $record) {
-            $plate = $record->vehicle?->vehicleDetail?->plate_number ?? 'Unknown Plate';
+            $plate = $record->vehicle?->plate_number ?? 'Unknown Plate';
             $key = 'hr_alert_maintenance_' . $record->id . '_' . now()->toDateString();
             $this->sendUnique(
                 $key,

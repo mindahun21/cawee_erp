@@ -14,6 +14,7 @@ class VehicleMaintenance extends Model
         'vehicle_id',
         'service_date',
         'service_type',
+        'service_type_id',
         'description',
         'cost',
         'next_service_date',
@@ -29,5 +30,10 @@ class VehicleMaintenance extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function serviceTypeRecord()
+    {
+        return $this->belongsTo(VehicleServiceType::class, 'service_type_id');
     }
 }

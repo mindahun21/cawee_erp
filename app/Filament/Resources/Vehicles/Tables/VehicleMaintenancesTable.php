@@ -21,7 +21,8 @@ class VehicleMaintenancesTable
                     ->label('Vehicle')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('service_type')
+                TextColumn::make('serviceTypeRecord.name')
+                    ->label('Service Type')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('service_date')

@@ -20,11 +20,11 @@ class InventoryMovementStatusResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-check-circle';
 
-    protected static ?string $navigationLabel = 'Inventory Movement Statuses';
+    protected static ?string $navigationLabel = 'Movement Statuses';
+
+    protected static ?int $navigationSort = 19;
     
     protected static ?string $pluralLabel = 'Inventory Movement Statuses';
-
-    protected static ?int $navigationSort = 16;
 
     public static function form(Schema $schema): Schema
     {

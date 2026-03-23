@@ -38,7 +38,7 @@ class AgreementRenewal extends Model
 
     public function decision(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'decision_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'decision_option_id');
     }
 
     public function approver(): BelongsTo

@@ -29,6 +29,25 @@ class WarehouseForm
                                 TextInput::make('name')
                                     ->required()
                                     ->label('Warehouse Name'),
+                                Select::make('manager_id')
+                                    ->label('Warehouse Manager')
+                                    ->relationship('manager', 'first_name')
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                                    ->searchable()
+                                    ->preload(),
+                                Select::make('warehouse_type_id')
+                                    ->label('Warehouse Type')
+                                    ->relationship('warehouseType', 'name')
+                                    ->required()
+                                    ->preload()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->unique('warehouse_types', 'name'),
+                                    ]),
+                                \Filament\Forms\Components\Toggle::make('is_active')
+                                    ->label('Is Active?')
+                                    ->default(true)
+                                    ->columnSpanFull(),
                             ]),
                         Grid::make(2)
                             ->schema([
@@ -56,10 +75,15 @@ class WarehouseForm
                                 TextInput::make('postal_code')
                                     ->label('Postal Code'),
                             ]),
-                        Select::make('country')
-                            ->options(config('countries'))
+                        Select::make('country_id')
+                            ->relationship('country', 'name')
                             ->searchable()
-                            ->label('Country'),
+                            ->preload()
+                            ->label('Country')
+                            ->createOptionForm([
+                                TextInput::make('name')->required()->unique('countries', 'name'),
+                                TextInput::make('code')->label('Country Code (Optional)'),
+                            ]),
                     ]),
                 Section::make('Additional Information')
                     ->schema([

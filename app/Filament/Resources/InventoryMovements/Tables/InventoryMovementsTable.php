@@ -48,7 +48,7 @@ class InventoryMovementsTable
                     }),
                 \Filament\Tables\Columns\TextColumn::make('quantity')
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('movementStatus.name')
+                \Filament\Tables\Columns\TextColumn::make('status.name')
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -59,7 +59,7 @@ class InventoryMovementsTable
                         default => 'gray',
                     })
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('movementReason.name')
+                \Filament\Tables\Columns\TextColumn::make('reason.name')
                     ->label('Reason')
                     ->sortable()
                     ->toggleable(),
@@ -75,12 +75,12 @@ class InventoryMovementsTable
                     ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('reason_id')
                     ->label('Reason')
-                    ->relationship('movementReason', 'name')
+                    ->relationship('reason', 'name')
                     ->searchable()
                     ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
-                    ->relationship('movementStatus', 'name')
+                    ->relationship('status', 'name')
                     ->searchable()
                     ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('from_warehouse_id')
@@ -110,15 +110,14 @@ class InventoryMovementsTable
                     ->searchable()
                     ->preload(),
             ])
-            ->filtersLayout(FiltersLayout::AboveContent)
-            ->filtersFormColumns(3)
+            ->filtersLayout(FiltersLayout::Modal)
             ->recordActions([
                 \Filament\Actions\Action::make('approve')
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('info')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->movementStatus?->name === 'Pending Approval')
+                    ->visible(fn ($record) => $record->status?->name === 'Pending Approval')
                     ->action(function ($record) {
                         $status = \App\Models\InventoryMovementStatus::where('name', 'In Transit')->first();
                         if ($status) {
@@ -130,7 +129,7 @@ class InventoryMovementsTable
                     ->icon('heroicon-o-inbox-arrow-down')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->movementStatus?->name === 'In Transit')
+                    ->visible(fn ($record) => $record->status?->name === 'In Transit')
                     ->action(function ($record) {
                         $status = \App\Models\InventoryMovementStatus::where('name', 'Completed / Received')->first();
                         if ($status) {
@@ -142,7 +141,7 @@ class InventoryMovementsTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->movementStatus?->name === 'Pending Approval')
+                    ->visible(fn ($record) => $record->status?->name === 'Pending Approval')
                     ->action(function ($record) {
                         $status = \App\Models\InventoryMovementStatus::where('name', 'Rejected')->first();
                         if ($status) {

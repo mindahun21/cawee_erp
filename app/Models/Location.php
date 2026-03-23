@@ -24,4 +24,9 @@ class Location extends Model
     {
         return $this->hasMany(Project::class, 'location_id');
     }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class, 'location_id');
+    }
 }

@@ -33,13 +33,13 @@ class VehiclesTable
                 TextColumn::make('statusRecord.name')
                     ->label('Status')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
-                        'Available' => 'success',
-                        'Assigned' => 'info',
-                        'Maintenance' => 'warning',
-                        'Out of Service' => 'danger',
-                        default => 'gray',
-                    })
+                    ->colors([
+                        'success' => 'Available',
+                        'info' => 'Assigned',
+                        'warning' => 'Maintenance',
+                        'danger' => 'Out of Service',
+                        'gray' => static fn ($state) => true,
+                    ])
                     ->sortable(),
                 TextColumn::make('currentLocation.location_name')
                     ->label('Location')
