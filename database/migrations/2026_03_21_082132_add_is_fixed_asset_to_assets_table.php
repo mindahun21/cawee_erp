@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('assets') || Schema::hasColumn('assets', 'is_fixed_asset')) {
+            return;
+        }
+
         Schema::table('assets', function (Blueprint $table) {
             $table->boolean('is_fixed_asset')->default(true)->after('unit_id');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('assets') || !Schema::hasColumn('assets', 'is_fixed_asset')) {
+            return;
+        }
+
         Schema::table('assets', function (Blueprint $table) {
             $table->dropColumn('is_fixed_asset');
         });
