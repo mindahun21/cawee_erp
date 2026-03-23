@@ -11,12 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('vehicles', function (Blueprint $table) {
-            $table->dropForeign(['vehicle_type_id']);
-            $table->dropForeign(['vehicle_status_id']);
+        if (!Schema::hasTable('vehicles')) {
+            return;
+        }
 
-            $table->foreign('vehicle_type_id')->references('id')->on('hr_setting_options');
-            $table->foreign('vehicle_status_id')->references('id')->on('hr_setting_options')->onDelete('cascade');
+        Schema::table('vehicles', function (Blueprint $table) {
+            try {
+                $table->dropForeign(['vehicle_type_id']);
+            } catch (\Exception $e) {
+                // Ignore if FK doesn't exist
+            }
+            try {
+                $table->dropForeign(['vehicle_status_id']);
+            } catch (\Exception $e) {
+                // Ignore if FK doesn't exist
+            }
+
+            if (Schema::hasColumn('vehicles', 'vehicle_type_id')) {
+                $table->foreign('vehicle_type_id')->references('id')->on('hr_setting_options');
+            }
+            if (Schema::hasColumn('vehicles', 'vehicle_status_id')) {
+                $table->foreign('vehicle_status_id')->references('id')->on('hr_setting_options')->onDelete('cascade');
+            }
         });
     }
 
@@ -25,12 +41,28 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('vehicles', function (Blueprint $table) {
-            $table->dropForeign(['vehicle_type_id']);
-            $table->dropForeign(['vehicle_status_id']);
+        if (!Schema::hasTable('vehicles')) {
+            return;
+        }
 
-            $table->foreign('vehicle_type_id')->references('id')->on('vehicle_types');
-            $table->foreign('vehicle_status_id')->references('id')->on('vehicle_statuses')->onDelete('cascade');
+        Schema::table('vehicles', function (Blueprint $table) {
+            try {
+                $table->dropForeign(['vehicle_type_id']);
+            } catch (\Exception $e) {
+                // Ignore if FK doesn't exist
+            }
+            try {
+                $table->dropForeign(['vehicle_status_id']);
+            } catch (\Exception $e) {
+                // Ignore if FK doesn't exist
+            }
+
+            if (Schema::hasColumn('vehicles', 'vehicle_type_id')) {
+                $table->foreign('vehicle_type_id')->references('id')->on('vehicle_types');
+            }
+            if (Schema::hasColumn('vehicles', 'vehicle_status_id')) {
+                $table->foreign('vehicle_status_id')->references('id')->on('vehicle_statuses')->onDelete('cascade');
+            }
         });
     }
 };
