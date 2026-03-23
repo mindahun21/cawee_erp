@@ -9,22 +9,29 @@ class RecruitmentStatsWidget extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
-        $activePlans = \App\Models\Recruitment\RecruitmentPlan::where('status', '!=', 'closed')->count();
-        $totalVacancies = \App\Models\Recruitment\RecruitmentPlan::where('status', '!=', 'closed')->sum('vacancies_needed');
-        $skillsCount = \App\Models\Recruitment\RecruitmentSkill::count();
+        $nonClosedPlans = \App\Models\Recruitment\RecruitmentPlan::where('status', '!=', 'Closed');
+        
+        $totalVacancies = (clone $nonClosedPlans)->sum('vacancies_needed');
+        $approvedPlans = (clone $nonClosedPlans)->where('status', 'Approved')->count();
+        $pendingPlans = (clone $nonClosedPlans)->where('status', 'Submitted')->count();
+        $activeChannels = \App\Models\Recruitment\RecruitmentChannel::where('status', 'active')->count();
 
         return [
-            Stat::make('Active Recruitment Plans', $activePlans)
-                ->description('Currently ongoing plans')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('primary'),
-            Stat::make('Total Vacancies to Fill', $totalVacancies)
-                ->description('Sum of all open positions')
+            Stat::make('Total Vacancies', $totalVacancies)
+                ->description('Across all active plans')
                 ->descriptionIcon('heroicon-m-users')
+                ->color('primary'),
+            Stat::make('Approved Plans', $approvedPlans)
+                ->description('Ready for sourcing')
+                ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
-            Stat::make('Registered Skills', $skillsCount)
-                ->description('Unique skills tracked')
-                ->descriptionIcon('heroicon-m-shield-check')
+            Stat::make('Pending Approvals', $pendingPlans)
+                ->description('Awaiting workflow action')
+                ->descriptionIcon('heroicon-m-clock')
+                ->color('warning'),
+            Stat::make('Active Channels', $activeChannels)
+                ->description('Current sourcing platforms')
+                ->descriptionIcon('heroicon-m-megaphone')
                 ->color('info'),
         ];
     }

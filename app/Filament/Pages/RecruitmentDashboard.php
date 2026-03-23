@@ -10,7 +10,8 @@ class RecruitmentDashboard extends Dashboard
 {
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
-    protected static ?string $title = 'Recruitment Dashboard';
+    protected static ?string $title = 'Dashboard';
+    protected static ?string $navigationLabel = 'Dashboard';
     protected static ?int $navigationSort = 1;
     
     protected static string $routePath = 'recruitment-dashboard'; 
@@ -21,6 +22,7 @@ class RecruitmentDashboard extends Dashboard
             \App\Filament\Widgets\Recruitment\RecruitmentStatsWidget::class,
             \App\Filament\Widgets\Recruitment\RecruitmentPlansChart::class,
             \App\Filament\Widgets\Recruitment\RecruitmentSkillsChart::class,
+            \App\Filament\Widgets\Recruitment\LatestRecruitmentPlansWidget::class,
         ];
     }
 }

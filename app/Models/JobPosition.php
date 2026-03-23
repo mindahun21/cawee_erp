@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Recruitment\RecruitmentSkill;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobPosition extends Model
@@ -44,17 +46,13 @@ class JobPosition extends Model
         return $this->belongsTo(Grade::class);
     }
 
-    /**
-     * Required skills for this job position.
-     */
-    public function skills(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function skills(): BelongsToMany
     {
         return $this->belongsToMany(
-            Recruitment\RecruitmentSkill::class,
-            'recruitment_job_position_skills',
+            RecruitmentSkill::class,
+            'recruitment_job_position_skill',
             'job_position_id',
             'recruitment_skill_id'
-        )->withPivot(['is_required', 'min_proficiency'])
-         ->withTimestamps();
+        );
     }
 }

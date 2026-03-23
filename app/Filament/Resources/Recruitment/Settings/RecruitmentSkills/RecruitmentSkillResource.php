@@ -22,7 +22,7 @@ class RecruitmentSkillResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static ?string $navigationLabel = 'Recruitment Skills';
+    protected static ?string $navigationLabel = 'Skills';
 
     public static function form(Schema $schema): Schema
     {

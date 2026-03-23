@@ -16,11 +16,13 @@ class RecruitmentSkillsTable
                 \Filament\Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('category')
+                \Filament\Tables\Columns\TextColumn::make('category.name')
+                    ->label('Category')
                     ->badge()
                     ->color('info')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->default('—'),
             ])
             ->filters([
                 //
@@ -36,3 +38,4 @@ class RecruitmentSkillsTable
             ]);
     }
 }
+

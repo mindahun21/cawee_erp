@@ -23,3 +23,4 @@ Homestead.yaml
 Thumbs.db
 /database/database.db
 docker-compose-mdev.yml
+/database/seeders/RecruitmentTestSeeder.php

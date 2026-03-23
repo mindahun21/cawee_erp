@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies\Recruitment;
 
-use App\Models\Recruitment\Recruitment\RecruitmentChannel;
+use App\Models\Recruitment\RecruitmentChannel;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

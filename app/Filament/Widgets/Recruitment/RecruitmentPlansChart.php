@@ -6,25 +6,26 @@ use Filament\Widgets\ChartWidget;
 
 class RecruitmentPlansChart extends ChartWidget
 {
-    protected ?string $heading = 'Active Plans by Department';
+    protected ?string $heading = 'Vacancies by Department';
 
     protected function getData(): array
     {
-        $data = \App\Models\Recruitment\RecruitmentPlan::with('department')
-            ->where('status', '!=', 'closed')
-            ->select('department_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('department_id')
+        $data = \App\Models\Recruitment\RecruitmentPlan::query()
+            ->join('hr_departments', 'hr_departments.id', '=', 'recruitment_plans.department_id')
+            ->where('recruitment_plans.status', '!=', 'Closed')
+            ->selectRaw('hr_departments.name as dept_name, sum(vacancies_needed) as total')
+            ->groupBy('hr_departments.name')
             ->get();
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Active Plans',
+                    'label' => 'Total Vacancies',
                     'data' => $data->pluck('total')->toArray(),
                     'backgroundColor' => '#f59e0b',
                 ],
             ],
-            'labels' => $data->map(fn ($item) => $item->department?->name ?? 'Unknown')->toArray(),
+            'labels' => $data->pluck('dept_name')->toArray(),
         ];
     }
 

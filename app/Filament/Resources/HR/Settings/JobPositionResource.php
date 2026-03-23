@@ -91,32 +91,13 @@ class JobPositionResource extends Resource
                 RichEditor::make('requirements')
                     ->columnSpanFull(),
 
-                \Filament\Forms\Components\Repeater::make('skills')
-                    ->relationship('skills')
-                    ->schema([
-                        Select::make('recruitment_skill_id')
-                            ->label('Skill')
-                            ->options(\App\Models\Recruitment\RecruitmentSkill::all()->pluck('name', 'id')->toArray())
-                            ->required()
-                            ->searchable()
-                            ->distinct()
-                            ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
-                        Select::make('min_proficiency')
-                            ->label('Min. Proficiency')
-                            ->options([
-                                'Beginner' => 'Beginner',
-                                'Intermediate' => 'Intermediate',
-                                'Advanced' => 'Advanced',
-                                'Expert' => 'Expert',
-                            ])
-                            ->required(),
-                        Toggle::make('is_required')
-                            ->label('Required')
-                            ->default(true),
-                    ])
-                    ->columns(['default' => 3])
-                    ->columnSpanFull()
-                    ->itemLabel(fn (array $state): ?string => \App\Models\Recruitment\RecruitmentSkill::find($state['recruitment_skill_id'] ?? null)?->name ?? 'Skill'),
+                Select::make('skills')
+                    ->label('Required Skills')
+                    ->relationship('skills', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
             ]),
         ]);
     }
@@ -193,21 +174,11 @@ class JobPositionResource extends Resource
             Section::make('Required Skills')
                 ->columnSpanFull()
                 ->schema([
-                    \Filament\Infolists\Components\RepeatableEntry::make('skills')
-                        ->hiddenLabel()
-                        ->schema([
-                            TextEntry::make('name')
-                                ->label('Skill'),
-                            TextEntry::make('pivot.min_proficiency')
-                                ->label('Proficiency Level')
-                                ->badge()
-                                ->color('success'),
-                            \Filament\Infolists\Components\IconEntry::make('pivot.is_required')
-                                ->label('Mandatory')
-                                ->boolean(),
-                        ])
-                        ->columns(['default' => 3])
-                        ->grid(['default' => 2]),
+                    TextEntry::make('skills.name')
+                        ->label('Skills')
+                        ->badge()
+                        ->color('primary')
+                        ->separator(', '),
                 ]),
         ]);
     }

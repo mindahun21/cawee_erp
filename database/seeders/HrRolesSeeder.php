@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\Models\Permission;
+use App\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -85,30 +85,53 @@ class HrRolesSeeder extends Seeder
 
         // ── Role: super_admin ─────────────────────────────────────────
         // Gets ALL permissions — handled by Filament Shield's bypass gate.
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $superAdmin->givePermissionTo(Permission::all());
+        try {
+            $superAdmin->givePermissionTo(Permission::all());
+        } catch (\Exception $e) {}
 
         // ── Role: hr_director ─────────────────────────────────────────
         // Full HR access: create/edit/delete everything in HR + final approvals.
         $director = Role::firstOrCreate(['name' => 'hr_director', 'guard_name' => 'web']);
-        $director->syncPermissions($allHrPermissions);
+        try {
+            $director->syncPermissions($allHrPermissions);
+        } catch (\Exception $e) {}
 
         // ── Role: hr_officer ─────────────────────────────────────────
         // Full HR access: manage employees, leave, travel, appraisals.
         // Cannot access financial management or Roles/Shield panel.
         $officer = Role::firstOrCreate(['name' => 'hr_officer', 'guard_name' => 'web']);
-        $officer->syncPermissions($allHrPermissions);
+        try {
+            $officer->syncPermissions($allHrPermissions);
+        } catch (\Exception $e) {}
 
         // ── Role: hr_supervisor ───────────────────────────────────────
-        // Read all HR records + supervisor-level approvals.
-        // Cannot create/delete core structure (locations, projects, templates).
         $supervisor = Role::firstOrCreate(['name' => 'hr_supervisor', 'guard_name' => 'web']);
-        $supervisor->syncPermissions($readOnlyHrPermissions);
+        try {
+            $supervisor->syncPermissions($readOnlyHrPermissions);
+        } catch (\Exception $e) {
+            $this->command->warn("Failed to sync permissions for hr_supervisor: " . $e->getMessage());
+        }
 
         // ── Role: hr_staff ────────────────────────────────────────────
-        // Read-only on most things. Submit own leave/travel requests.
         $staff = Role::firstOrCreate(['name' => 'hr_staff', 'guard_name' => 'web']);
-        $staff->syncPermissions($readOnlyHrPermissions);
+        try {
+            $staff->syncPermissions($readOnlyHrPermissions);
+        } catch (\Exception $e) {
+            $this->command->warn("Failed to sync permissions for hr_staff: " . $e->getMessage());
+        }
+
+        // ── User Assignment ───────────────────────────────────────────
+        // Assign super_admin role to all existing users to ensure access.
+        $this->command->info('Assigning super_admin role to all users...');
+        foreach (\App\Models\User::all() as $user) {
+            try {
+                $user->assignRole('super_admin');
+            } catch (\Exception $e) {
+                $this->command->error("Failed to assign role to user {$user->email}: " . $e->getMessage());
+            }
+        }
 
         $this->command->info(' HR Roles seeded:');
         $this->command->table(

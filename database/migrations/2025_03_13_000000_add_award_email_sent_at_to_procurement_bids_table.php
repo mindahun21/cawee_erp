@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('procurement_bids', function (Blueprint $table) {
-            $table->timestamp('award_email_sent_at')->nullable()->after('notes');
+            if (!Schema::hasColumn('procurement_bids', 'award_email_sent_at')) {
+                $table->timestamp('award_email_sent_at')->nullable()->after('notes');
+            }
         });
     }
 

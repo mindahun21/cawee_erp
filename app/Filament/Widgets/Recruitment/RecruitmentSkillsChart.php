@@ -2,27 +2,43 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Models\Recruitment\RecruitmentSkillCategory;
 use Filament\Widgets\ChartWidget;
 
 class RecruitmentSkillsChart extends ChartWidget
 {
-    protected ?string $heading = 'Skills by Category';
+    protected ?string $heading = 'Plans by Status';
 
     protected function getData(): array
     {
-        $data = \App\Models\Recruitment\RecruitmentSkill::select('category', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('category')
+        $data = \App\Models\Recruitment\RecruitmentPlan::query()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
             ->get();
+
+        $labels = $data->pluck('status')->map(fn($status) => \App\Models\Recruitment\RecruitmentPlan::statusLabel($status))->toArray();
+        $counts = $data->pluck('count')->toArray();
+
+        // Standard Filament colors mapping for status
+        $colorMap = [
+            \App\Models\Recruitment\RecruitmentPlan::STATUS_DRAFT     => '#9ca3af', // gray-400
+            \App\Models\Recruitment\RecruitmentPlan::STATUS_SUBMITTED => '#f59e0b', // amber-500
+            \App\Models\Recruitment\RecruitmentPlan::STATUS_APPROVED  => '#10b981', // emerald-500
+            \App\Models\Recruitment\RecruitmentPlan::STATUS_REJECTED  => '#ef4444', // red-500
+            \App\Models\Recruitment\RecruitmentPlan::STATUS_CLOSED    => '#3b82f6', // blue-500
+        ];
+
+        $bgColors = $data->pluck('status')->map(fn($status) => $colorMap[$status] ?? '#6b7280')->toArray();
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Skills',
-                    'data' => $data->pluck('total')->toArray(),
-                    'backgroundColor' => ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    'label' => 'Plans',
+                    'data' => $counts,
+                    'backgroundColor' => $bgColors,
                 ],
             ],
-            'labels' => $data->map(fn ($item) => $item->category ?? 'Uncategorized')->toArray(),
+            'labels' => $labels,
         ];
     }
 
@@ -31,3 +47,4 @@ class RecruitmentSkillsChart extends ChartWidget
         return 'doughnut';
     }
 }
+

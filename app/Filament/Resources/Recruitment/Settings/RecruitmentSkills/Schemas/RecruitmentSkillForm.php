@@ -14,14 +14,23 @@ class RecruitmentSkillForm
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
-                \Filament\Forms\Components\Select::make('category')
-                    ->options([
-                        'Technical' => 'Technical',
-                        'Soft' => 'Soft Skill',
-                        'Language' => 'Language',
-                        'Other' => 'Other',
+                \Filament\Forms\Components\Select::make('category_id')
+                    ->label('Category')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        \Filament\Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->unique('recruitment_skill_categories', 'name')
+                            ->maxLength(255),
+                        \Filament\Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->unique('recruitment_skill_categories', 'slug')
+                            ->maxLength(255),
                     ])
                     ->nullable(),
             ]);
     }
 }
+

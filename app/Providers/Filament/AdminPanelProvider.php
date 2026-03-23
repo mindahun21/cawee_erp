@@ -107,6 +107,10 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn (): string => \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getUrl())
                     ->isActiveWhen(fn () => request()->routeIs([
                         \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkillCategories\RecruitmentSkillCategoryResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentApprovalWorkflows\RecruitmentApprovalWorkflowResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\RecruitmentEvaluationCriteriaResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationFormTemplates\RecruitmentEvaluationFormTemplateResource::getRouteBaseName() . '.*',
                     ]))
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill')),
             ])
