@@ -84,14 +84,14 @@ class EmployeeResource extends Resource
                                 ->required()
                                 ->maxLength(100),
 
-                            Select::make('gender_id')
+                            Select::make('gender')
                                 ->label('Gender')
-                                ->relationship('genderOption', 'name')
+                                ->options([
+                                    'M' => 'Male',
+                                    'F' => 'Female',
+                                ])
                                 ->required()
-                                ->createOptionForm([
-                                    TextInput::make('name')->required()->unique('genders', 'name'),
-                                    TextInput::make('code'),
-                                ]),
+                                ->native(false),
 
                             DatePicker::make('date_of_birth')
                                 ->maxDate(now()->subYears(18)),
@@ -299,12 +299,17 @@ class EmployeeResource extends Resource
                     ->sortable(['first_name'])
                     ->weight('semibold'),
 
-                TextColumn::make('genderOption.name')
+                TextColumn::make('gender')
                     ->label('Gender')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
-                        'Male' => 'info',
-                        'Female' => 'pink',
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'M' => 'Male',
+                        'F' => 'Female',
+                        default => $state ?? '',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'M' => 'info',
+                        'F' => 'pink',
                         default => 'gray',
                     }),
 
@@ -366,9 +371,12 @@ class EmployeeResource extends Resource
             ->filters([
                 TrashedFilter::make(),
 
-                SelectFilter::make('gender_id')
+                SelectFilter::make('gender')
                     ->label('Gender')
-                    ->relationship('genderOption', 'name'),
+                    ->options([
+                        'M' => 'Male',
+                        'F' => 'Female',
+                    ]),
 
                 SelectFilter::make('employment_type_id')
                     ->label('Employment Type')
