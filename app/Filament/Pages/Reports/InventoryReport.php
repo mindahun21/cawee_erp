@@ -257,15 +257,15 @@ class InventoryReport extends Page implements HasForms
     protected function loadDamaged(array $filters): void
     {
         $assets = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
-            ->orWhereHas('condition', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
+            ->orWhereHas('conditionRecord', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
             ->get();
 
         $this->reportData = [
             'assets' => $assets,
             'metrics' => [
                 'lost' => $assets->filter(fn($a) => strtolower($a->statusRecord?->name ?? '') === 'lost')->count(),
-                'broken' => $assets->filter(fn($a) => strtolower($a->condition?->name ?? '') === 'broken')->count(),
-                'poor' => $assets->filter(fn($a) => strtolower($a->condition?->name ?? '') === 'poor')->count(),
+                'broken' => $assets->filter(fn($a) => strtolower($a->conditionRecord?->name ?? '') === 'broken')->count(),
+                'poor' => $assets->filter(fn($a) => strtolower($a->conditionRecord?->name ?? '') === 'poor')->count(),
             ]
         ];
     }
@@ -376,9 +376,9 @@ class InventoryReport extends Page implements HasForms
             case 'damaged':
                 $headers = ['Asset Name', 'Status', 'Condition', 'Location'];
                 $data = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
-                    ->orWhereHas('condition', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
+                    ->orWhereHas('conditionRecord', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
                     ->get()->map(fn($a) => [
-                    $a->name, $a->statusRecord?->name, $a->condition?->name, $a->location->location_name ?? 'N/A'
+                    $a->name, $a->statusRecord?->name, $a->conditionRecord?->name, $a->location->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "LOST/DAMAGED ASSET REPORT";
                 break;
