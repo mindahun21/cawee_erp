@@ -25,10 +25,18 @@ class VehicleMaintenanceForm
                             ->required()
                             ->preload()
                             ->searchable(),
-                        Select::make('service_type')
-                            ->options(HrSettingOption::optionsFor('vehicle_service_type'))
+                        Select::make('service_type_id')
+                            ->label('Service Type')
+                            ->relationship('serviceTypeRecord', 'name')
                             ->required()
-                            ->searchable(),
+                            ->searchable()
+                            ->createOptionForm([
+                                \Filament\Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->unique('vehicle_service_types', 'name'),
+                                \Filament\Forms\Components\Toggle::make('is_active')
+                                    ->default(true),
+                            ]),
                         DatePicker::make('service_date')
                             ->default(now())
                             ->required(),

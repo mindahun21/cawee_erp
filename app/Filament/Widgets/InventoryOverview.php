@@ -14,20 +14,25 @@ class InventoryOverview extends StatsOverviewWidget
             'total_assets' => \App\Models\Asset::count(),
             'total_investment' => \App\Models\Asset::sum('purchase_cost'),
             'active_assignments' => \App\Models\AssetAssignment::whereNull('returned_date')->count(),
+            'low_stock' => \App\Models\ItemWarehouse::whereRaw('quantity <= min_stock_value')->count(),
+            'pending_maintenance' => \App\Models\Maintenance::whereNotIn('status', ['Completed', 'Cancelled'])->count(),
         ]);
 
         return [
-            Stat::make('Total Assets', $metrics['total_assets'])
-                ->description('Total items in inventory')
-                ->descriptionIcon('heroicon-m-briefcase'),
-            Stat::make('Total Investment', 'INR ' . number_format($metrics['total_investment'], 2))
-                ->description('Total purchase cost')
-                ->descriptionIcon('heroicon-m-currency-rupee')
+            Stat::make('Total Asset Value', 'ETB ' . number_format($metrics['total_investment'], 2))
+                ->description('Total purchase cost of all assets')
+                ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
 
-            Stat::make('Active Assignments', $metrics['active_assignments'])
-                ->description('Assets currently checked out')
-                ->descriptionIcon('heroicon-m-user'),
+            Stat::make('Low Stock Items', $metrics['low_stock'])
+                ->description('Items below reorder level')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color($metrics['low_stock'] > 0 ? 'warning' : 'success'),
+
+            Stat::make('Ongoing Maintenance', $metrics['pending_maintenance'])
+                ->description('Active repair tasks')
+                ->descriptionIcon('heroicon-m-wrench-screwdriver')
+                ->color($metrics['pending_maintenance'] > 0 ? 'danger' : 'success'),
         ];
     }
 }

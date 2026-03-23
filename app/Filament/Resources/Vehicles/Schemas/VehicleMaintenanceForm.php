@@ -23,9 +23,18 @@ class VehicleMaintenanceForm
                             ->required()
                             ->preload()
                             ->searchable(),
-                        TextInput::make('service_type')
+                        Select::make('service_type_id')
+                            ->label('Service Type')
+                            ->relationship('serviceTypeRecord', 'name')
                             ->required()
-                            ->maxLength(255),
+                            ->searchable()
+                            ->createOptionForm([
+                                \Filament\Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->unique('vehicle_service_types', 'name'),
+                                \Filament\Forms\Components\Toggle::make('is_active')
+                                    ->default(true),
+                            ]),
                         DatePicker::make('service_date')
                             ->default(now())
                             ->required(),

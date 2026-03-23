@@ -44,7 +44,7 @@ class AssetInfolist
                 Section::make('Classification')
                     ->columns(['default' => 2])
                     ->schema([
-                        TextEntry::make('condition.name'),
+                        TextEntry::make('conditionRecord.name'),
                         TextEntry::make('statusRecord.name')
                             ->label('Status'),
                     ]),

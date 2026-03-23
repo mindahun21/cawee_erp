@@ -24,6 +24,8 @@ class AcquisitionTypeResource extends Resource
 
     protected static ?int $navigationSort = 13;
 
+
+
     public static function form(Schema $schema): Schema
     {
         return $schema

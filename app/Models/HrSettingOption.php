@@ -49,7 +49,6 @@ class HrSettingOption extends Model
 
     public function branches(): HasMany
     {
-        return $this->hasMany(HrBranch::class, 'branch_type_option_id');
+        return $this->hasMany(HrBranch::class , 'branch_type_option_id');
     }
 }
-

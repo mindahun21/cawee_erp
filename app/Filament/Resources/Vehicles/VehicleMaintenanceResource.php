@@ -23,7 +23,7 @@ class VehicleMaintenanceResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 22;
+    protected static ?int $navigationSort = 130;
 
     protected static ?string $navigationLabel = 'Maintenances';
 

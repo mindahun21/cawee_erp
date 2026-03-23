@@ -62,14 +62,66 @@ class Vehicle extends Model
         'purchase_price' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        // When a vehicle is saved, mirror it as an Asset
+        static::saved(function (Vehicle $vehicle) {
+            $name = trim(implode(' ', array_filter([
+                $vehicle->manufacturer,
+                $vehicle->model,
+                $vehicle->plate_number ? '(' . $vehicle->plate_number . ')' : null,
+            ]))) ?: ('Vehicle #' . $vehicle->id);
+
+            // Ensure Asset Metadata exists
+            $category = \App\Models\AssetCategory::firstOrCreate(['name' => 'Vehicles']);
+            $type = \App\Models\AssetType::firstOrCreate(['name' => 'Vehicle']);
+            
+            $modelName = trim("{$vehicle->manufacturer} {$vehicle->model}") ?: 'Generic Vehicle';
+            $assetModel = \App\Models\AssetModel::firstOrCreate(
+                ['name' => $modelName],
+                ['asset_category_id' => $category->id, 'asset_type_id' => $type->id]
+            );
+
+            // Status mapping from Vehicle Status to Asset Status
+            $vStatus = strtolower($vehicle->statusRecord?->name ?? 'available');
+            $assetStatusName = match(true) {
+                str_contains($vStatus, 'maintenance') || str_contains($vStatus, 'repair') => 'Maintenance',
+                str_contains($vStatus, 'assign') || str_contains($vStatus, 'busy')    => 'Assigned',
+                str_contains($vStatus, 'dispos') || str_contains($vStatus, 'junk')    => 'Disposed',
+                default => 'Available',
+            };
+            $assetStatus = \App\Models\AssetStatus::firstOrCreate(['name' => $assetStatusName]);
+
+            Asset::withoutTimestamps(function () use ($vehicle, $name, $assetModel, $assetStatus) {
+                Asset::updateOrCreate(
+                    ['asset_tag' => 'VEH-' . $vehicle->id],
+                    [
+                        'name'              => $name,
+                        'asset_tag'         => 'VEH-' . $vehicle->id,
+                        'asset_model_id'    => $assetModel->id,
+                        'asset_status_id'   => $assetStatus?->id,
+                        'purchase_date'     => $vehicle->purchase_date,
+                        'purchase_cost'     => $vehicle->purchase_price ?? 0,
+                        'notes'             => "Plate: {$vehicle->plate_number} | Managed in Vehicle module.",
+                    ]
+                );
+            });
+        });
+
+        // When a vehicle is permanently deleted, remove the asset mirror
+        static::deleted(function (Vehicle $vehicle) {
+            Asset::where('asset_tag', 'VEH-' . $vehicle->id)->delete();
+        });
+    }
+
     public function type()
     {
-        return $this->belongsTo(VehicleSetting::class, 'vehicle_type_id');
+        return $this->belongsTo(VehicleType::class, 'vehicle_type_id');
     }
 
     public function statusRecord()
     {
-        return $this->belongsTo(VehicleSetting::class, 'vehicle_status_id');
+        return $this->belongsTo(VehicleStatus::class, 'vehicle_status_id');
     }
 
     public function supplier()
@@ -95,5 +147,14 @@ class Vehicle extends Model
     public function fuelLogs()
     {
         return $this->hasMany(VehicleFuelLog::class);
+    }
+
+    public function getNameAttribute(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->manufacturer,
+            $this->model,
+            $this->plate_number ? "({$this->plate_number})" : null,
+        ]))) ?: "Vehicle #{$this->id}";
     }
 }

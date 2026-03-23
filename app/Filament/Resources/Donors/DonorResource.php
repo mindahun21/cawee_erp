@@ -38,7 +38,7 @@ class DonorResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising';
+    protected static ?string $cluster = \App\Filament\Clusters\Settings::class;
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
@@ -163,7 +163,9 @@ class DonorResource extends Resource
                         <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
                             <a href="'.\App\Filament\Resources\Donors\DonorResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
                             <span class="text-gray-200">|</span>
-                            <a href="'.\App\Filament\Resources\Donors\DonorResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'edit\', '.$record->id.')"
+                                class="hover-action-link text-primary-600 hover:text-primary-700">Edit</button>
                             <span class="text-gray-200">|</span>
                             <button type="button" 
                                 x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"

@@ -21,7 +21,7 @@ class VehicleFuelLogResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 23;
+    protected static ?int $navigationSort = 120;
 
     protected static ?string $navigationLabel = 'Fuel Logs';
 

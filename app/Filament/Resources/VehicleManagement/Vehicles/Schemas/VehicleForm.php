@@ -7,10 +7,13 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class VehicleForm
 {
@@ -27,7 +30,14 @@ class VehicleForm
                                     ->required()
                                     ->unique(ignoreRecord: true),
                                 Select::make('vehicle_type_id')
-                                    ->relationship('type', 'label', fn ($query) => $query->where('category', 'vehicle_type'))
+                                    ->relationship('type', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->required()
+                                            ->unique('vehicle_types', 'name'),
+                                        Toggle::make('is_active')
+                                            ->default(true),
+                                    ])
                                     ->required()
                                     ->preload()
                                     ->searchable(),
@@ -37,7 +47,15 @@ class VehicleForm
                                 TextInput::make('color'),
                                 Select::make('vehicle_status_id')
                                     ->label('Current Status')
-                                    ->relationship('statusRecord', 'label', fn ($query) => $query->where('category', 'vehicle_status'))
+                                    ->relationship('statusRecord', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->required()
+                                            ->unique('vehicle_statuses', 'name'),
+                                        \Filament\Forms\Components\ColorPicker::make('color'),
+                                        Toggle::make('is_active')
+                                            ->default(true),
+                                    ])
                                     ->required()
                                     ->preload()
                                     ->searchable(),

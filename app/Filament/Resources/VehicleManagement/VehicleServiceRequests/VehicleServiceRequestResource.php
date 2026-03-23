@@ -22,6 +22,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\TextInput;
 
 class VehicleServiceRequestResource extends Resource
 {
@@ -38,32 +41,56 @@ class VehicleServiceRequestResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make('asset_id')
+            Select::make('vehicle_id')
                 ->label('Vehicle')
-                ->relationship(
-                    name: 'vehicle',
-                    titleAttribute: 'name',
-                    modifyQueryUsing: fn ($query) => $query->whereHas('vehicleDetail')
-                )
+                ->relationship('vehicle', 'plate_number')
                 ->getOptionLabelFromRecordUsing(
-                    fn (Asset $record) => $record->name . ' - ' . ($record->vehicleDetail?->plate_number ?? 'No Plate')
+                    fn (\App\Models\Vehicle $record) => $record->plate_number . ' — ' . trim("{$record->manufacturer} {$record->model}")
                 )
                 ->searchable()
+                ->preload()
                 ->required(),
 
             Select::make('service_type_option_id')
                 ->label('Service Type')
-                ->options(VehicleSetting::optionsFor('vehicle_service_type'))
+                ->relationship(
+                    name: 'serviceType',
+                    titleAttribute: 'label',
+                    modifyQueryUsing: fn ($query) => $query->where('category', 'vehicle_service_type')->where('is_active', true)
+                )
+                ->createOptionForm([
+                    TextInput::make('label')->required(),
+                    TextInput::make('code')->required()->default(fn() => Str::random(8)),
+                    Hidden::make('category')->default('vehicle_service_type'),
+                ])
                 ->required(),
 
             Select::make('urgency_option_id')
                 ->label('Urgency')
-                ->options(VehicleSetting::optionsFor('vehicle_urgency'))
+                ->relationship(
+                    name: 'urgencyLevel',
+                    titleAttribute: 'label',
+                    modifyQueryUsing: fn ($query) => $query->where('category', 'vehicle_urgency')->where('is_active', true)
+                )
+                ->createOptionForm([
+                    TextInput::make('label')->required(),
+                    TextInput::make('code')->required()->default(fn() => Str::random(8)),
+                    Hidden::make('category')->default('vehicle_urgency'),
+                ])
                 ->required(),
 
             Select::make('provider_option_id')
                 ->label('Service Provider')
-                ->options(VehicleSetting::optionsFor('service_provider'))
+                ->relationship(
+                    name: 'provider',
+                    titleAttribute: 'label',
+                    modifyQueryUsing: fn ($query) => $query->where('category', 'service_provider')->where('is_active', true)
+                )
+                ->createOptionForm([
+                    TextInput::make('label')->required(),
+                    TextInput::make('code')->required()->default(fn() => Str::random(8)),
+                    Hidden::make('category')->default('service_provider'),
+                ])
                 ->nullable(),
 
             Textarea::make('problem_description')->required()->rows(3)->columnSpanFull(),
@@ -94,8 +121,8 @@ class VehicleServiceRequestResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('vehicle.name')->label('Vehicle')->searchable()->sortable()->weight('semibold'),
-                TextColumn::make('vehicle.vehicleDetail.plate_number')->label('Plate')->searchable(),
+                TextColumn::make('vehicle.plate_number')->label('Plate')->searchable()->sortable(),
+                TextColumn::make('vehicle.model')->label('Model'),
                 TextColumn::make('serviceType.label')->label('Service'),
                 TextColumn::make('urgencyLevel.label')->label('Urgency')->badge(),
                 TextColumn::make('provider.label')->label('Provider')->toggleable(),
@@ -107,7 +134,7 @@ class VehicleServiceRequestResource extends Resource
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         'Pending' => 'gray',
-                        default => 'gray',
+                      default => 'gray',
                     }),
                 TextColumn::make('requested_at')->since()->label('Requested'),
             ])
@@ -162,7 +189,7 @@ class VehicleServiceRequestResource extends Resource
 
                         if (! $record->maintenanceRecord()->exists()) {
                             VehicleMaintenanceRecord::create([
-                                'asset_id' => $record->asset_id,
+                                'vehicle_id' => $record->vehicle_id,
                                 'service_request_id' => $record->id,
                                 'service_type_option_id' => $record->service_type_option_id,
                                 'provider_option_id' => $record->provider_option_id,

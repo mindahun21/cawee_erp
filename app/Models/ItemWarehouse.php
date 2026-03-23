@@ -13,10 +13,13 @@ class ItemWarehouse extends Model
         'item_id',
         'warehouse_id',
         'sku',
+        'batch_number',
+        'bin_location',
         'acquisition_type_id',
         'currency_id',
         'purchase_cost',
         'purchase_date',
+        'expiry_date',
         'warranty_expiry',
         'supplier_id',
         'donor_id',
@@ -26,6 +29,7 @@ class ItemWarehouse extends Model
 
     protected $casts = [
         'purchase_date' => 'date',
+        'expiry_date' => 'date',
         'warranty_expiry' => 'date',
         'purchase_cost' => 'decimal:2',
         'quantity' => 'integer',

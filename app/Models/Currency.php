@@ -14,6 +14,7 @@ class Currency extends Model
         'code',
         'name',
         'symbol',
+        'exchange_rate',
         'is_procurement_default',
     ];
 
@@ -21,6 +22,7 @@ class Currency extends Model
     {
         return [
             'is_procurement_default' => 'boolean',
+            'exchange_rate' => 'decimal:6',
         ];
     }
 

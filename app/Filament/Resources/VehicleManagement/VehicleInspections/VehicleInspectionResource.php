@@ -35,17 +35,14 @@ class VehicleInspectionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make('asset_id')
+            Select::make('vehicle_id')
                 ->label('Vehicle')
-                ->relationship(
-                    name: 'vehicle',
-                    titleAttribute: 'name',
-                    modifyQueryUsing: fn ($query) => $query->whereHas('vehicleDetail')
-                )
+                ->relationship('vehicle', 'plate_number')
                 ->getOptionLabelFromRecordUsing(
-                    fn (Asset $record) => $record->name . ' - ' . ($record->vehicleDetail?->plate_number ?? 'No Plate')
+                    fn (\App\Models\Vehicle $record) => $record->plate_number . ' — ' . trim("{$record->manufacturer} {$record->model}")
                 )
                 ->searchable()
+                ->preload()
                 ->required(),
 
             DatePicker::make('inspection_date')->nullable(),
@@ -74,8 +71,8 @@ class VehicleInspectionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('vehicle.name')->label('Vehicle')->searchable()->sortable()->weight('semibold'),
-                TextColumn::make('vehicle.vehicleDetail.plate_number')->label('Plate')->searchable(),
+                TextColumn::make('vehicle.plate_number')->label('Plate')->searchable()->sortable(),
+                TextColumn::make('vehicle.model')->label('Model'),
                 TextColumn::make('inspection_date')->date()->placeholder('-'),
                 TextColumn::make('inspection_expiry_date')->date()->sortable(),
                 TextColumn::make('days_until_expiry')

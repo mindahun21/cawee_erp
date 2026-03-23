@@ -14,6 +14,7 @@ class VehicleServiceRequest extends Model
     protected $table = 'hr_vehicle_service_requests';
 
     protected $fillable = [
+        'vehicle_id',
         'asset_id',
         'service_type_option_id',
         'urgency_option_id',
@@ -52,6 +53,11 @@ class VehicleServiceRequest extends Model
     }
 
     public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    }
+
+    public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }

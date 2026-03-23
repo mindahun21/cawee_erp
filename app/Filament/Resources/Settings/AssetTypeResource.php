@@ -27,9 +27,9 @@ class AssetTypeResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Asset Types';
+	protected static ?string $navigationLabel = 'Asset Types';
 
-    protected static ?int $navigationSort = 16;
+    protected static ?int $navigationSort = 17;
 
     public static function form(Schema $schema): Schema
     {

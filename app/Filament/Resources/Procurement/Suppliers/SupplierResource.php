@@ -149,17 +149,13 @@ class SupplierResource extends Resource
                     ->maxLength(150)
                     ->nullable(),
 
-                Select::make('payment_terms')
+                Select::make('payment_term_id')
                     ->label('Payment Terms')
-                    ->options([
-                        'Net 30'          => 'Net 30',
-                        'Net 60'          => 'Net 60',
-                        'Net 90'          => 'Net 90',
-                        'Advance Payment' => 'Advance Payment',
-                        '50% Advance'     => '50% Advance',
-                        'Upon Delivery'   => 'Upon Delivery',
-                    ])
-                    ->nullable(),
+                    ->relationship('paymentTerm', 'name')
+                    ->nullable()
+                    ->createOptionForm([
+                        TextInput::make('name')->required()->unique('payment_terms', 'name'),
+                    ]),
 
                 Select::make('currency')
                     ->label('Preferred Currency')
@@ -239,6 +235,7 @@ class SupplierResource extends Resource
                     ->getStateUsing(fn (Supplier $r) => $r->portal_access ? 'Enabled' : 'Disabled')
                     ->color(fn ($state) => $state === 'Enabled' ? 'success' : 'gray'),
 
+                TextColumn::make('paymentTerm.name')->label('Payment Terms')->toggleable(),
                 TextColumn::make('created_at')->label('Since')->date()->sortable()->toggleable(),
             ])
             ->defaultSort('name')
