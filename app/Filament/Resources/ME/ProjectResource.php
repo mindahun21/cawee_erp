@@ -34,9 +34,15 @@ class ProjectResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
-    protected static ?string $navigationLabel = 'Projects';
+    protected static ?string $navigationLabel = 'Projects (Legacy)';
 
     protected static ?int $navigationSort = 0;
+
+    /**
+     * Project management has been moved to the BRT module.
+     * This resource is kept for backward compatibility but hidden from navigation.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $recordTitleAttribute = 'name';
 

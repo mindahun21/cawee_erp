@@ -31,9 +31,15 @@ class BeneficiaryResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationLabel = 'Beneficiaries';
+    protected static ?string $navigationLabel = 'Beneficiaries (Legacy)';
 
     protected static ?int $navigationSort = 7;
+
+    /**
+     * Beneficiary management has been moved to the BRT module.
+     * This resource is kept for backward compatibility but hidden from navigation.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $recordTitleAttribute = 'full_name';
 

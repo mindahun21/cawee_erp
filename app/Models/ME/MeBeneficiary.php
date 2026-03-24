@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models\ME;
 
+use App\Models\BRT\BrtAttendance;
+use App\Models\BRT\BrtProgressUpdate;
 use App\Models\ME\Concerns\LogsMeAudit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,8 +25,11 @@ class MeBeneficiary extends Model
 
     protected $fillable = [
         'beneficiary_code',
+        'child_code',
         'household_id',
         'full_name',
+        'father_name',
+        'grandfather_name',
         'full_name_local',
         'date_of_birth',
         'age',
@@ -110,6 +115,16 @@ class MeBeneficiary extends Model
     public function referrals(): HasMany
     {
         return $this->hasMany(MeReferral::class, 'beneficiary_id');
+    }
+
+    public function progressUpdates(): HasMany
+    {
+        return $this->hasMany(BrtProgressUpdate::class, 'beneficiary_id');
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(BrtAttendance::class, 'beneficiary_id');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

@@ -32,6 +32,12 @@ class HouseholdResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
+    /**
+     * Households are managed inline via the BRT Beneficiary module.
+     * This resource is kept for direct access but hidden from main navigation.
+     */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $recordTitleAttribute = 'household_code';
 
     // ── Form ──────────────────────────────────────────────────────────────────

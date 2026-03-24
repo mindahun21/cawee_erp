@@ -57,6 +57,8 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Beneficiary Registry & Project Tracking')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Monitoring and Evaluation')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
