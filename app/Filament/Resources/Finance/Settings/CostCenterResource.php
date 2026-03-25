@@ -101,7 +101,7 @@ class CostCenterResource extends Resource
                 ->schema([
                     Select::make('hr_project_id')
                         ->label('Linked Project')
-                        ->relationship('hrProject', 'project_name')
+                        ->relationship('hrProject', 'branch_name')
                         ->searchable()
                         ->preload()
                         ->nullable(),
