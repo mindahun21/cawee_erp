@@ -81,7 +81,6 @@ class ChannelFormBuilderService
                 // ── TEXT FIELDS ────────────────────
                 Components\Builder\Block::make('first_name')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'First name')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('first_name', 'First name', 'text')),
                 Components\Builder\Block::make('last_name')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'Last name')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('last_name', 'Last name', 'text')),
-                Components\Builder\Block::make('candidate_code')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'Candidate code')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('candidate_code', 'Candidate code', 'text')),
                 Components\Builder\Block::make('birthday')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'Birthday')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('birthday', 'Birthday', 'date')),
                 Components\Builder\Block::make('desired_salary')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'Desired salary')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('desired_salary', 'Desired salary', 'number')),
                 Components\Builder\Block::make('birthplace')->label(fn (?array $state): string => ($state['label'] ?? null) ?: 'Birthplace')->icon('heroicon-o-pencil')->schema(self::textFieldSchema('birthplace', 'Birthplace', 'text')),
@@ -171,8 +170,8 @@ class ChannelFormBuilderService
         return Components\Placeholder::make('close_hint')
             ->hiddenLabel()
             ->content(new \Illuminate\Support\HtmlString(
-                '<div style="text-align:right; margin-top: 8px;">
-                    <span style="color: #6b7280; font-size: 0.875rem; cursor: pointer;"
+                '<div class="text-right mt-2">
+                    <span class="text-gray-600 dark:text-gray-400 text-sm cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
                           onclick="this.closest(\'[data-builder-block]\').querySelector(\'[data-collapse]\').click()">
                         Close
                     </span>
@@ -243,7 +242,6 @@ class ChannelFormBuilderService
             ->map(fn($s) => ['label' => $s->name, 'value' => (string) $s->id])
             ->toArray();
 
-        // Ensure we always return an array, even if empty, so Filament doesn't crash on Repeater default
         if (empty($skillOptions)) {
             $skillOptions = [
                 ['label' => 'Option 1', 'value' => 'option-1'],

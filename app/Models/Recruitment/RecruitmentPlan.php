@@ -23,6 +23,7 @@ class RecruitmentPlan extends Model
     protected $table = 'recruitment_plans';
 
     protected $fillable = [
+        'title',
         'department_id',
         'job_position_id',
         'manager_id',

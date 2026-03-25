@@ -113,6 +113,13 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationFormTemplates\RecruitmentEvaluationFormTemplateResource::getRouteBaseName() . '.*',
                     ]))
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill')),
+
+                \Filament\Navigation\NavigationItem::make('Portal')
+                    ->group('Recruitment')
+                    ->icon('heroicon-o-globe-alt')
+                    ->sort(98)
+                    ->url('/recruitment/recruitment_portal', shouldOpenInNewTab: true)
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

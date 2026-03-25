@@ -7,11 +7,11 @@
 @endphp
 
 @if (empty($resolvedSchema))
-    <div style="text-align:center; padding:24px; color:#9ca3af;">
+    <div class="text-center p-6 text-gray-400 dark:text-gray-500">
         <p>No form fields configured.</p>
     </div>
 @else
-    <div style="max-width:680px; margin:0 auto;">
+    <div style="max-width: 1100px; margin:0 auto;">
         @foreach ($resolvedSchema as $field)
             @php
                 $data = $field['data'] ?? $field;
@@ -28,58 +28,83 @@
 
                 $isHeader = $fieldKey === 'header';
                 $isParagraph = $fieldKey === 'paragraph';
-
-                $inputStyle = 'width:100%;border:1px solid #d1d5db;border-radius:6px;padding:8px 10px;font-size:13px;background:#fff;color:#374151;';
             @endphp
 
             @if ($isHeader)
-                <h2 style="font-size:22px;font-weight:700;margin:16px 0 8px;color:#111827;border-bottom:1px solid #e5e7eb;padding-bottom:8px;">
+                <h2 class="text-[22px] font-bold mt-4 mb-2 pb-2 border-b text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700">
                     {{ $label ?: 'Header' }}
                 </h2>
             @elseif ($isParagraph)
-                <p style="font-size:14px;line-height:1.65;color:#4b5563;margin:0 0 14px;">
+                <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400 mb-3.5">
                     {{ $content ?: $label }}
                 </p>
             @else
-                <div style="margin-bottom:16px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#111827;margin-bottom:4px;">
+                <div class="mb-4">
+                    <label class="block text-[13px] font-semibold mb-1 text-gray-900 dark:text-gray-100">
                         {{ $label }}
                         @if ($required)
-                            <span style="color:#ef4444;"> *</span>
+                            <span class="text-red-500"> *</span>
                         @endif
                     </label>
 
                     @if ($helpText)
-                        <p style="font-size:12px;color:#6b7280;margin:0 0 4px;">{{ $helpText }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $helpText }}</p>
                     @endif
 
                     @if ($type === 'file')
-                        <input type="file" style="{{ $inputStyle }}" {{ $multipleFiles ? 'multiple' : '' }}>
+                        <input type="file"
+                            class="w-full border rounded-md px-2.5 py-2 text-[13px]
+                                   bg-white dark:bg-gray-800
+                                   border-gray-300 dark:border-gray-600
+                                   text-gray-700 dark:text-gray-200"
+                            {{ $multipleFiles ? 'multiple' : '' }}>
                     @elseif ($type === 'select' || $type === 'skill_select')
                         @if ($allowMultiple)
-                            <div style="{{ $inputStyle }} display:flex; gap:6px; flex-wrap:wrap; align-items:center; min-height:38px; cursor:pointer;">
+                            <div class="w-full border rounded-md px-2.5 py-2 text-[13px] flex gap-1.5 flex-wrap items-center min-h-[38px] cursor-pointer
+                                        bg-white dark:bg-gray-800
+                                        border-gray-300 dark:border-gray-600
+                                        text-gray-700 dark:text-gray-200">
                                 @foreach (array_slice($options, 0, 3) as $opt)
-                                    <span style="background:#eef2ff;border:1px solid #c7d2fe;padding:3px 10px;border-radius:16px;font-size:12px;color:#4338ca;font-weight:500;">
+                                    <span class="bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-700 px-2.5 py-0.5 rounded-full text-xs text-indigo-700 dark:text-indigo-300 font-medium">
                                         {{ $opt['label'] ?? '' }}
                                     </span>
                                 @endforeach
-                                <span style="color:#9ca3af;font-size:12px;">Select options...</span>
+                                <span class="text-gray-400 dark:text-gray-500 text-xs">Select options...</span>
                             </div>
                         @else
-                            <select style="{{ $inputStyle }}">
+                            <select class="w-full border rounded-md px-2.5 py-2 text-[13px]
+                                          bg-white dark:bg-gray-800
+                                          border-gray-300 dark:border-gray-600
+                                          text-gray-700 dark:text-gray-200">
                                 @foreach ($options as $opt)
                                     <option value="{{ $opt['value'] ?? '' }}">{{ $opt['label'] ?? '' }}</option>
                                 @endforeach
                             </select>
                         @endif
                     @elseif ($type === 'date')
-                        <input type="date" style="{{ $inputStyle }}">
+                        <input type="date"
+                            class="w-full border rounded-md px-2.5 py-2 text-[13px]
+                                   bg-white dark:bg-gray-800
+                                   border-gray-300 dark:border-gray-600
+                                   text-gray-700 dark:text-gray-200">
                     @elseif ($type === 'number')
-                        <input type="number" style="{{ $inputStyle }}" placeholder="{{ $placeholder }}">
+                        <input type="number" placeholder="{{ $placeholder }}"
+                            class="w-full border rounded-md px-2.5 py-2 text-[13px]
+                                   bg-white dark:bg-gray-800
+                                   border-gray-300 dark:border-gray-600
+                                   text-gray-700 dark:text-gray-200">
                     @elseif (in_array($fieldKey, ['introduce_yourself', 'interests', 'resident', 'current_accommodation', 'reason_for_leaving_job', 'job_description', 'birthplace', 'home_town']))
-                        <textarea rows="3" style="{{ $inputStyle }} resize:vertical;min-height:80px;" placeholder="{{ $placeholder }}"></textarea>
+                        <textarea rows="3" placeholder="{{ $placeholder }}"
+                            class="w-full border rounded-md px-2.5 py-2 text-[13px] resize-y min-h-[80px]
+                                   bg-white dark:bg-gray-800
+                                   border-gray-300 dark:border-gray-600
+                                   text-gray-700 dark:text-gray-200"></textarea>
                     @else
-                        <input type="{{ $fieldKey === 'email' ? 'email' : 'text' }}" style="{{ $inputStyle }}" placeholder="{{ $placeholder }}">
+                        <input type="{{ $fieldKey === 'email' ? 'email' : 'text' }}" placeholder="{{ $placeholder }}"
+                            class="w-full border rounded-md px-2.5 py-2 text-[13px]
+                                   bg-white dark:bg-gray-800
+                                   border-gray-300 dark:border-gray-600
+                                   text-gray-700 dark:text-gray-200">
                     @endif
                 </div>
             @endif

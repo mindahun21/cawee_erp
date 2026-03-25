@@ -51,9 +51,8 @@ class RecruitmentChannel extends Model
             // Text / identity
             'first_name'         => ['label' => 'First name',    'type' => 'text',   'db_column' => 'first_name',    'name' => 'first_name',    'repeatable' => false],
             'last_name'          => ['label' => 'Last name',     'type' => 'text',   'db_column' => 'last_name',     'name' => 'last_name',     'repeatable' => false],
-            'candidate_code'     => ['label' => 'Candidate code','type' => 'text',   'db_column' => 'candidate_code','name' => 'candidate_code','repeatable' => false],
             'birthday'           => ['label' => 'Birthday',      'type' => 'date',   'db_column' => 'birthday',      'name' => 'birthday',      'repeatable' => false],
-            'desired_salary'     => ['label' => 'Desired salary','type' => 'number', 'db_column' => 'desired_salary','name' => 'desired_salary','repeatable' => false],
+            'desired_salary'     => ['label' => 'Desired salary','type' => 'number', 'db_column' => 'desired_salary','name' => 'desired_salary','repeatable' => false, 'target' => 'application'],
             'birthplace'         => ['label' => 'Birthplace',    'type' => 'text',   'db_column' => 'birthplace',    'name' => 'birthplace',    'repeatable' => false],
             'home_town'          => ['label' => 'Home town',     'type' => 'text',   'db_column' => 'home_town',     'name' => 'home_town',     'repeatable' => false],
             'identification'     => ['label' => 'Identification','type' => 'text',   'db_column' => 'identification','name' => 'identification','repeatable' => false],
@@ -67,14 +66,14 @@ class RecruitmentChannel extends Model
             // Contact
             'email'                 => ['label' => 'Email Address',        'type' => 'text',   'db_column' => 'email',                 'name' => 'email',                 'repeatable' => false],
             'phone'                 => ['label' => 'Phone',                'type' => 'text',   'db_column' => 'phone',                 'name' => 'phone',                 'repeatable' => false],
+            'alternate_phone'       => ['label' => 'Alternate Phone',      'type' => 'text',   'db_column' => 'alternate_phone',       'name' => 'alternate_phone',       'repeatable' => false],
             'resident'              => ['label' => 'Resident',             'type' => 'text',   'db_column' => 'resident',              'name' => 'resident',              'repeatable' => false],
-            'zip_code'              => ['label' => 'Zip Code',             'type' => 'text',   'db_column' => 'zip_code',              'name' => 'zip_code',              'repeatable' => false],
             'current_accommodation' => ['label' => 'Current accommodation','type' => 'text',   'db_column' => 'current_accommodation', 'name' => 'current_accommodation', 'repeatable' => false],
             'skype'                 => ['label' => 'Skype',                'type' => 'text',   'db_column' => 'skype',                 'name' => 'skype',                 'repeatable' => false],
             'facebook'              => ['label' => 'Facebook',             'type' => 'text',   'db_column' => 'facebook',              'name' => 'facebook',              'repeatable' => false],
             'linkedin_url'          => ['label' => 'Linkedin',             'type' => 'text',   'db_column' => 'linkedin_url',          'name' => 'linkedin_url',          'repeatable' => false],
-            'introduce_yourself'    => ['label' => 'Introduce yourself',   'type' => 'text',   'db_column' => 'introduce_yourself',    'name' => 'introduce_yourself',    'repeatable' => false],
-            'interests'             => ['label' => 'Interests',            'type' => 'text',   'db_column' => 'interests',             'name' => 'interests',             'repeatable' => false],
+            'introduce_yourself'    => ['label' => 'Introduce yourself',   'type' => 'text',   'db_column' => 'introduce_yourself', 'name' => 'introduce_yourself', 'repeatable' => false, 'target' => 'application'],
+            'interests'             => ['label' => 'Interests',            'type' => 'text',   'db_column' => 'interests',          'name' => 'interests',          'repeatable' => false],
 
             // Work history
             'company'                => ['label' => 'Company',               'type' => 'text',   'db_column' => 'seniority_company',           'name' => 'company',               'repeatable' => false],
@@ -134,13 +133,14 @@ class RecruitmentChannel extends Model
                 ],
             ],
 
-            // Skills
+            // Skills — saved to candidate pivot table; new skill names are stored in skills_snapshot
             'skills' => [
                 'label' => 'Skill', 'type' => 'skill_select',
-                'db_column' => 'skills',
+                'db_column' => 'skills',   // handled specially in controller
                 'name' => 'skill',
                 'repeatable' => false,
                 'allow_multiple' => true,
+                'target' => 'candidate_skills', // special target — controller syncs to pivot
                 'default_options' => [],
             ],
         ];

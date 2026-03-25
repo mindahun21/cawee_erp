@@ -234,6 +234,75 @@
 .channel-field-palette .palette-item:hover {
     background-color: #e5e7eb;
 }
+
+/* ── Dark mode ── */
+.dark .channel-form-builder .fi-fo-builder-blocks {
+    border-color: #4b5563;
+    background: #1f2937;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block {
+    background: #111827;
+    border-color: #374151;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block:not(.fi-collapsed) {
+    border-color: var(--primary-400) !important;
+    background-color: #1f2937 !important;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block:not(.fi-collapsed) > div,
+.dark .channel-form-builder .fi-fo-builder-block:not(.fi-collapsed) form,
+.dark .channel-form-builder .fi-fo-builder-block:not(.fi-collapsed) .fi-fo-builder-block-content {
+    background-color: #1f2937 !important;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block-header .fi-fo-builder-block-label {
+    color: #e5e7eb;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block-content {
+    border-top-color: #374151;
+    background: #111827;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block [data-field="name"] input,
+.dark .channel-form-builder .fi-fo-builder-block input[name*="[name]"] {
+    background-color: #1f2937 !important;
+    color: #9ca3af !important;
+    border-color: #374151 !important;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block .fi-fo-builder-block-collapse-action:hover {
+    color: #60a5fa;
+    background: #1e3a5f;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block .fi-fo-builder-block-delete-action:hover {
+    color: #f87171;
+    background: #3b1111;
+}
+
+.dark .channel-form-builder .fi-fo-builder-block .fi-fo-builder-block-reorder-handle {
+    color: #4b5563;
+}
+.dark .channel-form-builder .fi-fo-builder-block .fi-fo-builder-block-reorder-handle:hover {
+    color: #6b7280;
+}
+
+.dark .channel-field-palette {
+    background-color: #111827;
+}
+.dark .channel-field-palette .palette-item {
+    background-color: #1f2937;
+    border-bottom-color: #111827;
+}
+.dark .channel-field-palette .palette-item:hover {
+    background-color: #374151;
+}
+.dark .channel-field-palette .palette-item span {
+    color: #d1d5db !important;
+}
 </style>
 
 <div

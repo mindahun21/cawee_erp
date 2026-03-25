@@ -33,6 +33,7 @@ class RecruitmentApprovalWorkflow extends Model
     {
         return [
             'recruitment_plan' => 'Recruitment Plan',
+            'recruitment_campaign' => 'Recruitment Campaign',
         ];
     }
 

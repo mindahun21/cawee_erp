@@ -25,6 +25,10 @@ class RecruitmentPlansTable
     {
         return $table
             ->columns([
+                TextColumn::make('title')
+                    ->label('Title')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('department.name')
                     ->label('Department')
                     ->sortable()

@@ -24,6 +24,12 @@ class RecruitmentPlanForm
                     ->columnSpanFull()
                     ->columns(2)
                     ->schema([
+                        TextInput::make('title')
+                            ->label('Title')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+
                         Select::make('department_id')
                             ->relationship('department', 'name')
                             ->required()
@@ -85,6 +91,7 @@ class RecruitmentPlanForm
                         TextInput::make('budget')
                             ->label('Budget')
                             ->numeric()
+                            ->minValue(0)
                             ->nullable()
                             ->live(onBlur: true)
                             ->columnSpan(1),
@@ -92,6 +99,7 @@ class RecruitmentPlanForm
                         TextInput::make('salary_from')
                             ->label('Starting Salary (From)')
                             ->numeric()
+                            ->minValue(0)
                             ->nullable()
                             ->lte('budget')
                             ->columnSpan(1),
@@ -99,6 +107,7 @@ class RecruitmentPlanForm
                         TextInput::make('salary_to')
                             ->label('Starting Salary (To)')
                             ->numeric()
+                            ->minValue(0)
                             ->nullable()
                             ->gte('salary_from')
                             ->lte('budget')

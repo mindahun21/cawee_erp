@@ -12,6 +12,7 @@
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div
+        wire:ignore
         x-data="formSchemaBuilder({
             initialSchema: @js($currentSchema),
             availableFields: @js($availableFields),
@@ -219,7 +220,9 @@
             padding: 6px 16px; background: #fff; border: 1px solid #d1d5db;
             border-radius: 6px; font-size: .8125rem; color: #374151; cursor: pointer;
         }
+        .dark .fsb-preview-btn { background: #1f2937; border-color: #374151; color: #d1d5db; }
         .fsb-preview-btn:hover:not(:disabled) { background: #f9fafb; border-color: #9ca3af; }
+        .dark .fsb-preview-btn:hover:not(:disabled) { background: #374151; border-color: #6b7280; }
         .fsb-preview-btn:disabled { opacity: .4; cursor: not-allowed; }
 
         /* ── Layout ── */
@@ -227,24 +230,34 @@
 
         /* ── Palette ── */
         .fsb-palette { width: 30%; min-width: 180px; border: 1px solid #e5e7eb; background: #fafbfc; border-radius: 8px; overflow: hidden; align-self: flex-start; }
+        .dark .fsb-palette { border-color: #374151; background: #1f2937; }
         .fsb-palette-title { padding: 10px 12px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6; }
+        .dark .fsb-palette-title { color: #9ca3af; border-color: #374151; background: #111827; }
         .fsb-palette-item { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; cursor: pointer; user-select: none; background: #f9fafb; }
+        .dark .fsb-palette-item { border-color: #374151; background: #111827; }
         .fsb-palette-item:hover { background: #eef2ff; }
+        .dark .fsb-palette-item:hover { background: #1e3a8a; }
         .fsb-palette-item.is-disabled { opacity: 0.4; cursor: not-allowed; background: #f3f4f6; }
+        .dark .fsb-palette-item.is-disabled { background: #1f2937; }
         .fsb-palette-label { font-size: 13px; color: #374151; }
+        .dark .fsb-palette-label { color: #d1d5db; }
 
         /* ── Canvas ── */
         .fsb-canvas { flex: 1; border: 1px solid #e5e7eb; min-height: 500px; background: #fff; border-radius: 8px; }
+        .dark .fsb-canvas { border-color: #374151; background: #111827; }
         .fsb-canvas-empty { border: 2px dashed #d1d5db; margin: 16px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #9ca3af; font-size: 13px; border-radius: 8px; }
+        .dark .fsb-canvas-empty { border-color: #4b5563; color: #6b7280; }
         .fsb-canvas-list { padding: 8px; min-height: 120px; }
 
         /* ── Item ── */
         .fsb-item { border: 1px solid #e5e7eb; margin-bottom: 6px; background: #fff; border-radius: 6px; overflow: hidden; }
+        .dark .fsb-item { border-color: #374151; background: #1f2937; }
         .fsb-item-header {
             display: flex; align-items: center; padding: 8px 10px; gap: 8px;
             cursor: default; user-select: none;
         }
         .fsb-item-header.is-open { border-bottom: 1px solid #e5e7eb; background: #f0f4ff; }
+        .dark .fsb-item-header.is-open { border-color: #374151; background: #1e3a8a; }
 
         /* Drag handle (LEFT) */
         .fsb-drag-handle {
@@ -255,6 +268,7 @@
 
         /* Label (CENTER, flex-grow) */
         .fsb-item-label { flex: 1; font-size: 13px; color: #111827; font-weight: 500; }
+        .dark .fsb-item-label { color: #f3f4f6; }
 
         /* Actions (RIGHT) — buttons always clickable; only opacity toggles on hover */
         .fsb-item-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s ease; flex-shrink: 0; margin-left: auto; }
@@ -272,15 +286,19 @@
 
         /* ── Editor ── */
         .fsb-item-editor { background: #f8fafc; padding: 12px; border-top: 1px dashed #c7d2fe; }
+        .dark .fsb-item-editor { background: #111827; border-color: #4338ca; }
         .fsb-editor-grid { display: grid; gap: 10px; margin-bottom: 10px; }
         .fsb-editor-grid label { display: flex; flex-direction: column; gap: 4px; }
         .fsb-editor-grid label > span { font-size: 11px; color: #374151; font-weight: 500; }
+        .dark .fsb-editor-grid label > span { color: #d1d5db; }
         .fsb-editor-grid input, .fsb-editor-grid textarea {
             border: 1px solid #d1d5db; border-radius: 4px; padding: 6px 8px;
             font-size: 12px; background: #fff; color: #111827;
         }
+        .dark .fsb-editor-grid input, .dark .fsb-editor-grid textarea { border-color: #4b5563; background: #1f2937; color: #f3f4f6; }
         .fsb-editor-grid input:focus, .fsb-editor-grid textarea:focus { outline: 2px solid #818cf8; outline-offset: -1px; }
         .fsb-editor-grid input.is-readonly { background: #f3f4f6; color: #6b7280; cursor: not-allowed; }
+        .dark .fsb-editor-grid input.is-readonly { background: #374151; color: #9ca3af; }
         .fsb-editor-checkbox { display: flex !important; flex-direction: row !important; align-items: center; gap: 6px; }
 
         .fsb-options-section { margin-top: 6px; }
@@ -306,9 +324,13 @@
             display: flex; flex-direction: column;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); overflow: hidden;
         }
+        .dark .fsb-modal { background: #1f2937; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
         .fsb-modal-header { padding: 20px 24px 16px; border-bottom: 1px solid #e5e7eb; position: relative; }
+        .dark .fsb-modal-header { border-color: #374151; }
         .fsb-modal-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0 0 4px; }
+        .dark .fsb-modal-title { color: #f3f4f6; }
         .fsb-modal-subtitle { font-size: .8125rem; color: #9ca3af; margin: 0; }
+        .dark .fsb-modal-subtitle { color: #6b7280; }
         .fsb-modal-close-x {
             position: absolute; top: 12px; right: 16px; border: none; background: transparent;
             font-size: 22px; color: #9ca3af; cursor: pointer;
@@ -553,6 +575,9 @@
                 sync() {
                     const payload = this.schemaForSave();
                     if (this.$refs.hiddenInput) this.$refs.hiddenInput.value = JSON.stringify(payload);
+                    // wire:ignore on the parent div prevents Livewire from morphing
+                    // this DOM subtree, so Alpine bindings survive. But we still need
+                    // $wire.set() to push data to Livewire server state for Filament save.
                     if (this.$wire && this.statePath) this.$wire.set(this.statePath, payload);
                 },
 
