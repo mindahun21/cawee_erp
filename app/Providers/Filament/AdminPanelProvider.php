@@ -53,6 +53,20 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Procurement')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Cash & Bank')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Petty Cash')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Budgets')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Per Diem')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Reports')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance / Settings')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
@@ -132,6 +146,23 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(98)
                     ->url('/recruitment/recruitment_portal', shouldOpenInNewTab: true)
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
+
+                // ── Finance ────────────────────────────────────────────────────────
+                \Filament\Navigation\NavigationItem::make('Finance Settings')
+                    ->group('Finance')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(99)
+                    ->url(fn (): string => \App\Filament\Resources\Finance\Settings\AccountTypeResource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs([
+                        \App\Filament\Resources\Finance\Settings\AccountTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\BudgetTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\TaxTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\PerdiemTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\CostCenterResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\CashierResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\AccountingPeriodResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
+                    ])),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
