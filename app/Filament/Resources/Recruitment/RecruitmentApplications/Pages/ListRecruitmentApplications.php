@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\Resources\Recruitment\RecruitmentApplications\Pages;
+
+use App\Filament\Resources\Recruitment\RecruitmentApplications\RecruitmentApplicationResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
+
+class ListRecruitmentApplications extends ListRecords
+{
+    protected static string $resource = RecruitmentApplicationResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make(),
+        ];
+    }
+}

@@ -24,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\InventoryMovement::observe(\App\Observers\InventoryMovementObserver::class);
         \App\Models\AssetAssignment::observe(\App\Observers\AssetAssignmentObserver::class);
 
+        // Recruitment Observers
+        \App\Models\Recruitment\RecruitmentPlan::observe(\App\Observers\Recruitment\RecruitmentPlanObserver::class);
+
         // Set default pagination to 25 rows across all Filament tables
         \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
             $table

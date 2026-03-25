@@ -214,6 +214,7 @@ return [
         'exclude' => [
             \Filament\Widgets\AccountWidget::class,
             \Filament\Widgets\FilamentInfoWidget::class,
+            \App\Filament\Widgets\Recruitment\RecruitmentStatsOverview::class,
         ],
     ],
 
