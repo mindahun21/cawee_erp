@@ -75,7 +75,7 @@ class OfficeRentAgreement extends Model
 
     public function paymentCycle(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'payment_cycle_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'payment_cycle_option_id');
     }
 
     public function legalReviewer(): BelongsTo

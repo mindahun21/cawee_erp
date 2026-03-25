@@ -39,29 +39,29 @@ class HrSettingOptionResource extends Resource
     {
         return $schema->components([
             Select::make('category')
-                ->options(HrSettingOption::CATEGORIES)
-                ->searchable()
-                ->required(),
+            ->options(HrSettingOption::CATEGORIES)
+            ->searchable()
+            ->required(),
 
             TextInput::make('label')
-                ->required()
-                ->maxLength(150),
+            ->required()
+            ->maxLength(150),
 
             TextInput::make('code')
-                ->maxLength(100)
-                ->helperText('Optional short code.'),
+            ->maxLength(100)
+            ->helperText('Optional short code.'),
 
             TextInput::make('sort_order')
-                ->numeric()
-                ->default(0)
-                ->required(),
+            ->numeric()
+            ->default(0)
+            ->required(),
 
             Toggle::make('is_active')
-                ->default(true),
+            ->default(true),
 
             Textarea::make('description')
-                ->rows(2)
-                ->columnSpanFull(),
+            ->rows(2)
+            ->columnSpanFull(),
         ]);
     }
 
@@ -69,18 +69,18 @@ class HrSettingOptionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('category')
-                    ->formatStateUsing(fn (string $state) => HrSettingOption::CATEGORIES[$state] ?? $state)
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('label')->searchable()->sortable()->weight('semibold'),
-                TextColumn::make('code')->toggleable(),
-                TextColumn::make('sort_order')->sortable(),
-                IconColumn::make('is_active')->boolean(),
-            ])
+            TextColumn::make('category')
+            ->formatStateUsing(fn(string $state) => HrSettingOption::CATEGORIES[$state] ?? $state)
+            ->badge()
+            ->sortable(),
+            TextColumn::make('label')->searchable()->sortable()->weight('semibold'),
+            TextColumn::make('code')->toggleable(),
+            TextColumn::make('sort_order')->sortable(),
+            IconColumn::make('is_active')->boolean(),
+        ])
             ->filters([
-                SelectFilter::make('category')->options(HrSettingOption::CATEGORIES),
-            ])
+            SelectFilter::make('category')->options(HrSettingOption::CATEGORIES),
+        ])
             ->defaultSort('category')
             ->recordActions([EditAction::make(), DeleteAction::make()])
             ->bulkActions([DeleteBulkAction::make()]);
@@ -93,4 +93,3 @@ class HrSettingOptionResource extends Resource
         ];
     }
 }
-

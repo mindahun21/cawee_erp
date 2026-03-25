@@ -17,17 +17,26 @@ class Asset extends Model
         'department_id',
         'asset_model_id',
         'name',
+        'asset_tag',
+        'is_fixed_asset',
         'notes',
         'serial_number',
         'barcode',
         'purchase_cost',
         'purchase_date',
         'description',
-        'is_fixed_asset',
+        'image',
         'quantity',
         'qr_code',
         'rfid_tag',
         'warranty_expiry_date',
+        'insurance_policy_no',
+        'insurance_provider',
+        'insurance_expiry_date',
+        'end_of_life_date',
+        'disposal_method_id',
+        'disposal_date',
+        'disposal_value',
         'unit_id',
         'contract_details',
     ];
@@ -36,6 +45,11 @@ class Asset extends Model
         'purchase_date' => 'date',
         'purchase_cost' => 'decimal:2',
         'warranty_expiry_date' => 'date',
+        'insurance_expiry_date' => 'date',
+        'end_of_life_date' => 'date',
+        'disposal_date' => 'date',
+        'disposal_value' => 'decimal:2',
+        'is_fixed_asset' => 'boolean',
         'contract_details' => 'json',
     ];
 
@@ -49,7 +63,24 @@ class Asset extends Model
         return $this->belongsTo(AssetModel::class, 'asset_model_id');
     }
 
-    public function condition()
+    public function vehicleDetail()
+    {
+        return $this->hasOne(VehicleDetail::class);
+    }
+
+    /**
+     * If this asset was created as a mirror of a Vehicle, returns that Vehicle.
+     */
+    public function mirroredVehicle()
+    {
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $concat = $driver === 'sqlite' ? "'VEH-' || vehicles.id" : "CONCAT('VEH-', vehicles.id)";
+        
+        return $this->hasOne(Vehicle::class, 'id', 'asset_tag')
+            ->whereRaw("assets.asset_tag = $concat");
+    }
+
+    public function conditionRecord()
     {
         return $this->belongsTo(AssetCondition::class, 'asset_condition_id');
     }
@@ -88,6 +119,11 @@ class Asset extends Model
     public function supplier()
     {
         return $this->belongsTo(\App\Models\Procurement\Supplier::class);
+    }
+
+    public function disposalMethod()
+    {
+        return $this->belongsTo(AssetDisposalMethod::class);
     }
 
     public function unit()
@@ -245,6 +281,9 @@ class Asset extends Model
         parent::boot();
 
         static::created(function ($asset) {
+            if ($asset->asset_tag) {
+                \App\Models\PrefixSetting::updateNextNumberFromCode('asset_tag', $asset->asset_tag);
+            }
             if ($asset->serial_number) {
                 \App\Models\PrefixSetting::updateNextNumberFromCode('asset_serial_number', $asset->serial_number);
             }
@@ -256,6 +295,16 @@ class Asset extends Model
             }
             if ($asset->rfid_tag) {
                 \App\Models\PrefixSetting::updateNextNumberFromCode('asset_rfid_tag', $asset->rfid_tag);
+            }
+        });
+
+        // When an asset that mirrors a Vehicle is deleted, cascade to the Vehicle
+        static::deleting(function ($asset) {
+            if ($asset->asset_tag && str_starts_with($asset->asset_tag, 'VEH-')) {
+                $vehicleId = (int) str_replace('VEH-', '', $asset->asset_tag);
+                if ($vehicleId) {
+                    Vehicle::find($vehicleId)?->delete();
+                }
             }
         });
     }

@@ -85,8 +85,13 @@ class EmployeeResource extends Resource
                                 ->maxLength(100),
 
                             Select::make('gender')
-                                ->options(['M' => 'Male', 'F' => 'Female'])
-                                ->required(),
+                                ->label('Gender')
+                                ->options([
+                                    'M' => 'Male',
+                                    'F' => 'Female',
+                                ])
+                                ->required()
+                                ->native(false),
 
                             DatePicker::make('date_of_birth')
                                 ->maxDate(now()->subYears(18)),
@@ -167,14 +172,17 @@ class EmployeeResource extends Resource
                                 ->nullable(),
 
                             Select::make('employment_type')
+                                ->label('Employment Type')
                                 ->options([
-                                    'Permanent'   => 'Permanent',
                                     'Contract'    => 'Contract',
                                     'Temporary'   => 'Temporary',
                                     'Consultancy' => 'Consultancy',
                                     'Other'       => 'Other',
                                 ])
-                                ->nullable(),
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->native(false),
 
                             DatePicker::make('date_of_employment')
                                 ->required(),
@@ -295,13 +303,18 @@ class EmployeeResource extends Resource
                     ->weight('semibold'),
 
                 TextColumn::make('gender')
+                    ->label('Gender')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'M' => 'Male',
+                        'F' => 'Female',
+                        default => $state ?? '',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
                         'M' => 'info',
                         'F' => 'pink',
                         default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => $state === 'M' ? 'Male' : 'Female'),
+                    }),
 
                 TextColumn::make('jobPosition.title')
                     ->label('Position')
@@ -309,13 +322,13 @@ class EmployeeResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('employment_type')
+                    ->label('Employment Type')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Permanent'   => 'success',
                         'Contract'    => 'warning',
                         'Temporary'   => 'info',
                         'Consultancy' => 'primary',
-                        'Other'       => 'gray',
                         default       => 'gray',
                     }),
 
@@ -362,11 +375,15 @@ class EmployeeResource extends Resource
                 TrashedFilter::make(),
 
                 SelectFilter::make('gender')
-                    ->options(['M' => 'Male', 'F' => 'Female']),
+                    ->label('Gender')
+                    ->options([
+                        'M' => 'Male',
+                        'F' => 'Female',
+                    ]),
 
                 SelectFilter::make('employment_type')
+                    ->label('Employment Type')
                     ->options([
-                        'Permanent'   => 'Permanent',
                         'Contract'    => 'Contract',
                         'Temporary'   => 'Temporary',
                         'Consultancy' => 'Consultancy',

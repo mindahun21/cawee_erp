@@ -19,8 +19,11 @@ class MeSurvey extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'project_id',
+        'reporting_period_id',
         'type',
         'title',
+        'version',
         'period_start',
         'period_end',
         'is_active',
@@ -54,5 +57,15 @@ class MeSurvey extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(MeSurveyResponse::class, 'survey_id');
+    }
+
+    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(MeProject::class, 'project_id');
+    }
+
+    public function reportingPeriod(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(MeReportingPeriod::class, 'reporting_period_id');
     }
 }

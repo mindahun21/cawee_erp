@@ -8,11 +8,28 @@ class Item extends Model
 {
     protected $fillable = [
         'name',
+        'item_code',
+        'item_category_id',
+        'item_type',
+        'item_type_id',
+        'barcode',
+        'description',
+        'reorder_level',
         'asset_model_id',
         'unit_id',
         'note',
         'image',
     ];
+
+    public function itemCategory()
+    {
+        return $this->belongsTo(ItemCategory::class);
+    }
+
+    public function itemTypeRecord()
+    {
+        return $this->belongsTo(ItemType::class, 'item_type_id');
+    }
 
     public function unit()
     {

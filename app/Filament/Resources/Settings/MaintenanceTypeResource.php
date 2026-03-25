@@ -30,7 +30,7 @@ class MaintenanceTypeResource extends Resource
 
     protected static ?string $navigationLabel = 'Maintenance Types';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {

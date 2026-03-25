@@ -30,7 +30,7 @@ class InventoryReport extends Page implements HasForms
     
     protected static string | \UnitEnum | null $navigationGroup = 'Inventory and Asset';
     
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 500;
     
     protected static ?string $title = 'Inventory & Asset Reports';
     protected static ?string $navigationLabel = 'Report';
@@ -118,7 +118,7 @@ class InventoryReport extends Page implements HasForms
     protected function loadValuation(array $filters): void
     {
         $query = Asset::query();
-        if ($filters['categoryId'] ?? null) $query->where('asset_category_id', $filters['categoryId']);
+        if ($filters['categoryId'] ?? null) $query->whereHas('assetModel', fn($q) => $q->where('asset_category_id', $filters['categoryId']));
         if ($filters['locationId'] ?? null) $query->where('location_id', $filters['locationId']);
 
         $assets = $query->get();
@@ -153,17 +153,28 @@ class InventoryReport extends Page implements HasForms
         $asOfStr = $asOf->format('Y-m-d');
         $endOfMonthStr = $asOf->copy()->endOfMonth()->format('Y-m-d');
 
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+
         // Apply range filtering: acquired before/during month, and not yet fully depreciated
         $query->where('purchase_date', '<=', $endOfMonthStr)
-            ->whereExists(function ($sub) use ($asOfStr) {
+            ->whereExists(function ($sub) use ($asOfStr, $driver) {
                 $sub->select(\Illuminate\Support\Facades\DB::raw(1))
                     ->from('asset_models')
                     ->join('depreciations', 'asset_models.depreciation_id', '=', 'depreciations.id')
-                    ->whereColumn('asset_models.id', 'assets.asset_model_id')
-                    ->whereRaw("DATE_ADD(assets.purchase_date, INTERVAL depreciations.months MONTH) > ?", [$asOfStr]);
+                    ->whereColumn('asset_models.id', 'assets.asset_model_id');
+                    
+                if ($driver === 'sqlite') {
+                    $sub->whereRaw("date(assets.purchase_date, '+' || depreciations.months || ' months') > ?", [$asOfStr]);
+                } else if ($driver === 'pgsql') {
+                    $sub->whereRaw("assets.purchase_date + (depreciations.months || ' months')::interval > ?", [$asOfStr]);
+                } else {
+                    $sub->whereRaw("DATE_ADD(assets.purchase_date, INTERVAL depreciations.months MONTH) > ?", [$asOfStr]);
+                }
             });
 
-        $this->reportData = $query->get()->map(fn($a) => [
+        $assets = $query->get();
+        
+        $mapped = $assets->map(fn($a) => [
             'name'                 => $a->name,
             'period'               => $asOf->format('M Y'),
             'cost'                 => $a->purchase_cost,
@@ -172,75 +183,128 @@ class InventoryReport extends Page implements HasForms
             'remaining_value'      => (float) $a->purchase_cost - $a->getCurrentValueAsOf($asOf),
             'remaining_months'     => $a->getRemainingMonthsAsOf($asOf),
         ]);
+
+        $this->reportData = [
+            'assets' => $mapped,
+            'top_5' => $mapped->sortByDesc('monthly_depreciation')->take(5)->values()->toArray(),
+        ];
     }
 
     protected function loadAging(array $filters): void
     {
         $query = Asset::query();
-        if ($filters['categoryId'] ?? null) $query->where('asset_category_id', $filters['categoryId']);
+        if ($filters['categoryId'] ?? null) $query->whereHas('assetModel', fn($q) => $q->where('asset_category_id', $filters['categoryId']));
 
-        $this->reportData = $query->whereNotNull('purchase_date')->get()->map(fn($a) => [
+        $assets = $query->whereNotNull('purchase_date')->get();
+        
+        $mapped = $assets->map(fn($a) => [
             'name' => $a->name,
             'purchase_date' => $a->purchase_date,
             'age_months' => $a->purchase_date->diffInMonths(now()),
             'useful_life_months' => $a->depreciation?->months ?? 0,
             'remaining_months' => $a->remaining_months,
         ]);
+
+        $this->reportData = [
+            'assets' => $mapped,
+            'metrics' => [
+                'new' => $mapped->filter(fn($a) => $a['age_months'] < 12)->count(),
+                'mid' => $mapped->filter(fn($a) => $a['age_months'] >= 12 && $a['age_months'] <= 36)->count(),
+                'eol' => $mapped->filter(fn($a) => $a['age_months'] > 36)->count(),
+            ]
+        ];
     }
 
     protected function loadUtilization(array $filters): void
     {
-        $this->reportData = Asset::withCount(['assignments' => fn($q) => $q->whereNull('returned_date')])
+        $mapped = Asset::withCount(['assignments' => fn($q) => $q->whereNull('returned_date')])
             ->get()->map(fn($a) => [
                 'name' => $a->name,
                 'total_qty' => $a->quantity,
                 'assigned_qty' => $a->assignments_count,
                 'utilization_rate' => $a->quantity > 0 ? ($a->assignments_count / $a->quantity) * 100 : 0,
             ]);
+
+        $this->reportData = [
+            'assets' => $mapped,
+            'metrics' => [
+                'high' => $mapped->where('utilization_rate', '>=', 80)->count(),
+                'moderate' => $mapped->where('utilization_rate', '>=', 1)->where('utilization_rate', '<', 80)->count(),
+                'idle' => $mapped->where('utilization_rate', 0)->count(),
+                'total' => $mapped->count() ?: 1, // prevent div by zero
+            ]
+        ];
     }
 
     protected function loadMovement(array $filters): void
     {
-        $query = InventoryMovement::with(['asset', 'fromLocation', 'toLocation']);
+        $query = InventoryMovement::with(['item', 'fromWarehouse', 'toWarehouse']);
         if ($filters['fromDate'] ?? null) $query->where('date', '>=', $filters['fromDate']);
         if ($filters['toDate'] ?? null) $query->where('date', '<=', $filters['toDate']);
         
-        $this->reportData = $query->latest('date')->get();
+        $movements = $query->latest('date')->get();
+        
+        $this->reportData = [
+            'movements' => $movements,
+            'metrics' => [
+                'in' => $movements->where('movement_type', 'in')->sum('quantity'),
+                'out' => $movements->where('movement_type', 'out')->sum('quantity'),
+                'transfer' => $movements->where('movement_type', 'transfer')->sum('quantity'),
+            ]
+        ];
     }
 
     protected function loadDamaged(array $filters): void
     {
-        $this->reportData = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
-            ->orWhereHas('condition', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
+        $assets = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
+            ->orWhereHas('conditionRecord', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
             ->get();
+
+        $this->reportData = [
+            'assets' => $assets,
+            'metrics' => [
+                'lost' => $assets->filter(fn($a) => strtolower($a->statusRecord?->name ?? '') === 'lost')->count(),
+                'broken' => $assets->filter(fn($a) => strtolower($a->conditionRecord?->name ?? '') === 'broken')->count(),
+                'poor' => $assets->filter(fn($a) => strtolower($a->conditionRecord?->name ?? '') === 'poor')->count(),
+            ]
+        ];
     }
 
     protected function loadLocationWise(array $filters): void
     {
-        $this->reportData = Location::withCount('assets')
+        $mapped = Location::withCount('assets')
             ->get()->map(fn($l) => [
                 'name' => $l->location_name,
                 'asset_count' => $l->assets_count,
                 'total_value' => Asset::where('location_id', $l->id)->sum('purchase_cost'),
             ]);
+
+        $this->reportData = [
+            'locations' => $mapped,
+            'max_value' => $mapped->max('total_value') ?: 1,
+        ];
     }
 
     protected function loadCategoryWise(array $filters): void
     {
-        $this->reportData = AssetCategory::withCount('assets')
+        $mapped = AssetCategory::withCount('assets')
             ->get()->map(fn($c) => [
                 'name' => $c->name,
                 'asset_count' => $c->assets_count,
-                'total_value' => Asset::where('asset_category_id', $c->id)->sum('purchase_cost'),
+                'total_value' => Asset::whereHas('assetModel', fn($q) => $q->where('asset_category_id', $c->id))->sum('purchase_cost'),
             ]);
+
+        $this->reportData = [
+            'categories' => $mapped,
+            'max_count' => $mapped->max('asset_count') ?: 1,
+        ];
     }
 
     protected function loadTurnover(array $filters): void
     {
-        // Simple turnover: Outgoing Qty / Average Stock
-        $this->reportData = Asset::all()->map(function($a) {
-            $outgoing = InventoryMovement::where('asset_id', $a->id)
-                ->whereIn('type', ['Stock Out', 'Disposal', 'Damage'])
+        $mapped = Asset::all()->map(function($a) {
+            $outgoing = InventoryMovement::where('item_id', $a->id)
+                ->whereIn('movement_type', ['out', 'disposal', 'damage'])
                 ->sum('quantity');
             
             return [
@@ -250,6 +314,11 @@ class InventoryReport extends Page implements HasForms
                 'turnover_ratio' => $a->quantity > 0 ? $outgoing / $a->quantity : 0,
             ];
         });
+
+        $this->reportData = [
+            'assets' => $mapped,
+            'top_3' => $mapped->sortByDesc('turnover_ratio')->take(3)->values()->toArray(),
+        ];
     }
 
     public function export(string $format)
@@ -299,15 +368,17 @@ class InventoryReport extends Page implements HasForms
                 break;
             case 'movement':
                 $headers = ['Date', 'Asset', 'Type', 'Qty', 'Origin', 'Destination'];
-                $data = InventoryMovement::with(['asset', 'fromLocation', 'toLocation'])->latest()->get()->map(fn($m) => [
-                    $m->date->format('d/m/Y'), $m->asset->name, $m->type, $m->quantity, $m->fromLocation->location_name ?? 'N/A', $m->toLocation->location_name ?? 'N/A'
+                $data = InventoryMovement::with(['item', 'fromWarehouse', 'toWarehouse'])->latest()->get()->map(fn($m) => [
+                    $m->date->format('d/m/Y'), $m->item->name ?? 'N/A', $m->movement_type, $m->quantity, $m->fromWarehouse->name ?? 'N/A', $m->toWarehouse->name ?? 'N/A'
                 ])->toArray();
                 $title = "INVENTORY MOVEMENT REPORT";
                 break;
             case 'damaged':
                 $headers = ['Asset Name', 'Status', 'Condition', 'Location'];
-                $data = Asset::whereIn('status', ['lost'])->orWhereIn('condition', ['Poor', 'Broken'])->get()->map(fn($a) => [
-                    $a->name, $a->statusRecord?->name, $a->condition?->name, $a->location->location_name ?? 'N/A'
+                $data = Asset::whereHas('statusRecord', fn($q) => $q->where('name', 'Lost'))
+                    ->orWhereHas('conditionRecord', fn($q) => $q->whereIn('name', ['Poor', 'Broken']))
+                    ->get()->map(fn($a) => [
+                    $a->name, $a->statusRecord?->name, $a->conditionRecord?->name, $a->location->location_name ?? 'N/A'
                 ])->toArray();
                 $title = "LOST/DAMAGED ASSET REPORT";
                 break;
@@ -321,14 +392,14 @@ class InventoryReport extends Page implements HasForms
             case 'category':
                 $headers = ['Category Name', 'Asset Count', 'Financial Value'];
                 $data = AssetCategory::withCount('assets')->get()->map(fn($c) => [
-                    $c->name, $c->assets_count, number_format(Asset::where('asset_category_id', $c->id)->sum('purchase_cost'), 2)
+                    $c->name, $c->assets_count, number_format(Asset::whereHas('assetModel', fn($q) => $q->where('asset_category_id', $c->id))->sum('purchase_cost'), 2)
                 ])->toArray();
                 $title = "CATEGORY-WISE ASSET REPORT";
                 break;
             case 'turnover':
                 $headers = ['Asset Name', 'Units Out', 'Available Stock', 'Turnover Ratio'];
                 $data = Asset::all()->map(function($a) {
-                    $outgoing = InventoryMovement::where('asset_id', $a->id)->whereIn('type', ['Stock Out', 'Disposal', 'Damage'])->sum('quantity');
+                    $outgoing = InventoryMovement::where('item_id', $a->id)->whereIn('movement_type', ['out', 'disposal', 'damage'])->sum('quantity');
                     return [$a->name, $outgoing, $a->quantity, number_format($a->quantity > 0 ? $outgoing / $a->quantity : 0, 2) . 'x'];
                 })->toArray();
                 $title = "INVENTORY TURNOVER REPORT";
@@ -348,4 +419,3 @@ class InventoryReport extends Page implements HasForms
         );
     }
 }
-

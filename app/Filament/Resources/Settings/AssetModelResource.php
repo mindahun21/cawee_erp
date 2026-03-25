@@ -36,6 +36,8 @@ class AssetModelResource extends Resource
 
     protected static ?int $navigationSort = 16;
 
+
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -44,31 +46,46 @@ class AssetModelResource extends Resource
                     ->label('Model Name')
                     ->required()
                     ->maxLength(255),
-                Select::make('asset_type_id')
+                 Select::make('asset_type_id')
                     ->label('Asset Type')
                     ->relationship('type', 'name')
                     ->required()
                     ->searchable()
-                    ->preload(),
-                Select::make('asset_manufacturer_id')
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                    ]),
+                 Select::make('asset_manufacturer_id')
                     ->label('Manufacturer')
                     ->relationship('manufacturer', 'name')
                     ->required()
                     ->searchable()
-                    ->preload(),
-                Select::make('asset_category_id')
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                    ]),
+                 Select::make('asset_category_id')
                     ->label('Category')
                     ->relationship('category', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                        TextInput::make('useful_life')->numeric(),
+                        Textarea::make('description'),
+                    ]),
                 TextInput::make('model_number')
                     ->label('Model NO.')
                     ->maxLength(255),
-                Select::make('depreciation_id')
+                 Select::make('depreciation_id')
                     ->label('Depreciation')
                     ->relationship('depreciation', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                        TextInput::make('months')->numeric()->required(),
+                    ]),
                 TextInput::make('eol_months')
                     ->label('EOL (months)')
                     ->numeric()

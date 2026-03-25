@@ -42,7 +42,7 @@ class BranchUtilityResource extends Resource
 
             Select::make('utility_type_option_id')
                 ->label('Utility Type')
-                ->options(fn () => HrSettingOption::optionsFor('utility_type'))
+                ->options(HrSettingOption::optionsFor('utility_type'))
                 ->searchable()
                 ->required(),
 
@@ -51,7 +51,7 @@ class BranchUtilityResource extends Resource
 
             Select::make('payment_cycle_option_id')
                 ->label('Payment Cycle')
-                ->options(fn () => HrSettingOption::optionsFor('utility_payment_cycle'))
+                ->options(HrSettingOption::optionsFor('utility_payment_cycle'))
                 ->nullable(),
 
             TextInput::make('estimated_amount')->numeric()->prefix('ETB')->default(0),
@@ -80,16 +80,18 @@ class BranchUtilityResource extends Resource
                 TextColumn::make('days_until_due')
                     ->label('Days To Due')
                     ->badge()
-                    ->color(fn ($state) => match (true) {
-                        $state === null => 'gray',
-                        $state < 0 => 'danger',
-                        $state <= 7 => 'danger',
-                        $state <= 30 => 'warning',
-                        default => 'success',
-                    }),
+                    ->colors([
+                        'gray' => static fn ($state) => $state === null,
+                        'danger' => static fn ($state) => $state < 0 || $state <= 7,
+                        'warning' => static fn ($state) => $state <= 30,
+                        'success' => static fn ($state) => $state > 30,
+                    ]),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => $state === 'Active' ? 'success' : 'gray'),
+                    ->colors([
+                        'success' => 'Active',
+                        'gray' => 'Inactive',
+                    ]),
             ])
             ->filters([
                 SelectFilter::make('status')->options(['Active' => 'Active', 'Inactive' => 'Inactive']),

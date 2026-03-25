@@ -54,7 +54,7 @@ class OfficeRentAgreementResource extends Resource
 
             Select::make('payment_cycle_option_id')
                 ->label('Payment Cycle')
-                ->options(fn () => HrSettingOption::optionsFor('agreement_payment_cycle'))
+                ->options(HrSettingOption::optionsFor('agreement_payment_cycle'))
                 ->searchable()
                 ->nullable(),
 
@@ -106,24 +106,22 @@ class OfficeRentAgreementResource extends Resource
                 TextColumn::make('days_until_expiry')
                     ->label('Days Left')
                     ->badge()
-                    ->color(fn ($state) => match (true) {
-                        $state === null => 'gray',
-                        $state < 0 => 'danger',
-                        $state <= 30 => 'warning',
-                        $state <= 90 => 'info',
-                        default => 'success',
-                    }),
+                    ->colors([
+                        'gray' => static fn ($state) => $state === null,
+                        'danger' => static fn ($state) => $state < 0,
+                        'warning' => static fn ($state) => $state <= 30,
+                        'info' => static fn ($state) => $state <= 90,
+                        'success' => static fn ($state) => $state > 90,
+                    ]),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'Active' => 'success',
-                        'Approved' => 'info',
-                        'Pending Legal' => 'warning',
-                        'Rejected' => 'danger',
-                        'Expired' => 'danger',
-                        'Terminated' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->colors([
+                        'success' => 'Active',
+                        'info' => 'Approved',
+                        'warning' => 'Pending Legal',
+                        'danger' => ['Rejected', 'Expired', 'Terminated'],
+                        'gray' => 'Draft',
+                    ]),
             ])
             ->filters([
                 SelectFilter::make('status')->options([

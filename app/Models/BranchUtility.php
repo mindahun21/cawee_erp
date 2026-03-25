@@ -49,12 +49,12 @@ class BranchUtility extends Model
 
     public function utilityType(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'utility_type_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'utility_type_option_id');
     }
 
     public function paymentCycle(): BelongsTo
     {
-        return $this->belongsTo(HrSettingOption::class, 'payment_cycle_option_id');
+        return $this->belongsTo(VehicleSetting::class, 'payment_cycle_option_id');
     }
 
     public function payments(): HasMany

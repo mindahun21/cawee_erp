@@ -12,71 +12,70 @@ class HrLeaveRequest extends Model
 
     protected $table = 'hr_leave_requests';
 
-    // Overall workflow status
-    const STATUS_PENDING   = 'Pending';
-    const STATUS_APPROVED  = 'Approved';
-    const STATUS_REJECTED  = 'Rejected';
+    const STATUS_PENDING  = 'Pending';
+    const STATUS_APPROVED = 'Approved';
+    const STATUS_REJECTED = 'Rejected';
 
     protected $fillable = [
         'employee_id',
         'hr_leave_type_id',
         'start_date',
         'end_date',
+        'no_of_days',
+        'from_time',
+        'to_time',
+        'total_hours',
         'reason',
-        'status', // legacy/simple status
-        'supervisor_id', // legacy simple approver
-        'approved_at', // legacy simple approval time
-
-        'supporting_document',
         'remarks',
+        'supporting_document',
+
+        // Overall
+        'approval_status',
+        'approval_date',
 
         // Stage 1 — Supervisor
+        'supervisor_status',
         'supervisor_approved_by',
         'supervisor_approved_at',
-        'supervisor_status',
 
         // Stage 2 — HR
+        'hr_status',
         'hr_approved_by',
         'hr_approved_at',
-        'hr_status',
 
         // Stage 3 — Director
+        'director_status',
         'director_approved_by',
         'director_approved_at',
-        
-        'approval_status', // Overall status
-        'approval_date',
+
+        // Import
+        'is_imported',
+        'import_fiscal_year',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'approved_at' => 'datetime',
-        'supervisor_approved_at' => 'datetime',
-        'hr_approved_at' => 'datetime',
-        'director_approved_at' => 'datetime',
-        'approval_date' => 'date',
+        'start_date'            => 'date',
+        'end_date'              => 'date',
+        'approval_date'         => 'date',
+        'supervisor_approved_at'=> 'datetime',
+        'hr_approved_at'        => 'datetime',
+        'director_approved_at'  => 'datetime',
+        'no_of_days'            => 'integer',
+        'total_hours'           => 'float',
+        'is_imported'           => 'boolean',
+        'import_fiscal_year'    => 'integer',
     ];
 
-    // ── Relationships ──────────────────────────────────────────────
+    // ── Relationships ───────────────────────────────────────────────
+
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(Employee::class);
     }
 
     public function leaveType(): BelongsTo
     {
         return $this->belongsTo(HrLeaveType::class, 'hr_leave_type_id');
-    }
-
-    public function legacySupervisor(): BelongsTo
-    {
-        return $this->belongsTo(Employee::class, 'supervisor_id');
-    }
-
-    public function supervisor(): BelongsTo
-    {
-        return $this->belongsTo(Employee::class, 'supervisor_id');
     }
 
     public function supervisorApprover(): BelongsTo
@@ -94,66 +93,59 @@ class HrLeaveRequest extends Model
         return $this->belongsTo(Employee::class, 'director_approved_by');
     }
 
-    // ── Computed ───────────────────────────────────────────────────
-    public function getDurationInDaysAttribute(): float
+    // ── Computed ────────────────────────────────────────────────────
+
+    public function getDurationDaysAttribute(): int
     {
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return 0;
         }
         return $this->start_date->diffInDays($this->end_date) + 1;
     }
 
-    public function getOverallStatusAttribute(): string
-    {
-        if ($this->supervisor_status === 'Rejected' || $this->hr_status === 'Rejected' || $this->approval_status === 'Rejected') {
-            return self::STATUS_REJECTED;
-        }
-        if ($this->director_approved_at !== null || $this->approval_status === 'Approved') {
-            return self::STATUS_APPROVED;
-        }
-        return self::STATUS_PENDING;
-    }
+    // ── Workflow Helpers ─────────────────────────────────────────────
 
-    public function getCurrentStageAttribute(): string
+    public function isFullyApproved(): bool
     {
-        if ($this->supervisor_status === 'Rejected' || $this->hr_status === 'Rejected' || $this->approval_status === 'Rejected') {
-            return 'Rejected';
-        }
-        if ($this->director_approved_at || $this->approval_status === 'Approved') {
-            return 'Director Approved';
-        }
-        if ($this->hr_approved_at || $this->hr_status === 'Approved') {
-            return 'Awaiting Director';
-        }
-        if ($this->supervisor_approved_at || $this->supervisor_status === 'Approved') {
-            return 'Awaiting HR';
-        }
-        return 'Awaiting Supervisor';
-    }
-
-    // ── Workflow Checks ─────────────────────────────────────────────
-    public function canSupervisorApprove(): bool
-    {
-        return $this->supervisor_status === 'Pending' || $this->supervisor_status === null;
-    }
-
-    public function canHrApprove(): bool
-    {
-        return ($this->supervisor_status === 'Approved') && ($this->hr_status === 'Pending' || $this->hr_status === null);
-    }
-
-    public function canDirectorApprove(): bool
-    {
-        return ($this->hr_status === 'Approved') && ($this->director_approved_at === null);
+        return $this->approval_status === self::STATUS_APPROVED;
     }
 
     public function isRejected(): bool
     {
-        return in_array('Rejected', [$this->supervisor_status, $this->hr_status, $this->approval_status]);
+        return in_array(self::STATUS_REJECTED, [
+            $this->supervisor_status,
+            $this->hr_status,
+            $this->director_status,
+            $this->approval_status,
+        ]);
     }
 
-    public function isFullyApproved(): bool
+    public function canSupervisorApprove(): bool
     {
-        return $this->director_approved_at !== null || $this->approval_status === 'Approved';
+        return $this->supervisor_status === self::STATUS_PENDING
+            && $this->approval_status  === self::STATUS_PENDING;
+    }
+
+    public function canHrApprove(): bool
+    {
+        return $this->supervisor_status === self::STATUS_APPROVED
+            && $this->hr_status         === self::STATUS_PENDING
+            && $this->approval_status   === self::STATUS_PENDING;
+    }
+
+    public function canDirectorApprove(): bool
+    {
+        return $this->hr_status        === self::STATUS_APPROVED
+            && $this->director_status  === self::STATUS_PENDING
+            && $this->approval_status  === self::STATUS_PENDING;
+    }
+
+    public function getCurrentStageAttribute(): string
+    {
+        if ($this->isRejected())                              return 'Rejected';
+        if ($this->isFullyApproved())                         return 'Fully Approved';
+        if ($this->hr_status === self::STATUS_APPROVED)       return 'Awaiting Director';
+        if ($this->supervisor_status === self::STATUS_APPROVED) return 'Awaiting HR';
+        return 'Awaiting Supervisor';
     }
 }

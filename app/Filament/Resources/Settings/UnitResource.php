@@ -21,6 +21,10 @@ class UnitResource extends Resource
 
     protected static ?string $cluster = Settings::class;
 
+    protected static ?string $navigationLabel = 'Units';
+
+    protected static ?int $navigationSort = 15;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema

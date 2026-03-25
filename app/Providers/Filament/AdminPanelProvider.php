@@ -59,6 +59,10 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Beneficiary Registry & Project Tracking')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Monitoring and Evaluation')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
@@ -71,6 +75,15 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(90)
                     ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
+
+                \Filament\Navigation\NavigationItem::make('Leave Balance Report')
+                    ->group('Human Resources')
+                    ->icon('heroicon-o-chart-bar')
+                    ->sort(91)
+                    ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveBalanceReportResource::getUrl())
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
+
+
                 \Filament\Navigation\NavigationItem::make('Timesheet Management')
                     ->group('Human Resources')
                     ->icon('heroicon-o-clock')
@@ -83,7 +96,6 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(93)
                     ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:Department')),
-
                 \Filament\Navigation\NavigationItem::make('Settings')
                     ->group('Procurement')
                     ->icon('heroicon-o-cog-6-tooth')

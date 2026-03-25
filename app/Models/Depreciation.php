@@ -11,6 +11,10 @@ class Depreciation extends Model
         'months',
     ];
 
+    protected $casts = [
+        'months' => 'integer',
+    ];
+
     public function assets()
     {
         return $this->hasMany(Asset::class);

@@ -25,7 +25,7 @@ class DepreciationLogResource extends Resource
     
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
     
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 70;
 
     protected static ?string $navigationLabel = 'Depreciations';
 
@@ -217,7 +217,7 @@ class DepreciationLogResource extends Resource
                     ->preload(),
                 Tables\Filters\SelectFilter::make('asset_condition_id')
                     ->label('Condition')
-                    ->relationship('condition', 'name')
+                    ->relationship('conditionRecord', 'name')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('acquisition_type_id')
@@ -226,8 +226,7 @@ class DepreciationLogResource extends Resource
                     ->searchable()
                     ->preload(),
             ])
-            ->filtersLayout(FiltersLayout::AboveContent)
-            ->filtersFormColumns(3)
+            ->filtersLayout(FiltersLayout::Modal)
             ->actions([
                 ViewAction::make()
                     ->url(fn (Asset $record): string => \App\Filament\Resources\Assets\AssetResource::getUrl('view', ['record' => $record])),

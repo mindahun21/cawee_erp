@@ -28,7 +28,7 @@ class CurrencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising / Settings';
+    protected static ?string $cluster = \App\Filament\Clusters\Settings::class;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -56,6 +56,13 @@ class CurrencyResource extends Resource
                             ->maxLength(10)
                             ->placeholder('e.g., $, €')
                             ->live(onBlur: true),
+                        TextInput::make('exchange_rate')
+                            ->label('Exchange Rate (to ETB)')
+                            ->numeric()
+                            ->required()
+                            ->default(1.0)
+                            ->placeholder('e.g., 55.50')
+                            ->helperText('How many ETB equals 1 unit of this currency?'),
                         
                         Placeholder::make('preview')
                             ->label('Preview')
@@ -166,17 +173,27 @@ class CurrencyResource extends Resource
                         <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
                             <a href="'.\App\Filament\Resources\Currencies\CurrencyResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
                             <span class="text-gray-200">|</span>
-                            <a href="'.\App\Filament\Resources\Currencies\CurrencyResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <button type="button" 
+                                x-on:click="$wire.mountTableAction(\'edit\', '.$record->id.')"
+                                class="hover-action-link text-primary-600 hover:text-primary-700">Edit</button>
                             <span class="text-gray-200">|</span>
                             <button type="button" 
                                 x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
                                 class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
                         </div>
                     '), position: 'below'),
+                TextColumn::make('exchange_rate')
+                    ->label('Rate (to ETB)')
+                    ->numeric(2)
+                    ->sortable()
+                    ->alignRight(),
                 TextColumn::make('symbol')
                     ->alignCenter()
                     ->weight('bold')
                     ->color('primary'),
+            ])
+            ->recordActions([
+                //
             ])
             ->filters([
                 //

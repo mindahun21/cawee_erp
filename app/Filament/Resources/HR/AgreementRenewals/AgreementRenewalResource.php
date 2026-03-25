@@ -44,7 +44,7 @@ class AgreementRenewalResource extends Resource
 
             Select::make('decision_option_id')
                 ->label('Decision')
-                ->options(fn () => HrSettingOption::optionsFor('renewal_decision'))
+                ->options(HrSettingOption::optionsFor('renewal_decision'))
                 ->required(),
 
             TextInput::make('new_monthly_rent')->numeric()->prefix('ETB')->nullable(),
@@ -77,11 +77,12 @@ class AgreementRenewalResource extends Resource
                 TextColumn::make('new_end_date')->date()->placeholder('-'),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'Approved' => 'success',
                         'Applied' => 'info',
                         'Rejected' => 'danger',
-                        default => 'warning',
+                        'Pending' => 'warning',
+                        default => 'gray',
                     }),
                 TextColumn::make('approved_at')->since()->label('Approved')->placeholder('-'),
             ])

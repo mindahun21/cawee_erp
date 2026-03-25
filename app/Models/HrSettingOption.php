@@ -26,11 +26,8 @@ class HrSettingOption extends Model
     }
 
     public const CATEGORIES = [
-        'branch_type' => 'Branch Type',
-        'agreement_payment_cycle' => 'Agreement Payment Cycle',
-        'renewal_decision' => 'Renewal Decision',
-        'utility_type' => 'Utility Type',
-        'utility_payment_cycle' => 'Utility Payment Cycle',
+        'vehicle_type' => 'Vehicle Type',
+        'vehicle_status' => 'Vehicle Status (Current Status)',
         'vehicle_service_type' => 'Vehicle Service Type',
         'vehicle_urgency' => 'Vehicle Urgency',
         'maintenance_rule_type' => 'Maintenance Rule Type',
@@ -52,7 +49,6 @@ class HrSettingOption extends Model
 
     public function branches(): HasMany
     {
-        return $this->hasMany(HrBranch::class, 'branch_type_option_id');
+        return $this->hasMany(HrBranch::class , 'branch_type_option_id');
     }
 }
-

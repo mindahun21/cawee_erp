@@ -20,6 +20,8 @@ class VehicleStatusResource extends Resource
     protected static ?string $model = VehicleStatus::class;
 
     protected static string|null $cluster = Settings::class;
+    
+    protected static string|\UnitEnum|null $navigationGroup = 'Vehicles';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static ?int $navigationSort = 2;

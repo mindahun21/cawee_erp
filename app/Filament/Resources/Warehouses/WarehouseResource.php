@@ -26,7 +26,7 @@ class WarehouseResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 80;
 
     protected static ?string $recordTitleAttribute = 'name';
 

@@ -39,6 +39,13 @@ class InventoryForm
                             ->hint(fn ($state, $record) => $state ? (\App\Models\ItemWarehouse::where('sku', \App\Models\PrefixSetting::getPrefix('inventory_sku') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'Already taken' : 'Available') : null)
                             ->hintColor(fn ($state, $record) => $state ? (\App\Models\ItemWarehouse::where('sku', \App\Models\PrefixSetting::getPrefix('inventory_sku') . $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->exists() ? 'danger' : 'success') : 'gray')
                             ->required(),
+                        TextInput::make('batch_number')
+                            ->label('Batch / Lot Number'),
+                        TextInput::make('bin_location')
+                            ->label('Bin / Shelf Location')
+                            ->placeholder('e.g. Rack A-12'),
+                        DatePicker::make('expiry_date')
+                            ->label('Expiry Date'),
                         Select::make('acquisition_type_id')
                             ->relationship('acquisitionType', 'name')
                             ->searchable()
@@ -60,12 +67,11 @@ class InventoryForm
                         Select::make('supplier_id')
                             ->relationship('supplier', 'name')
                             ->searchable()
-                            ->preload()
-                            ->disabledOn('edit'),
+                            ->preload(),
                         Select::make('donor_id')
                             ->relationship('donor', 'id')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable() // Fixed: Argument 1 removed (it expects bool, array was given)
+                            ->searchable()
                             ->preload()
                             ->disabledOn('edit'),
                         TextInput::make('quantity')

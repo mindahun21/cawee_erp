@@ -20,11 +20,11 @@ class InventoryMovementReasonResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static ?string $navigationLabel = 'Inventory Movement Reasons';
+    protected static ?string $navigationLabel = 'Movement Reasons';
+
+    protected static ?int $navigationSort = 18;
     
     protected static ?string $pluralLabel = 'Inventory Movement Reasons';
-
-    protected static ?int $navigationSort = 15;
 
     public static function form(Schema $schema): Schema
     {

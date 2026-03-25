@@ -15,7 +15,8 @@ return new class extends Migration
         // Rename user_id -> employee_id only if user_id still exists
         if (Schema::hasColumn('asset_assignments', 'user_id')) {
             // Check if the FK actually exists before trying to drop it
-            $fkExists = \DB::select("
+            $isSqlite = DB::getDriverName() === 'sqlite';
+            $fkExists = $isSqlite ? [] : \DB::select("
                 SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
                 WHERE TABLE_SCHEMA = DATABASE()
                 AND TABLE_NAME = 'asset_assignments'
@@ -32,7 +33,8 @@ return new class extends Migration
         }
 
         // Add FK on employee_id only if it doesn't already exist
-        $empFkExists = \DB::select("
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $empFkExists = $isSqlite ? [] : \DB::select("
             SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
             WHERE TABLE_SCHEMA = DATABASE()
             AND TABLE_NAME = 'asset_assignments'
