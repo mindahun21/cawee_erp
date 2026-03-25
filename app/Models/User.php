@@ -99,6 +99,39 @@ class User extends Authenticatable
         return $this->hasAnyRole(['procurement_auditor', 'procurement_director', 'super_admin']);
     }
 
+    // ── Finance Role Helpers ───────────────────────────────────────
+    // Mirror the HR / Procurement pattern; super_admin always has full access.
+
+    /** Finance Officer: create/edit vouchers, journals, petty cash */
+    public function isFinanceOfficer(): bool
+    {
+        return $this->hasAnyRole(['finance_officer', 'finance_manager', 'cfo', 'super_admin']);
+    }
+
+    /** Finance Manager: approve vouchers, manage budgets */
+    public function isFinanceManager(): bool
+    {
+        return $this->hasAnyRole(['finance_manager', 'cfo', 'super_admin']);
+    }
+
+    /** CFO: final approval, post-to-GL, all financial reports */
+    public function isCFO(): bool
+    {
+        return $this->hasAnyRole(['cfo', 'super_admin']);
+    }
+
+    /** Finance Auditor: read-only on all finance records and audit trail */
+    public function isFinanceAuditor(): bool
+    {
+        return $this->hasAnyRole(['finance_auditor', 'internal_auditor', 'external_auditor', 'cfo', 'super_admin']);
+    }
+
+    /** Cashier: petty cash payments and cash receipt vouchers only */
+    public function isCashier(): bool
+    {
+        return $this->hasAnyRole(['cashier', 'finance_officer', 'finance_manager', 'cfo', 'super_admin']);
+    }
+
     /**
      * The attributes that are mass assignable.
      *
