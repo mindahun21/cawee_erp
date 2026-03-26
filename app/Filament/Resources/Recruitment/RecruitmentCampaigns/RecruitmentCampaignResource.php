@@ -141,6 +141,18 @@ class RecruitmentCampaignResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where(function ($query) {
+                $query->where('status', '!=', \App\Models\Recruitment\RecruitmentCampaign::STATUS_DRAFT)
+                      ->orWhere('created_by', auth()->id());
+            })
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()

@@ -10,7 +10,6 @@ use Filament\Actions\Action;
 use App\Models\Recruitment\RecruitmentCampaign;
 use App\Services\Recruitment\RecruitmentApprovalService;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\DB;
 
 class ViewRecruitmentCampaign extends ViewRecord
 {
@@ -37,10 +36,7 @@ class ViewRecruitmentCampaign extends ViewRecord
                 })
                 ->requiresConfirmation()
                 ->action(function () {
-                    DB::transaction(function () {
-                        $this->record->update(['status' => RecruitmentCampaign::STATUS_SUBMITTED]);
-                        RecruitmentApprovalService::initialise($this->record, 'recruitment_campaign');
-                    });
+                    RecruitmentApprovalService::submitForApproval($this->record);
                     Notification::make()->title('Campaign submitted for approval')->success()->send();
                 }),
 
@@ -48,31 +44,18 @@ class ViewRecruitmentCampaign extends ViewRecord
                 ->label('Approve Step')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->visible(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    return RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign');
-                })
+                ->visible(fn () => RecruitmentApprovalService::canApprove(auth()->user(), $this->record, 'recruitment_campaign'))
                 ->requiresConfirmation()
                 ->action(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    $pending = RecruitmentApprovalService::pendingRecordFor($user, $this->record, 'recruitment_campaign');
-                    if ($pending) {
-                        RecruitmentApprovalService::approve($this->record, 'recruitment_campaign', $pending->stage_order, $user);
-                        Notification::make()->title('Stage approved')->success()->send();
-                    }
+                    RecruitmentApprovalService::approveStage($this->record, auth()->user());
+                    Notification::make()->title('Stage approved')->success()->send();
                 }),
 
             Action::make('reject')
                 ->label('Reject Step')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    return RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign');
-                })
+                ->visible(fn () => RecruitmentApprovalService::canApprove(auth()->user(), $this->record, 'recruitment_campaign'))
                 ->requiresConfirmation()
                 ->modalHeading('Reject Recruitment Campaign')
                 ->form([
@@ -82,13 +65,8 @@ class ViewRecruitmentCampaign extends ViewRecord
                         ->maxLength(500),
                 ])
                 ->action(function (array $data) {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    $pending = RecruitmentApprovalService::pendingRecordFor($user, $this->record, 'recruitment_campaign');
-                    if ($pending) {
-                        RecruitmentApprovalService::reject($this->record, 'recruitment_campaign', $pending->stage_order, $user, $data['notes']);
-                        Notification::make()->title('Campaign returned for revision')->danger()->send();
-                    }
+                    RecruitmentApprovalService::rejectStage($this->record, auth()->user(), $data['notes']);
+                    Notification::make()->title('Campaign returned for revision')->danger()->send();
                 }),
 
             DeleteAction::make()

@@ -2,9 +2,12 @@
 
 namespace App\Services\Recruitment;
 
+use App\Contracts\Recruitment\Approvable;
 use App\Models\Recruitment\RecruitmentApprovalRecord;
 use App\Models\Recruitment\RecruitmentApprovalWorkflow;
 use App\Models\User;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -44,14 +47,23 @@ class RecruitmentApprovalService
     }
 
     /**
-     * Initialize a new submission cycle from the active workflow.
+     * Initialize a new submission cycle from the document's selected workflow,
+     * falling back to the first active workflow for that document type.
      */
     public static function initialise(Model $document, string $documentType): void
     {
-        $workflow = RecruitmentApprovalWorkflow::query()
-            ->where('document_type', $documentType)
-            ->where('is_active', true)
-            ->first();
+        $workflow = null;
+
+        if (! empty($document->approval_workflow_id)) {
+            $workflow = RecruitmentApprovalWorkflow::find($document->approval_workflow_id);
+        }
+
+        if (! $workflow) {
+            $workflow = RecruitmentApprovalWorkflow::query()
+                ->where('document_type', $documentType)
+                ->where('is_active', true)
+                ->first();
+        }
 
         if (! $workflow) {
             return;
@@ -118,7 +130,7 @@ class RecruitmentApprovalService
             return null;
         }
 
-        if ($user->hasRole('super_admin') || $user->hasRole($pending->required_role)) {
+        if ($user->hasRole($pending->required_role)) {
             return $pending;
         }
 
@@ -214,11 +226,12 @@ class RecruitmentApprovalService
             'notes'      => $notes,
         ]);
 
-        // Set status back to Draft so the creator can edit and resubmit if no explicit rejected state exists
-        if (method_exists($document, 'onRejected')) {
+        if ($document instanceof Approvable) {
+            $document->onRejected();
+        } elseif (method_exists($document, 'onRejected')) {
             $document->onRejected();
         } else {
-            $document->update(['status' => $document::STATUS_DRAFT]);
+            $document->update(['status' => 'Draft']);
         }
     }
 
@@ -284,6 +297,126 @@ class RecruitmentApprovalService
         }
 
         return $document->updated_at->gt($rejectedAt);
+    }
+
+    /* ── DRY orchestration methods (Task 8) ── */
+
+    /**
+     * Submit a document for approval inside a DB transaction.
+     */
+    public static function submitForApproval(Model&Approvable $document): void
+    {
+        DB::transaction(function () use ($document) {
+            // Initialize records first so that Observers responding to the status update
+            // can successfully find the next pending stage to notify.
+            self::initialise($document, $document->approvalDocumentType());
+            $document->update(['status' => $document->submittedStatus()]);
+        });
+    }
+
+    /**
+     * Approve the current pending stage for a user inside a DB transaction.
+     * Returns true if the document is now fully approved.
+     */
+    public static function approveStage(Model&Approvable $document, User $user, ?string $notes = null): bool
+    {
+        return DB::transaction(function () use ($document, $user, $notes) {
+            $pending = self::pendingRecordFor($user, $document, $document->approvalDocumentType());
+
+            if (! $pending) {
+                return false;
+            }
+
+            self::approve($document, $document->approvalDocumentType(), $pending->stage_order, $user, $notes);
+
+            $fullyApproved = self::isFullyApproved($document, $document->approvalDocumentType());
+
+            if (! $fullyApproved) {
+                self::notifyNextStageApprover($document);
+            }
+
+            return $fullyApproved;
+        });
+    }
+
+    /**
+     * Reject the current pending stage for a user inside a DB transaction.
+     */
+    public static function rejectStage(Model&Approvable $document, User $user, string $notes): void
+    {
+        DB::transaction(function () use ($document, $user, $notes) {
+            $pending = self::pendingRecordFor($user, $document, $document->approvalDocumentType());
+
+            if (! $pending) {
+                return;
+            }
+
+            self::reject($document, $document->approvalDocumentType(), $pending->stage_order, $user, $notes);
+        });
+    }
+
+    /**
+     * Notify the next stage approver via in-app notification only.
+     * Per notification matrix: intermediate stage approvals exclude email.
+     */
+    private static function notifyNextStageApprover(Model&Approvable $document): void
+    {
+        $nextPending = self::nextPendingRecord($document, $document->approvalDocumentType());
+
+        if (! $nextPending) {
+            return;
+        }
+
+        $approvers = User::role($nextPending->required_role)->get();
+        $docLabel = ucwords(str_replace('_', ' ', $document->approvalDocumentType()));
+        $title = $document->title ?? $document->getKey();
+
+        $viewUrl = '#';
+        if ($document->approvalDocumentType() === 'recruitment_plan') {
+            $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentPlans\RecruitmentPlanResource::getUrl('view', ['record' => $document]);
+            $mailable = new \App\Mail\Recruitment\RecruitmentPlanSubmittedMail($document, $viewUrl);
+        } elseif ($document->approvalDocumentType() === 'recruitment_campaign') {
+            $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentCampaigns\RecruitmentCampaignResource::getUrl('view', ['record' => $document]);
+            $mailable = new \App\Mail\Recruitment\RecruitmentCampaignSubmittedMail($document, $viewUrl);
+        }
+
+        foreach ($approvers as $approver) {
+            if (isset($mailable)) {
+                \Illuminate\Support\Facades\Mail::to($approver->email)->queue($mailable);
+            }
+
+            FilamentNotification::make()
+                ->title("{$docLabel} Awaiting Your Approval")
+                ->body("Stage \"{$nextPending->stage_name}\" for \"{$title}\" requires your review.")
+                ->icon('heroicon-o-clock')
+                ->iconColor('warning')
+                ->actions([
+                    NotificationAction::make('review')
+                        ->label('Review')
+                        ->url($viewUrl)
+                        ->markAsRead(),
+                ])
+                ->sendToDatabase($approver);
+        }
+    }
+
+    /**
+     * Get the next pending approval record (used for notifications).
+     */
+    public static function nextPendingRecord(Model $document, string $documentType): ?RecruitmentApprovalRecord
+    {
+        $latestCycle = RecruitmentApprovalRecord::query()
+            ->where('approvable_type', get_class($document))
+            ->where('approvable_id', $document->getKey())
+            ->max('submission_cycle') ?? 1;
+
+        return RecruitmentApprovalRecord::query()
+            ->where('approvable_type', get_class($document))
+            ->where('approvable_id', $document->getKey())
+            ->where('submission_cycle', $latestCycle)
+            ->where('status', 'Pending')
+            ->orderBy('stage_order')
+            ->first();
     }
 
     /**

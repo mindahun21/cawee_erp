@@ -2,6 +2,7 @@
 
 namespace App\Models\Recruitment;
 
+use App\Contracts\Recruitment\Approvable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use App\Models\Department;
 use App\Models\JobPosition;
 use App\Models\User;
 
-class RecruitmentPlan extends Model
+class RecruitmentPlan extends Model implements Approvable
 {
     use SoftDeletes;
 
@@ -83,6 +84,43 @@ class RecruitmentPlan extends Model
     public function approvalRecords(): MorphMany
     {
         return $this->morphMany(RecruitmentApprovalRecord::class, 'approvable');
+    }
+
+    /* ── Approvable Interface ── */
+
+    public function approvalDocumentType(): string
+    {
+        return 'recruitment_plan';
+    }
+
+    public function approvedStatus(): string
+    {
+        return self::STATUS_APPROVED;
+    }
+
+    public function rejectedStatus(): string
+    {
+        return self::STATUS_DRAFT;
+    }
+
+    public function submittedStatus(): string
+    {
+        return self::STATUS_SUBMITTED;
+    }
+
+    public function draftStatus(): string
+    {
+        return self::STATUS_DRAFT;
+    }
+
+    public function onFullyApproved(): void
+    {
+        // Plan stays at STATUS_APPROVED (set by service)
+    }
+
+    public function onRejected(): void
+    {
+        $this->update(['status' => $this->rejectedStatus()]);
     }
 
     /* ── Helpers ── */

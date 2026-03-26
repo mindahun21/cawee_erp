@@ -9,7 +9,6 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
-use Illuminate\Support\Facades\DB;
 
 class ViewRecruitmentPlan extends ViewRecord
 {
@@ -29,7 +28,6 @@ class ViewRecruitmentPlan extends ViewRecord
                     if ($this->record->status !== RecruitmentPlan::STATUS_DRAFT) {
                         return false;
                     }
-                    // If previously rejected, only allow resubmit after editing
                     if (RecruitmentApprovalService::hasBeenRejected($this->record)) {
                         return RecruitmentApprovalService::wasEditedAfterRejection($this->record);
                     }
@@ -37,10 +35,7 @@ class ViewRecruitmentPlan extends ViewRecord
                 })
                 ->requiresConfirmation()
                 ->action(function () {
-                    DB::transaction(function () {
-                        $this->record->update(['status' => RecruitmentPlan::STATUS_SUBMITTED]);
-                        RecruitmentApprovalService::initialise($this->record, 'recruitment_plan');
-                    });
+                    RecruitmentApprovalService::submitForApproval($this->record);
                     Notification::make()->title('Plan submitted for approval')->success()->send();
                 }),
 
@@ -51,11 +46,8 @@ class ViewRecruitmentPlan extends ViewRecord
                 ->visible(fn () => RecruitmentApprovalService::canApprove(auth()->user(), $this->record, 'recruitment_plan'))
                 ->requiresConfirmation()
                 ->action(function () {
-                    $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $this->record, 'recruitment_plan');
-                    if ($pending) {
-                        RecruitmentApprovalService::approve($this->record, 'recruitment_plan', $pending->stage_order, auth()->user());
-                        Notification::make()->title('Stage approved')->success()->send();
-                    }
+                    RecruitmentApprovalService::approveStage($this->record, auth()->user());
+                    Notification::make()->title('Stage approved')->success()->send();
                 }),
 
             Action::make('reject')
@@ -72,11 +64,8 @@ class ViewRecruitmentPlan extends ViewRecord
                         ->maxLength(500),
                 ])
                 ->action(function (array $data) {
-                    $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $this->record, 'recruitment_plan');
-                    if ($pending) {
-                        RecruitmentApprovalService::reject($this->record, 'recruitment_plan', $pending->stage_order, auth()->user(), $data['notes']);
-                        Notification::make()->title('Plan returned for revision')->danger()->send();
-                    }
+                    RecruitmentApprovalService::rejectStage($this->record, auth()->user(), $data['notes']);
+                    Notification::make()->title('Plan returned for revision')->danger()->send();
                 }),
         ];
     }

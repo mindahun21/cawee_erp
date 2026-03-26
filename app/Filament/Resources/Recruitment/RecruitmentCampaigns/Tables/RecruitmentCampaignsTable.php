@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Recruitment\RecruitmentCampaigns\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -12,7 +13,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use App\Services\Recruitment\RecruitmentApprovalService;
 use App\Models\Recruitment\RecruitmentCampaign;
-use Illuminate\Support\Facades\DB;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
@@ -119,6 +119,9 @@ class RecruitmentCampaignsTable
                     ->color('primary')
                     ->requiresConfirmation()
                     ->visible(function (RecruitmentCampaign $record) {
+                        if ($record->created_by !== auth()->id()) {
+                            return false;
+                        }
                         if ($record->status !== RecruitmentCampaign::STATUS_DRAFT) {
                             return false;
                         }
@@ -128,10 +131,7 @@ class RecruitmentCampaignsTable
                         return true;
                     })
                     ->action(function (RecruitmentCampaign $record) {
-                        DB::transaction(function () use ($record) {
-                            $record->update(['status' => RecruitmentCampaign::STATUS_SUBMITTED]);
-                            RecruitmentApprovalService::initialise($record, 'recruitment_campaign');
-                        });
+                        RecruitmentApprovalService::submitForApproval($record);
                         Notification::make()->success()->title('Campaign Submitted for Approval')->send();
                     }),
 
@@ -142,11 +142,8 @@ class RecruitmentCampaignsTable
                     ->requiresConfirmation()
                     ->visible(fn (RecruitmentCampaign $record) => RecruitmentApprovalService::canApprove(auth()->user(), $record, 'recruitment_campaign'))
                     ->action(function (RecruitmentCampaign $record) {
-                        $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $record, 'recruitment_campaign');
-                        if ($pending) {
-                            RecruitmentApprovalService::approve($record, 'recruitment_campaign', $pending->stage_order, auth()->user());
-                            Notification::make()->success()->title('Stage Approved')->send();
-                        }
+                        RecruitmentApprovalService::approveStage($record, auth()->user());
+                        Notification::make()->success()->title('Stage Approved')->send();
                     }),
 
                 Action::make('reject')
@@ -163,15 +160,14 @@ class RecruitmentCampaignsTable
                     ])
                     ->visible(fn (RecruitmentCampaign $record) => RecruitmentApprovalService::canApprove(auth()->user(), $record, 'recruitment_campaign'))
                     ->action(function (RecruitmentCampaign $record, array $data) {
-                        $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $record, 'recruitment_campaign');
-                        if ($pending) {
-                            RecruitmentApprovalService::reject($record, 'recruitment_campaign', $pending->stage_order, auth()->user(), $data['notes']);
-                            Notification::make()->success()->title('Campaign Rejected')->send();
-                        }
+                        RecruitmentApprovalService::rejectStage($record, auth()->user(), $data['notes']);
+                        Notification::make()->success()->title('Campaign Rejected')->send();
                     }),
 
                 EditAction::make()
                     ->visible(fn (RecruitmentCampaign $record) => $record->isEditable()),
+                DeleteAction::make()
+                    ->visible(fn (RecruitmentCampaign $record) => $record->status === RecruitmentCampaign::STATUS_DRAFT),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
