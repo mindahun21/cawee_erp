@@ -1,11 +1,8 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Policies\Recruitment;
 
 use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Recruitment\RecruitmentCandidate;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RecruitmentCandidatePolicy
@@ -17,7 +14,7 @@ class RecruitmentCandidatePolicy
         return $authUser->can('ViewAny:RecruitmentCandidate');
     }
 
-    public function view(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:RecruitmentCandidate');
     }
@@ -27,22 +24,22 @@ class RecruitmentCandidatePolicy
         return $authUser->can('Create:RecruitmentCandidate');
     }
 
-    public function update(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:RecruitmentCandidate');
     }
 
-    public function delete(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:RecruitmentCandidate');
     }
 
-    public function restore(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:RecruitmentCandidate');
     }
 
-    public function forceDelete(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:RecruitmentCandidate');
     }
@@ -57,7 +54,7 @@ class RecruitmentCandidatePolicy
         return $authUser->can('RestoreAny:RecruitmentCandidate');
     }
 
-    public function replicate(AuthUser $authUser, RecruitmentCandidate $recruitmentCandidate): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:RecruitmentCandidate');
     }
