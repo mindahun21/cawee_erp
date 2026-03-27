@@ -41,6 +41,10 @@ class RecruitmentCandidateForm
                                             'married'  => 'Married',
                                             'divorced' => 'Divorced',
                                         ]),
+                                    FileUpload::make('photo_path')
+                                        ->image()
+                                        ->directory('recruitment/photos')
+                                        ->columnSpanFull(),
                                 ]),
                             ]),
 

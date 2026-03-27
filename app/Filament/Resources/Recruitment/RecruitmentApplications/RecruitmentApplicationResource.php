@@ -111,11 +111,11 @@ class RecruitmentApplicationResource extends Resource
                                 ->schema([
                                     TextEntry::make('candidate.resume_path')->label('Resume / CV')
                                         ->formatStateUsing(fn ($state) => $state ? '📄 Download Resume' : '—')
-                                        ->url(fn ($record) => $record->candidate?->resume_path ? asset('storage/' . $record->candidate->resume_path) : null, true)
+                                        ->url(fn ($record) => $record->candidate?->resume_path ? \Illuminate\Support\Facades\Storage::url($record->candidate->resume_path) : null, true)
                                         ->color('primary'),
                                     TextEntry::make('candidate.photo_path')->label('Photo')
                                         ->formatStateUsing(fn ($state) => $state ? '🖼 View Photo' : '—')
-                                        ->url(fn ($record) => $record->candidate?->photo_path ? asset('storage/' . $record->candidate->photo_path) : null, true)
+                                        ->url(fn ($record) => $record->candidate?->photo_path ? \Illuminate\Support\Facades\Storage::url($record->candidate->photo_path) : null, true)
                                         ->color('primary'),
                                 ]),
                         ]),

@@ -20,6 +20,34 @@ class ViewRecruitmentApplication extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
+
+            Actions\Action::make('mark_under_review')
+                ->label('Mark Under Review')
+                ->icon('heroicon-o-eye')
+                ->color('warning')
+                ->visible(fn () => $this->record->status === \App\Models\Recruitment\RecruitmentApplication::STATUS_APPLIED)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update([
+                        'status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW,
+                        'reviewed_by' => auth()->id(),
+                    ]);
+                    \Filament\Notifications\Notification::make()->title('Application marked as under review')->success()->send();
+                }),
+
+            Actions\Action::make('shortlist')
+                ->label('Shortlist')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->visible(fn () => $this->record->status === \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update([
+                        'status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_SHORTLISTED,
+                        'shortlisted_by' => auth()->id(),
+                    ]);
+                    \Filament\Notifications\Notification::make()->title('Application shortlisted')->success()->send();
+                }),
         ];
     }
 

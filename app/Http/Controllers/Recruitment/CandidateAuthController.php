@@ -58,7 +58,13 @@ class CandidateAuthController extends Controller
         $data['password'] = Hash::make($data['password']);
         $data['portal_access'] = true;
 
-        $candidate = RecruitmentCandidate::create($data);
+        try {
+            $candidate = RecruitmentCandidate::create($data);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return back()->withErrors(['email' => 'An account with this email already exists, or there was a system error generating your candidate ID. Please try again.'])->withInput();
+        } catch (\Exception $e) {
+            return back()->withErrors(['email' => 'An unexpected error occurred during registration. Please try again later.'])->withInput();
+        }
 
         Auth::guard('candidate')->login($candidate);
 

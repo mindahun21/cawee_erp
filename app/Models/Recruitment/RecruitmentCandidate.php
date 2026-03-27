@@ -35,11 +35,17 @@ class RecruitmentCandidate extends Authenticatable
     {
         static::creating(function ($candidate) {
             if (empty($candidate->candidate_code)) {
-                $last = static::orderBy('id', 'desc')->first();
+                // Use withTrashed() to ensure we account for soft-deleted records when generating the next ID-based code
+                $last = static::withTrashed()->orderBy('id', 'desc')->first();
                 $next = $last ? $last->id + 1 : 1;
                 $candidate->candidate_code = 'ID' . str_pad($next, 5, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
     }
 
     public function user(): BelongsTo

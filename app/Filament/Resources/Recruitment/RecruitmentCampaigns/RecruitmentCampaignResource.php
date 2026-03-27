@@ -127,7 +127,7 @@ class RecruitmentCampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ApplicationsRelationManager::class,
         ];
     }
 

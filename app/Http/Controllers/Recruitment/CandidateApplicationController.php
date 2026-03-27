@@ -131,7 +131,7 @@ class CandidateApplicationController extends Controller
 
             // ── File upload ────────────────────────────────────────────────────
             if ($definition['type'] === 'file' && $request->hasFile($fieldKey)) {
-                $path = $request->file($fieldKey)->store('candidates/resumes', 'public');
+                $path = $request->file($fieldKey)->store('candidates/resumes');
 
                 if ($target === 'application' && $dbColumn && in_array($dbColumn, self::applicationColumns())) {
                     $applicationData[$dbColumn] = $path;
