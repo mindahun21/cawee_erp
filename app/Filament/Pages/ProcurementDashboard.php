@@ -3,10 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\Procurement\ProcurementBudgetUtilizationChart;
+use App\Filament\Widgets\Procurement\ProcurementJsiThresholdWidget;
 use App\Filament\Widgets\Procurement\ProcurementPoByStatusChart;
 use App\Filament\Widgets\Procurement\ProcurementRecentRequisitionsWidget;
 use App\Filament\Widgets\Procurement\ProcurementStatsOverview;
 use App\Filament\Widgets\Procurement\ProcurementTenderPipelineWidget;
+use App\Services\Procurement\JsiThresholds;
 use App\Models\Procurement\Contract;
 use App\Models\Procurement\GoodsReceipt;
 use App\Models\Procurement\Invoice;
@@ -77,6 +79,11 @@ class ProcurementDashboard extends Page
                 'contractsExpiring' => Contract::where('status', 'Active')->whereDate('expiry_date', '<=', now()->addDays(30))->whereDate('expiry_date', '>=', now())->count(),
                 'tendersOpen' => Tender::where('status', 'Published')->count(),
                 'grnPending' => GoodsReceipt::whereIn('status', ['Draft', 'Inspecting'])->count(),
+                // JSI threshold distribution
+                'jsiMicroCount'      => Requisition::where('estimated_total', '<',  JsiThresholds::SIMPLIFIED_MIN)->count(),
+                'jsiSimplifiedCount' => Requisition::whereBetween('estimated_total', [JsiThresholds::SIMPLIFIED_MIN, JsiThresholds::SIMPLIFIED_MAX])->count(),
+                'jsiRfqCount'        => Requisition::whereBetween('estimated_total', [JsiThresholds::RFQ_MIN, JsiThresholds::RFQ_MAX])->count(),
+                'jsiOpenCount'       => Requisition::where('estimated_total', '>=', JsiThresholds::OPEN_MIN)->count(),
             ];
         });
 
