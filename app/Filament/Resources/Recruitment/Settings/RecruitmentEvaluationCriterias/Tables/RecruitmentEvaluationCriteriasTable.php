@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Recruitment\RecruitmentEvaluationCriterias\Tables;
+namespace App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;

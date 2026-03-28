@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Recruitment\RecruitmentEvaluationCriterias\Schemas;
+namespace App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\Schemas;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
