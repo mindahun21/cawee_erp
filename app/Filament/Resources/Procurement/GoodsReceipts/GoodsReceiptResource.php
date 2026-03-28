@@ -130,9 +130,9 @@ class GoodsReceiptResource extends Resource
                         Select::make('item_type')
                             ->label('Register As')
                             ->options([
-                                'consumable'  => '📦 Consumable — add to Inventory stock',
-                                'fixed_asset' => '🏷️ Fixed Asset — add to Asset Register',
-                                'skip'        => '⏭ Skip — no registration needed',
+                                'consumable'  => 'Consumable — add to Inventory stock',
+                                'fixed_asset' => 'Fixed Asset — add to Asset Register',
+                                'skip'        => 'Skip — no registration needed',
                             ])
                             ->default('consumable')
                             ->required()
