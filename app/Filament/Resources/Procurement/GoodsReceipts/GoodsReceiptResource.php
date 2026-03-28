@@ -7,6 +7,7 @@ use App\Filament\Resources\Procurement\GoodsReceipts\Pages\EditGoodsReceipt;
 use App\Filament\Resources\Procurement\GoodsReceipts\Pages\ListGoodsReceipts;
 use App\Models\Procurement\GoodsReceipt;
 use App\Models\Procurement\SupplierReturn;
+use App\Services\Procurement\GrnPostRegistrationService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -124,6 +125,19 @@ class GoodsReceiptResource extends Resource
                             ->label('Inspection Remarks')
                             ->helperText('Describe defects, damage, or quality observations for this line')
                             ->rows(2)->nullable()->columnSpanFull(),
+
+                        // Registration type — determines downstream routing after GRN acceptance
+                        Select::make('item_type')
+                            ->label('Register As')
+                            ->options([
+                                'consumable'  => 'Consumable — add to Inventory stock',
+                                'fixed_asset' => 'Fixed Asset — add to Asset Register',
+                                'skip'        => 'Skip — no registration needed',
+                            ])
+                            ->default('consumable')
+                            ->required()
+                            ->helperText('Determines how accepted items are recorded after GRN approval')
+                            ->columnSpanFull(),
                     ])
                     ->columns(4)
                     ->addActionLabel('+ Add Item')
@@ -184,6 +198,18 @@ class GoodsReceiptResource extends Resource
                         'Rejected' => 'danger', 'Inspecting' => 'info', 'Pending Approval' => 'warning',
                         default => 'gray',
                     }),
+
+                TextColumn::make('registration_status')
+                    ->label('Registration')
+                    ->badge()
+                    ->getStateUsing(fn (GoodsReceipt $r) => GrnPostRegistrationService::registrationSummary($r))
+                    ->color(fn ($state) => match (true) {
+                        $state === 'Fully Registered' => 'success',
+                        str_contains($state, '/')     => 'warning',
+                        $state === 'Pending'          => 'gray',
+                        default                       => 'gray',
+                    })
+                    ->visible(fn () => true),
             ])
             ->defaultSort('receipt_date', 'desc')
             ->filters([
@@ -362,6 +388,42 @@ class GoodsReceiptResource extends Resource
                         }
                         $r->update(['status' => 'Rejected']);
                         Notification::make()->title('Delivery rejected')->danger()->send();
+                    }),
+
+                // ── Register to Inventory / Assets ─────────────────────────────────
+                Action::make('register_items')
+                    ->label('Register to Inventory / Assets')
+                    ->icon('heroicon-o-archive-box-arrow-down')
+                    ->color('primary')
+                    ->visible(fn (GoodsReceipt $r) =>
+                        in_array($r->status, ['Accepted', 'Partial'])
+                        && ! GrnPostRegistrationService::isFullyRegistered($r)
+                    )
+                    ->requiresConfirmation()
+                    ->modalHeading('Register Received Items')
+                    ->modalDescription(
+                        'Consumable items will be added to the Inventory stock ledger. ' .
+                        'Fixed Asset items will be created in the Asset Register. ' .
+                        'Items marked "Skip" will be flagged as processed without registration.'
+                    )
+                    ->modalSubmitActionLabel('Register Now')
+                    ->action(function (GoodsReceipt $r) {
+                        $result = GrnPostRegistrationService::register($r);
+
+                        $parts = [];
+                        if ($result['inventory'] > 0) $parts[] = "{$result['inventory']} inventory movement(s)";
+                        if ($result['assets'] > 0)    $parts[] = "{$result['assets']} asset(s)";
+                        if ($result['skipped'] > 0)   $parts[] = "{$result['skipped']} skipped";
+                        if ($result['errors'] > 0)    $parts[] = "{$result['errors']} error(s)";
+
+                        $summary = empty($parts) ? 'Nothing to register' : implode(', ', $parts);
+
+                        $hasErrors = $result['errors'] > 0;
+                        Notification::make()
+                            ->title($hasErrors ? 'Registration completed with errors' : 'Registration complete')
+                            ->body("Result: {$summary}")
+                            ->{$hasErrors ? 'warning' : 'success'}()
+                            ->send();
                     }),
 
                 EditAction::make(),
