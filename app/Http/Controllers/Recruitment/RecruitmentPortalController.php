@@ -16,6 +16,10 @@ class RecruitmentPortalController extends Controller
         $query = RecruitmentCampaign::query()
             ->where('status', RecruitmentCampaign::STATUS_ACTIVE)
             ->where('is_public', true)
+            ->where(function ($q) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', now()->startOfDay());
+            })
             ->with(['jobPosition.department', 'channel']);
 
         // 1. Text Search (Campaign title or Job Position title)
@@ -45,10 +49,14 @@ class RecruitmentPortalController extends Controller
         // Get filter options
         $departments = \App\Models\Department::orderBy('name')->get();
         
-        // Pluck unique employment types from active public campaigns
+        // Pluck unique employment types from active public campaigns (also respecting deadline)
         $employmentTypes = RecruitmentCampaign::query()
             ->where('status', RecruitmentCampaign::STATUS_ACTIVE)
             ->where('is_public', true)
+            ->where(function ($q) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', now()->startOfDay());
+            })
             ->select('employment_type')
             ->distinct()
             ->pluck('employment_type')
@@ -62,7 +70,14 @@ class RecruitmentPortalController extends Controller
      */
     public function show(RecruitmentCampaign $campaign)
     {
-        if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE || ! $campaign->is_public) {
+        $allowedStatuses = [
+            RecruitmentCampaign::STATUS_ACTIVE,
+            RecruitmentCampaign::STATUS_PAUSED,
+            RecruitmentCampaign::STATUS_CLOSED
+        ];
+
+        // We allow viewing expired active campaigns (so they can see the 'Deadline Passed' message)
+        if (! in_array($campaign->status, $allowedStatuses) || ! $campaign->is_public) {
             abort(404);
         }
 
@@ -76,6 +91,31 @@ class RecruitmentPortalController extends Controller
         $candidate = auth('candidate')->user();
         $applications = $candidate->applications()->with('campaign.jobPosition')->orderByDesc('created_at')->get();
         return view('recruitment.portal.my-applications', compact('candidate', 'applications'));
+    }
+
+    public function withdrawApplication(\App\Models\Recruitment\RecruitmentApplication $application)
+    {
+        $candidate = auth('candidate')->user();
+
+        if ($application->candidate_id !== $candidate->id) {
+            abort(403);
+        }
+
+        $allowedWithdrawStatuses = [
+            \App\Models\Recruitment\RecruitmentApplication::STATUS_APPLIED,
+            \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW,
+            \App\Models\Recruitment\RecruitmentApplication::STATUS_SHORTLISTED,
+            \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEW_SCHEDULED,
+        ];
+
+        if (! in_array($application->status, $allowedWithdrawStatuses)) {
+            return back()->with('error', 'This application cannot be withdrawn at its current stage.');
+        }
+
+        $application->update(['status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_WITHDRAWN]);
+
+        return redirect()->route('candidate.my-applications')
+            ->with('success', 'Your application has been withdrawn.');
     }
 
     public function showApplication(\App\Models\Recruitment\RecruitmentApplication $application)

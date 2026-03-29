@@ -48,6 +48,31 @@ class ViewRecruitmentApplication extends ViewRecord
                     ]);
                     \Filament\Notifications\Notification::make()->title('Application shortlisted')->success()->send();
                 }),
+
+            Actions\Action::make('reject')
+                ->label('Reject Application')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn () => in_array($this->record->status, [
+                    \App\Models\Recruitment\RecruitmentApplication::STATUS_APPLIED,
+                    \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW,
+                    \App\Models\Recruitment\RecruitmentApplication::STATUS_SHORTLISTED,
+                    \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEW_SCHEDULED,
+                ]))
+                ->requiresConfirmation()
+                ->form([
+                    \Filament\Forms\Components\Textarea::make('rejection_reason')
+                        ->label('Rejection Reason')
+                        ->required()
+                        ->placeholder('Provide a brief reason for the candidate...'),
+                ])
+                ->action(function (array $data) {
+                    $this->record->update([
+                        'status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_REJECTED,
+                        'rejection_reason' => $data['rejection_reason'],
+                    ]);
+                    \Filament\Notifications\Notification::make()->title('Application rejected')->danger()->send();
+                }),
         ];
     }
 

@@ -30,10 +30,9 @@ class ViewRecruitmentCampaign extends ViewRecord
                         \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW,
                         \App\Models\Recruitment\RecruitmentApplication::STATUS_SHORTLISTED,
                     ])->exists())
-                ->action(function () {
-                    // Placeholder for now
-                    Notification::make()->title('Schedule creation logic will be implemented in Phase 1')->info()->send();
-                }),
+                ->url(fn () => \App\Filament\Resources\Recruitment\RecruitmentInterviewSchedules\RecruitmentInterviewScheduleResource::getUrl('create', [
+                    'campaign_id' => $this->record->id,
+                ])),
 
             Action::make('submit')
                 ->label('Submit for Approval')
@@ -85,6 +84,50 @@ class ViewRecruitmentCampaign extends ViewRecord
                     $user = auth()->user();
                     RecruitmentApprovalService::rejectStage($this->record, $user, $data['notes']);
                     Notification::make()->title('Campaign returned for revision')->danger()->send();
+                }),
+
+            Action::make('pause')
+                ->label('Pause Campaign')
+                ->icon('heroicon-o-pause-circle')
+                ->color('warning')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_ACTIVE)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_PAUSED]);
+                    Notification::make()->title('Campaign paused')->warning()->send();
+                }),
+
+            Action::make('resume')
+                ->label('Resume Campaign')
+                ->icon('heroicon-o-play-circle')
+                ->color('success')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_PAUSED)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_ACTIVE]);
+                    Notification::make()->title('Campaign resumed')->success()->send();
+                }),
+
+            Action::make('close')
+                ->label('Close Campaign')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn () => in_array($this->record->status, [RecruitmentCampaign::STATUS_ACTIVE, RecruitmentCampaign::STATUS_PAUSED]))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_CLOSED]);
+                    Notification::make()->title('Campaign closed')->danger()->send();
+                }),
+
+            Action::make('re_open')
+                ->label('Re-open Campaign')
+                ->icon('heroicon-o-arrow-path')
+                ->color('success')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_CLOSED && (!$this->record->end_date || $this->record->end_date->isFuture()))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_ACTIVE]);
+                    Notification::make()->title('Campaign re-opened')->success()->send();
                 }),
 
             DeleteAction::make()

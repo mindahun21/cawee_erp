@@ -378,6 +378,9 @@ class RecruitmentApprovalService
         } elseif ($document->approvalDocumentType() === 'recruitment_campaign') {
             $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentCampaigns\RecruitmentCampaignResource::getUrl('view', ['record' => $document]);
             $mailable = new \App\Mail\Recruitment\RecruitmentCampaignSubmittedMail($document, $viewUrl);
+        } elseif ($document->approvalDocumentType() === 'recruitment_interview_schedule') {
+            $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentInterviewSchedules\RecruitmentInterviewScheduleResource::getUrl('view', ['record' => $document]);
+            // Mailable will be added if needed, for now just in-app
         }
 
         foreach ($approvers as $approver) {

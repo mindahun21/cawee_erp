@@ -105,8 +105,12 @@
                     @if($campaign->channel)
                         <span class="badge" style="background: rgba(255,255,255,.15); color: #fff;">via {{ $campaign->channel->name }}</span>
                     @endif
-                    @if($campaign->end_date && $campaign->end_date->isFuture())
-                        <span class="badge" style="background: rgba(255,255,255,.1); color: rgba(255,255,255,.85);">Closes {{ $campaign->end_date->diffForHumans() }}</span>
+                    @if($campaign->end_date)
+                        @if($campaign->end_date->isFuture())
+                            <span class="badge" style="background: rgba(255,255,255,.1); color: rgba(255,255,255,.85);">Closes {{ $campaign->end_date->diffForHumans() }}</span>
+                        @else
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">Applications Closed</span>
+                        @endif
                     @endif
                 </div>
                 <h1 style="color: #fff; font-size: 1.7rem; font-weight: 800; line-height: 1.3; margin: 0;">{{ $campaign->title }}</h1>
@@ -182,13 +186,14 @@
     <div class="rp-apply-sticky" style="position: sticky; top: 80px; display: flex; flex-direction: column; gap: 1.25rem;">
 
         {{-- Apply card --}}
+        {{-- Apply card --}}
         <div style="background: linear-gradient(135deg, var(--navy), #004d99); border-radius: 14px; padding: 1.5rem; color: #fff; text-align: center;">
             <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: .4rem;">Interested in this role?</h3>
-            <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
-                Apply now and take the next step in your career.
-            </p>
-
+            
             @if($alreadyApplied)
+                <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
+                    Thanks for your interest! Keep an eye on your status.
+                </p>
                 <div style="background: rgba(255,255,255,.12); border-radius: 10px; padding: .85rem 1rem; font-size: .88rem; color: rgba(255,255,255,.9); font-weight: 600;">
                     ✅ Application submitted
                 </div>
@@ -196,7 +201,24 @@
                    style="display: inline-block; margin-top: .75rem; font-size: .8rem; color: rgba(255,255,255,.7); text-decoration: underline;">
                     View my applications
                 </a>
+            @elseif($campaign->status === \App\Models\Recruitment\RecruitmentCampaign::STATUS_PAUSED)
+                <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
+                    Applications for this position are temporarily paused.
+                </p>
+                <div style="background: rgba(255,255,255,.08); border: 1px dashed rgba(255,255,255,0.3); border-radius: 10px; padding: .85rem 1rem; font-size: .88rem; color: rgba(255,255,255,0.8); font-weight: 600;">
+                    ⏸️ Applications Paused
+                </div>
+            @elseif($campaign->status === \App\Models\Recruitment\RecruitmentCampaign::STATUS_CLOSED || ($campaign->end_date && $campaign->end_date->isPast()))
+                <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
+                    Applications for this position are now closed.
+                </p>
+                <div style="background: rgba(255,255,255,.08); border: 1px dashed rgba(255,255,255,0.3); border-radius: 10px; padding: .85rem 1rem; font-size: .88rem; color: rgba(255,255,255,0.8); font-weight: 600;">
+                    🚫 Applications Closed
+                </div>
             @elseif($candidate)
+                <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
+                    Apply now and take the next step in your career.
+                </p>
                 <a href="{{ route('candidate.campaigns.apply', $campaign) }}"
                    id="apply-btn"
                    style="display: inline-flex; align-items: center; justify-content: center; gap: .4rem; width: 100%;
@@ -209,6 +231,9 @@
                     <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                 </a>
             @else
+                <p style="font-size: .82rem; color: rgba(255,255,255,.7); margin-bottom: 1.2rem; line-height:1.5;">
+                    Apply now and take the next step in your career.
+                </p>
                 <a href="{{ route('candidate.login', ['redirect' => route('candidate.campaigns.apply', $campaign)]) }}"
                    style="display: inline-flex; align-items: center; justify-content: center; gap: .4rem; width: 100%;
                           padding: .75rem 1.5rem; border-radius: 10px; font-size: .95rem; font-weight: 700;

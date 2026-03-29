@@ -86,7 +86,8 @@ class RecruitmentRoleSeeder extends Seeder
             'RecruitmentApplication', 'RecruitmentCampaign', 'RecruitmentCandidate',
             'RecruitmentChannel', 'RecruitmentEvaluationCriteria', 'RecruitmentEvaluationForm',
             'RecruitmentEvaluationScore', 'RecruitmentInterview', 'RecruitmentJobPosting',
-            'RecruitmentOffer',
+            'RecruitmentOffer', 'RecruitmentInterviewSchedule',
+            'RecruitmentScheduleCandidate', 'RecruitmentScheduleInterviewer',
         ];
 
         $actions = ['ViewAny', 'View', 'Create', 'Update', 'Delete', 'Restore', 'ForceDelete', 'Replicate', 'Reorder'];

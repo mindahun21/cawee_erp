@@ -34,6 +34,7 @@ Route::prefix('recruitment')->name('candidate.')->group(function () {
     Route::middleware('auth:candidate')->group(function () {
         Route::get('/my-applications', [RecruitmentPortalController::class, 'myApplications'])->name('my-applications');
         Route::get('/my-applications/{application}', [RecruitmentPortalController::class, 'showApplication'])->name('my-applications.show');
+        Route::post('/my-applications/{application}/withdraw', [RecruitmentPortalController::class, 'withdrawApplication'])->name('my-applications.withdraw');
         Route::get('/profile', [RecruitmentPortalController::class, 'profile'])->name('profile');
     });
 });

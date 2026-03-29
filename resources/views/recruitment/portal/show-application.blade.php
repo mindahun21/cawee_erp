@@ -85,6 +85,20 @@
             </div>
             <div>
                 <span class="status-pill status-{{ $application->status }}">{{ str_replace('_', ' ', $application->status) }}</span>
+                
+                @if(in_array($application->status, ['applied', 'under_review', 'shortlisted', 'interview_scheduled']))
+                <form action="{{ route('candidate.my-applications.withdraw', $application) }}" method="POST" 
+                      style="display: inline-block; margin-left: .5rem;"
+                      onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.')">
+                    @csrf
+                    <button type="submit" 
+                            style="background: #ef4444; color: #ffffff; border: none; padding: .5rem 1rem; border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" 
+                            onmouseover="this.style.background='#dc2626'" 
+                            onmouseout="this.style.background='#ef4444'">
+                        Withdraw Application
+                    </button>
+                </form>
+                @endif
             </div>
         </div>
         <div style="margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: .82rem; color: rgba(255,255,255,.7);">
@@ -108,6 +122,18 @@
 
         {{-- TAB: Application --}}
         <div class="app-tab-panel" :class="{ active: tab === 'application' }">
+            @if($application->status === 'rejected' && $application->rejection_reason)
+            <div style="background: #fff1f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                <div style="background: #fee2e2; padding: .5rem; border-radius: 50%;">
+                    <svg style="width: 20px; height: 20px; color: #b91c1c;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <div>
+                    <h4 style="color: #991b1b; margin: 0 0 .25rem 0; font-size: .95rem; font-weight: 700;">Application Status: Rejected</h4>
+                    <p style="color: #b91c1c; margin: 0; font-size: .88rem; line-height: 1.5;"><strong>Reason:</strong> {{ $application->rejection_reason }}</p>
+                </div>
+            </div>
+            @endif
+
             <div class="detail-card">
                 <h3>Application Details</h3>
                 <div class="detail-grid">

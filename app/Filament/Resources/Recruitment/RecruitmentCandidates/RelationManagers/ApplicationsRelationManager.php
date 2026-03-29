@@ -69,7 +69,9 @@ class ApplicationsRelationManager extends RelationManager
                     ->color('primary')
                     ->icon('heroicon-o-play')
                     ->requiresConfirmation()
-                    ->visible(fn (RecruitmentApplication $record) => $record->status === RecruitmentApplication::STATUS_APPLIED)
+                    ->visible(fn (RecruitmentApplication $record) => 
+                        $record->status === RecruitmentApplication::STATUS_APPLIED
+                    )
                     ->action(function (RecruitmentApplication $record) {
                         RecruitmentApprovalService::initialise($record, 'recruitment_application');
                         $record->update(['status' => RecruitmentApplication::STATUS_UNDER_REVIEW]);
@@ -82,6 +84,9 @@ class ApplicationsRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
                     ->visible(function (RecruitmentApplication $record) {
+                        if ($record->status === RecruitmentApplication::STATUS_WITHDRAWN) {
+                            return false;
+                        }
                         /** @var User $user */
                         $user = auth()->user();
                         return RecruitmentApprovalService::canApprove($user, $record, 'recruitment_application');
@@ -110,6 +115,9 @@ class ApplicationsRelationManager extends RelationManager
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
                     ->visible(function (RecruitmentApplication $record) {
+                        if ($record->status === RecruitmentApplication::STATUS_WITHDRAWN) {
+                            return false;
+                        }
                         /** @var User $user */
                         $user = auth()->user();
                         return RecruitmentApprovalService::canApprove($user, $record, 'recruitment_application');
