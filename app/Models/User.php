@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -16,6 +17,26 @@ class User extends Authenticatable
     public function employee(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function sharedFolders(): HasMany
+    {
+        return $this->hasMany(SharedFolder::class, 'owner_id');
+    }
+
+    public function sharedFiles(): HasMany
+    {
+        return $this->hasMany(SharedFile::class, 'uploaded_by');
+    }
+
+    public function fileSharesCreated(): HasMany
+    {
+        return $this->hasMany(FileShare::class, 'created_by');
+    }
+
+    public function fileAccessLogs(): HasMany
+    {
+        return $this->hasMany(FileAccessLog::class);
     }
 
     // ── HR Role Helpers ────────────────────────────────────────────
