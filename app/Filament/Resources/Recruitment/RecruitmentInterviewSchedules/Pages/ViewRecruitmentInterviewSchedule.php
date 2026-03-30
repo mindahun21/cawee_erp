@@ -18,18 +18,18 @@ class ViewRecruitmentInterviewSchedule extends ViewRecord
     {
         return [
             EditAction::make()
-                ->visible(fn () => $this->record->status === RecruitmentInterviewSchedule::STATUS_DRAFT),
+                ->visible(fn () => in_array($this->record->status, [RecruitmentInterviewSchedule::STATUS_DRAFT, RecruitmentInterviewSchedule::STATUS_REJECTED])),
 
             Action::make('submit')
                 ->label('Submit for Approval')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('primary')
                 ->visible(function () {
-                    if ($this->record->status !== RecruitmentInterviewSchedule::STATUS_DRAFT) {
+                    if (!in_array($this->record->status, [RecruitmentInterviewSchedule::STATUS_DRAFT, RecruitmentInterviewSchedule::STATUS_REJECTED])) {
                         return false;
                     }
-                    if (RecruitmentApprovalService::hasBeenRejected($this->record)) {
-                        return RecruitmentApprovalService::wasEditedAfterRejection($this->record);
+                    if (\App\Services\Recruitment\RecruitmentApprovalService::hasBeenRejected($this->record)) {
+                        return \App\Services\Recruitment\RecruitmentApprovalService::wasEditedAfterRejection($this->record);
                     }
                     return true;
                 })

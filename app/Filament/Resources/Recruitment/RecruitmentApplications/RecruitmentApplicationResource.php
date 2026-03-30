@@ -6,6 +6,7 @@ use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\CreateRecru
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\EditRecruitmentApplication;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\ListRecruitmentApplications;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\ViewRecruitmentApplication;
+use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\KanbanRecruitmentApplications;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Schemas\RecruitmentApplicationForm;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Tables\RecruitmentApplicationsTable;
 use App\Models\Recruitment\RecruitmentApplication;
@@ -296,6 +297,7 @@ class RecruitmentApplicationResource extends Resource
     {
         return [
             'index' => ListRecruitmentApplications::route('/'),
+            'kanban' => KanbanRecruitmentApplications::route('/kanban'),
             'create' => CreateRecruitmentApplication::route('/create'),
             'view' => ViewRecruitmentApplication::route('/{record}'),
             'edit' => EditRecruitmentApplication::route('/{record}/edit'),

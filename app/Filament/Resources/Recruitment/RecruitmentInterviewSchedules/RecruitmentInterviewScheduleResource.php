@@ -74,10 +74,15 @@ class RecruitmentInterviewScheduleResource extends Resource
             Section::make('Interview Panel')
                 ->icon('heroicon-o-users')
                 ->schema([
-                    TextEntry::make('interviewers.name')
+                    \Filament\Infolists\Components\RepeatableEntry::make('scheduleInterviewers')
                         ->label('Panelists')
-                        ->badge()
-                        ->color('info'),
+                        ->schema([
+                            TextEntry::make('user.name')->label('Name')->weight('bold'),
+                            TextEntry::make('role')->badge()->color('info')->formatStateUsing(fn (string $state) => ucfirst($state)),
+                            TextEntry::make('notes')->label('Notes')->columnSpanFull(),
+                        ])
+                        ->columns(['md' => 2])
+                        ->grid(['md' => 2]),
                 ]),
 
             Section::make('Approval Trail')
@@ -104,6 +109,7 @@ class RecruitmentInterviewScheduleResource extends Resource
     {
         return [
             'index' => ListRecruitmentInterviewSchedules::route('/'),
+            'calendar' => Pages\CalendarRecruitmentInterviewSchedules::route('/calendar'),
             'create' => CreateRecruitmentInterviewSchedule::route('/create'),
             'view' => ViewRecruitmentInterviewSchedule::route('/{record}'),
             'edit' => EditRecruitmentInterviewSchedule::route('/{record}/edit'),

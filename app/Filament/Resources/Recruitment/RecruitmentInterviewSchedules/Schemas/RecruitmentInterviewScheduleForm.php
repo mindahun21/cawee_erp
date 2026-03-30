@@ -158,6 +158,7 @@ class RecruitmentInterviewScheduleForm
                     ->schema([
                         Repeater::make('scheduleCandidates')
                             ->relationship('scheduleCandidates')
+                            ->minItems(1)
                             ->schema([
                                 Select::make('candidate_id')
                                     ->label('Candidate')

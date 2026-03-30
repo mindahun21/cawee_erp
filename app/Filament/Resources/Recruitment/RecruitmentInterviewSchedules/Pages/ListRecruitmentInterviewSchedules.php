@@ -13,6 +13,11 @@ class ListRecruitmentInterviewSchedules extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('calendar_view')
+                ->label('Calendar View')
+                ->icon('heroicon-o-calendar')
+                ->color('gray')
+                ->url(RecruitmentInterviewScheduleResource::getUrl('calendar')),
             CreateAction::make(),
         ];
     }

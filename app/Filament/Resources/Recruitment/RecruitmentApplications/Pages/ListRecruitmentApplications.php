@@ -13,6 +13,11 @@ class ListRecruitmentApplications extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kanban_view')
+                ->label('Switch to Kanban')
+                ->icon('heroicon-o-view-columns')
+                ->color('gray')
+                ->url(RecruitmentApplicationResource::getUrl('kanban')),
             CreateAction::make(),
         ];
     }
