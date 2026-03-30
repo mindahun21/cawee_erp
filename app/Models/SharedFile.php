@@ -100,6 +100,11 @@ class SharedFile extends Model
         return $this->morphTo();
     }
 
+    public function activeShares(): HasMany
+    {
+        return $this->shares()->where('is_active', true);
+    }
+
     public function getHumanSizeAttribute(): string
     {
         $bytes = (int) $this->size_bytes;

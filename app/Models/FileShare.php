@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class FileShare extends Model
 {
@@ -34,6 +37,25 @@ class FileShare extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $share): void {
+            if (! $share->share_token) {
+                $share->share_token = Str::random(40);
+            }
+
+            if ($share->password && ! Str::startsWith($share->password, '$2y$')) {
+                $share->password = Hash::make($share->password);
+            }
+        });
+
+        static::updating(function (self $share): void {
+            if ($share->isDirty('password') && filled($share->password) && ! Str::startsWith($share->password, '$2y$')) {
+                $share->password = Hash::make($share->password);
+            }
+        });
+    }
+
     public function file(): BelongsTo
     {
         return $this->belongsTo(SharedFile::class, 'shared_file_id');
@@ -54,8 +76,17 @@ class FileShare extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function accessLogs()
+    public function accessLogs(): HasMany
     {
         return $this->hasMany(FileAccessLog::class, 'file_share_id');
+    }
+
+    public function getShareUrlAttribute(): ?string
+    {
+        if (! $this->share_token) {
+            return null;
+        }
+
+        return route('file-shares.show', $this->share_token);
     }
 }
