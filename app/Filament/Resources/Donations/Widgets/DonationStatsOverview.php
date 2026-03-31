@@ -21,12 +21,12 @@ class DonationStatsOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('primary'),
 
-            Stat::make('Total Amount Raised', '$' . number_format($overall['total_amount'], 2))
+            Stat::make('Total Amount Raised', 'ETB ' . number_format($overall['total_amount'], 2))
                 ->description('All time')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('success'),
 
-            Stat::make('This Year', '$' . number_format($currentYear['total_amount'], 2))
+            Stat::make('This Year', 'ETB ' . number_format($currentYear['total_amount'], 2))
                 ->description('Year to date')
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('info')

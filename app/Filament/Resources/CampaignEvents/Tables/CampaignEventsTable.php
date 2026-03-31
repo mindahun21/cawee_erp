@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CampaignEvents\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -26,17 +27,7 @@ class CampaignEventsTable
                 TextColumn::make('event_name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
-                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
-                            <a href="'.\App\Filament\Resources\CampaignEvents\CampaignEventResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
-                            <span class="text-gray-200">|</span>
-                            <a href="'.\App\Filament\Resources\CampaignEvents\CampaignEventResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
-                            <span class="text-gray-200">|</span>
-                            <button type="button" 
-                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
-                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
-                        </div>
-                    '), position: 'below'),
+                    ->weight('semibold'),
                 TextColumn::make('event_type')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -64,7 +55,7 @@ class CampaignEventsTable
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('funds_raised')
-                    ->money()
+                    ->money('ETB')
                     ->sortable(),
                 TextColumn::make('volunteers_registered')
                     ->label('Volunteers')
@@ -87,7 +78,12 @@ class CampaignEventsTable
             ->filters([
                 TrashedFilter::make(),
             ])
-            ->toolbarActions([
+            ->actions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),

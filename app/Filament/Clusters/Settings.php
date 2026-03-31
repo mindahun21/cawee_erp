@@ -5,16 +5,12 @@ namespace App\Filament\Clusters;
 use Filament\Clusters\Cluster;
 
 use BackedEnum;
+use UnitEnum;
 
 class Settings extends Cluster
 {
-    protected static bool $shouldRegisterNavigation = true;
-
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-cog-6-tooth';
     
-    protected static ?string $navigationLabel = 'Settings';
-
-    protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
-
-    protected static ?int $navigationSort = 1000;
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
 }
+

@@ -68,4 +68,15 @@ class CampaignEvent extends Model
     {
         return $this->hasMany(EventVolunteer::class);
     }
+
+    /**
+     * Synchronize registration counts based on actual records.
+     */
+    public function syncCounts(): void
+    {
+        $this->update([
+            'volunteers_registered' => $this->volunteers()->count(),
+            'tickets_sold' => $this->attendees()->sum('tickets_purchased'),
+        ]);
+    }
 }

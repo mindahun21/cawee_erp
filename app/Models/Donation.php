@@ -23,6 +23,7 @@ class Donation extends Model
         'payment_method',
         'transaction_id',
         'receipt_number',
+        'pledge_id',
         'notes',
         'status',
     ];
@@ -52,6 +53,11 @@ class Donation extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function pledge(): BelongsTo
+    {
+        return $this->belongsTo(Pledge::class);
     }
 
     // Query Scopes
