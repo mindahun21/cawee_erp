@@ -11,6 +11,8 @@ use App\Filament\Resources\CampaignEvents\Schemas\CampaignEventInfolist;
 use App\Filament\Resources\CampaignEvents\Tables\CampaignEventsTable;
 use App\Models\CampaignEvent;
 use BackedEnum;
+use UnitEnum;
+
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -22,9 +24,11 @@ class CampaignEventResource extends Resource
 {
     protected static ?string $model = CampaignEvent::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    
-    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising';
+    protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';
+
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $recordTitleAttribute = 'event_name';
 

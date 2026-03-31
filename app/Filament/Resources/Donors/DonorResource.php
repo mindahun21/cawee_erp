@@ -4,8 +4,11 @@ namespace App\Filament\Resources\Donors;
 
 use App\Filament\Resources\Donors\Pages\ManageDonors;
 use App\Filament\Resources\Donors\Pages\ViewDonor;
+use App\Filament\Resources\Donors\DonorResource\RelationManagers\InteractionsRelationManager;
+use App\Filament\Resources\Donors\DonorResource\RelationManagers\PledgesRelationManager;
 use App\Models\Donor;
 use BackedEnum;
+
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -22,6 +25,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -31,16 +36,21 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+
 
 class DonorResource extends Resource
 {
     protected static ?string $model = Donor::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';
 
-    protected static ?string $cluster = \App\Filament\Clusters\Settings::class;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $recordTitleAttribute = 'full_name';
+
+    protected static ?int $navigationSort = 1;
 
     public static function getGloballySearchableAttributes(): array
     {
@@ -50,90 +60,99 @@ class DonorResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->columns(1)
             ->components([
-                Section::make('Basic Information')
-                    ->columns(2)
-                    ->schema([
-                        ToggleButtons::make('donor_type')
-                            ->options([
-                                'individual' => 'Individual',
-                                'corporate' => 'Corporate',
-                                'foundation' => 'Foundation',
-                            ])
-                            ->icons([
-                                'individual' => 'heroicon-m-user',
-                                'corporate' => 'heroicon-m-building-office',
-                                'foundation' => 'heroicon-m-academic-cap',
-                            ])
-                            ->colors([
-                                'individual' => 'info',
-                                'corporate' => 'primary',
-                                'foundation' => 'warning',
-                            ])
-                            ->required()
-                            ->reactive()
-                            ->inline(),
-                        Select::make('status')
-                            ->options([
-                                'active' => 'Active',
-                                'inactive' => 'Inactive',
-                                'lead' => 'Lead',
-                                'prospect' => 'Prospect',
-                            ])
-                            ->required()
-                            ->default('active'),
-                        TextInput::make('first_name')
-                            ->label('First Name')
-                            ->placeholder('John')
-                            ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
-                            ->required(fn ($get) => $get('donor_type') === 'individual'),
-                        TextInput::make('last_name')
-                            ->label('Last Name')
-                            ->placeholder('Doe')
-                            ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
-                            ->required(fn ($get) => $get('donor_type') === 'individual'),
-                        TextInput::make('organization_name')
-                            ->label('Organization Name')
-                            ->placeholder('Acme Corp')
-                            ->hidden(fn ($get) => $get('donor_type') === 'individual')
-                            ->required(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
-                        TextInput::make('email')
-                            ->email()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->placeholder('john@example.com'),
-                        TextInput::make('phone')
-                            ->tel()
-                            ->placeholder('(123) 456-7890'),
-                    ]),
-                Section::make('Address & Categorization')
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('city')
-                            ->placeholder('New York'),
-                        Select::make('country')
-                            ->options(config('countries'))
-                            ->searchable()
-                            ->preload(),
-                        Textarea::make('address')
-                            ->columnSpanFull()
-                            ->placeholder('123 Main St, Apt 4B'),
-                    ]),
-                Section::make('Donor Categories')
-                    ->schema([
-                        Select::make('categories')
-                            ->multiple()
-                            ->relationship('categories', 'name')
-                            ->preload()
-                            ->columnSpanFull(),
-                    ]),
-                Section::make('Notes')
-                    ->schema([
-                        Textarea::make('notes')
-                            ->columnSpanFull()
-                            ->placeholder('Any additional information about this donor...'),
-                    ]),
+                Tabs::make()->tabs([
+                    Tab::make('Basic Information')
+                        ->icon('heroicon-o-user')
+                        ->schema([
+                            Section::make()->columns(2)->schema([
+                                ToggleButtons::make('donor_type')
+                                    ->options([
+                                        'individual' => 'Individual',
+                                        'corporate' => 'Corporate',
+                                        'foundation' => 'Foundation',
+                                    ])
+                                    ->icons([
+                                        'individual' => 'heroicon-m-user',
+                                        'corporate' => 'heroicon-m-building-office',
+                                        'foundation' => 'heroicon-m-academic-cap',
+                                    ])
+                                    ->colors([
+                                        'individual' => 'info',
+                                        'corporate' => 'primary',
+                                        'foundation' => 'warning',
+                                    ])
+                                    ->required()
+                                    ->reactive()
+                                    ->inline(),
+                                Select::make('status')
+                                    ->options([
+                                        'active' => 'Active',
+                                        'inactive' => 'Inactive',
+                                        'lead' => 'Lead',
+                                        'prospect' => 'Prospect',
+                                    ])
+                                    ->required()
+                                    ->default('active'),
+                                TextInput::make('first_name')
+                                    ->label('First Name')
+                                    ->placeholder('John')
+                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
+                                    ->required(fn ($get) => $get('donor_type') === 'individual'),
+                                TextInput::make('last_name')
+                                    ->label('Last Name')
+                                    ->placeholder('Doe')
+                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
+                                    ->required(fn ($get) => $get('donor_type') === 'individual'),
+                                TextInput::make('organization_name')
+                                    ->label('Organization Name')
+                                    ->placeholder('Acme Corp')
+                                    ->hidden(fn ($get) => $get('donor_type') === 'individual')
+                                    ->required(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
+                                TextInput::make('email')
+                                    ->email()
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->placeholder('john@example.com'),
+                                PhoneInput::make('phone')
+                                    ->defaultCountry('ET')
+                                    ->placeholder('0912 345 678'),
+                            ]),
+                        ]),
+
+                    Tab::make('Address & Categorization')
+                        ->icon('heroicon-o-map-pin')
+                        ->schema([
+                            Section::make()->columns(2)->schema([
+                                TextInput::make('city')
+                                    ->placeholder('Addis Ababa'),
+                                Select::make('country')
+                                    ->options(config('countries'))
+                                    ->searchable()
+                                    ->preload(),
+                                Textarea::make('address')
+                                    ->columnSpanFull()
+                                    ->placeholder('Sub City, Woreda, House No...'),
+                                
+                                Select::make('categories')
+                                    ->multiple()
+                                    ->relationship('categories', 'name')
+                                    ->preload()
+                                    ->columnSpanFull(),
+                            ]),
+                        ]),
+
+                    Tab::make('Notes')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            Section::make()->schema([
+                                Textarea::make('notes')
+                                    ->columnSpanFull()
+                                    ->rows(6)
+                                    ->placeholder('Any additional information about this donor...'),
+                            ]),
+                        ]),
+                ])->columnSpanFull(),
             ]);
     }
 
@@ -159,19 +178,7 @@ class DonorResource extends Resource
                     ->label('Name')
                     ->searchable(['first_name', 'last_name', 'organization_name'])
                     ->sortable()
-                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
-                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
-                            <a href="'.\App\Filament\Resources\Donors\DonorResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
-                            <span class="text-gray-200">|</span>
-                            <button type="button" 
-                                x-on:click="$wire.mountTableAction(\'edit\', '.$record->id.')"
-                                class="hover-action-link text-primary-600 hover:text-primary-700">Edit</button>
-                            <span class="text-gray-200">|</span>
-                            <button type="button" 
-                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
-                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
-                        </div>
-                    '), position: 'below'),
+                    ->weight('semibold'),
                 TextColumn::make('email')
                     ->label('Email address')
                     ->searchable()
@@ -197,7 +204,7 @@ class DonorResource extends Resource
                     })
                     ->searchable(),
                 TextColumn::make('total_donated')
-                    ->money('INR')
+                    ->money('ETB')
                     ->sortable(),
                 TextColumn::make('last_donation_date')
                     ->date()
@@ -227,6 +234,13 @@ class DonorResource extends Resource
                     ->multiple()
                     ->preload(),
             ])
+            ->recordActions([
+                \Filament\Actions\ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                ForceDeleteAction::make(),
+                RestoreAction::make(),
+            ])
             ->bulkActions([
                 BulkActionGroup::make([
                     BulkAction::make('assignCategories')
@@ -234,14 +248,14 @@ class DonorResource extends Resource
                         ->icon('heroicon-m-tag')
                         ->form([
                             Select::make('category_ids')
-                                ->label('Categories')
-                                ->multiple()
-                                ->relationship('categories', 'name')
-                                ->preload()
-                                ->required(),
+                                  ->label('Categories')
+                                  ->multiple()
+                                  ->relationship('categories', 'name')
+                                  ->preload()
+                                  ->required(),
                             Checkbox::make('append')
-                                ->label('Append to existing categories')
-                                ->default(true),
+                                    ->label('Append to existing categories')
+                                    ->default(true),
                         ])
                         ->action(function (Collection $records, array $data): void {
                             foreach ($records as $record) {
@@ -258,6 +272,14 @@ class DonorResource extends Resource
                     RestoreBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            InteractionsRelationManager::class,
+            PledgesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

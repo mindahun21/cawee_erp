@@ -53,6 +53,16 @@ class Donor extends Model
         return $this->hasMany(EventVolunteer::class);
     }
 
+    public function interactions(): HasMany
+    {
+        return $this->hasMany(DonorInteraction::class);
+    }
+
+    public function pledges(): HasMany
+    {
+        return $this->hasMany(Pledge::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         if ($this->donor_type === 'individual') {

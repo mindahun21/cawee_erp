@@ -5,8 +5,11 @@ namespace App\Filament\Resources\Donations;
 use App\Filament\Resources\Donations\Pages\ManageDonations;
 use App\Filament\Resources\Donations\Pages\ViewDonation;
 use App\Models\Donation;
+
 use App\Models\Donor;
 use BackedEnum;
+use UnitEnum;
+
 use App\Services\ReportService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -20,6 +23,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -31,106 +36,107 @@ class DonationResource extends Resource
 {
     protected static ?string $model = Donation::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Donor Fundraising';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->columns(1)
             ->components([
-                \Filament\Schemas\Components\Section::make('Donation Details')
-                    ->columns(2)
-                    ->schema([
-                        Select::make('donor_id')
-                            ->relationship('donor', 'id')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable()
-                            ->getSearchResultsUsing(fn (string $search): array => Donor::query()
-                                ->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%")
-                                ->orWhere('organization_name', 'like', "%{$search}%")
-                                ->limit(50)
-                                ->get()
-                                ->mapWithKeys(fn ($donor) => [$donor->id => $donor->full_name])
-                                ->all())
-                            ->getOptionLabelsUsing(fn (array $values): array => Donor::whereIn('id', $values)
-                                ->get()
-                                ->mapWithKeys(fn ($donor) => [$donor->id => $donor->full_name])
-                                ->all())
-                            ->required(),
-                        Select::make('campaign_id')
-                            ->relationship('campaign', 'title')
-                            ->searchable()
-                            ->preload(),
-                        Select::make('donation_type_id')
-                            ->relationship('donationType', 'name', fn ($query) => $query->active())
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                // You can add logic here to show/hide fields based on donation type
-                            }),
-                        DatePicker::make('donation_date')
-                            ->required()
-                            ->default(now()),
-                        Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'completed' => 'Completed',
-                                'failed' => 'Failed',
-                                'refunded' => 'Refunded',
-                            ])
-                            ->default('completed')
-                            ->required(),
-                    ]),
-                \Filament\Schemas\Components\Section::make('Payment Information')
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('amount')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$')
-                            ->minValue(0.01),
-                        Select::make('currency_id')
-                            ->relationship('currency', 'name')
-                            ->required()
-                            ->default(1), // Assuming 1 is USD
-                        TextInput::make('payment_method')
-                            ->maxLength(50)
-                            ->placeholder('e.g., Credit Card, Bank Transfer'),
-                        TextInput::make('transaction_id')
-                            ->maxLength(100)
-                            ->placeholder('Transaction reference number'),
-                        TextInput::make('receipt_number')
-                            ->maxLength(50)
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->helperText('Auto-generated on save'),
-                    ]),
-                \Filament\Schemas\Components\Section::make('Recurring & Pledge')
-                    ->columns(2)
-                    ->schema([
-                        Toggle::make('is_recurring')
-                            ->label('Recurring Donation')
-                            ->helperText('Will be processed automatically each month'),
-                        TextInput::make('pledge_amount')
-                            ->numeric()
-                            ->prefix('$')
-                            ->helperText('Total pledge amount if applicable'),
-                    ]),
-                \Filament\Schemas\Components\Section::make('Additional Information')
-                    ->schema([
-                        Textarea::make('in_kind_description')
-                            ->label('In-Kind Description')
-                            ->rows(3)
-                            ->helperText('For non-monetary donations'),
-                        Textarea::make('notes')
-                            ->rows(3)
-                            ->helperText('Internal notes'),
-                    ]),
+                Tabs::make()->tabs([
+                    Tab::make('Donation Details')
+                        ->icon('heroicon-o-gift')
+                        ->schema([
+                            \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Select::make('donor_id')
+                                    ->relationship('donor', 'id')
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
+                                Select::make('campaign_id')
+                                    ->relationship('campaign', 'title')
+                                    ->searchable()
+                                    ->preload(),
+                                Select::make('donation_type_id')
+                                    ->relationship('donationType', 'name', fn ($query) => $query->active())
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->reactive(),
+                                DatePicker::make('donation_date')
+                                    ->required()
+                                    ->default(now()),
+                                Select::make('status')
+                                    ->options([
+                                        'pending' => 'Pending',
+                                        'completed' => 'Completed',
+                                        'failed' => 'Failed',
+                                        'refunded' => 'Refunded',
+                                    ])
+                                    ->default('completed')
+                                    ->required(),
+                            ]),
+                        ]),
+
+                    Tab::make('Payment Information')
+                        ->icon('heroicon-o-banknotes')
+                        ->schema([
+                            \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                TextInput::make('amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('ETB')
+                                    ->minValue(0.01),
+                                Select::make('currency_id')
+                                    ->relationship('currency', 'name')
+                                    ->required()
+                                    ->default(fn () => \App\Models\Currency::where('code', 'ETB')->first()?->id ?? 1),
+                                TextInput::make('payment_method')
+                                    ->maxLength(50)
+                                    ->placeholder('e.g., Bank Transfer, Telebirr, Cash'),
+                                TextInput::make('transaction_id')
+                                    ->maxLength(100)
+                                    ->placeholder('Transaction reference number'),
+                                TextInput::make('receipt_number')
+                                    ->maxLength(50)
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->helperText('Auto-generated on save'),
+                            ]),
+                        ]),
+
+                    Tab::make('Recurring & Pledge')
+                        ->icon('heroicon-o-arrow-path')
+                        ->schema([
+                            \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Toggle::make('is_recurring')
+                                    ->label('Recurring Donation')
+                                    ->helperText('Will be processed automatically each month'),
+                                TextInput::make('pledge_amount')
+                                    ->numeric()
+                                    ->prefix('ETB')
+                                    ->helperText('Total pledge amount if applicable'),
+                            ]),
+                        ]),
+
+                    Tab::make('Additional Information')
+                        ->icon('heroicon-o-plus-circle')
+                        ->schema([
+                            \Filament\Schemas\Components\Section::make()->schema([
+                                Textarea::make('in_kind_description')
+                                    ->label('In-Kind Description')
+                                    ->rows(3)
+                                    ->helperText('For non-monetary donations'),
+                                Textarea::make('notes')
+                                    ->rows(3)
+                                    ->helperText('Internal notes'),
+                            ]),
+                        ]),
+                ])->columnSpanFull(),
             ]);
     }
 
@@ -143,17 +149,7 @@ class DonationResource extends Resource
                     ->sortable()
                     ->copyable()
                     ->toggleable()
-                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
-                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
-                            <a href="'.\App\Filament\Resources\Donations\DonationResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
-                            <span class="text-gray-200">|</span>
-                            <a href="'.\App\Filament\Resources\Donations\DonationResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
-                            <span class="text-gray-200">|</span>
-                            <button type="button" 
-                                x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
-                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
-                        </div>
-                    '), position: 'below'),
+                    ->weight('semibold'),
                 TextColumn::make('donor.full_name')
                     ->label('Donor')
                     ->searchable()
@@ -167,7 +163,7 @@ class DonationResource extends Resource
                     ->badge()
                     ->searchable(),
                 TextColumn::make('amount')
-                    ->money(fn ($record) => $record->currency?->code ?? 'USD')
+                    ->money(fn ($record) => $record->currency?->code ?? 'ETB')
                     ->sortable(),
                 TextColumn::make('payment_method')
                     ->toggleable()
@@ -328,8 +324,6 @@ class DonationResource extends Resource
     {
         return [
             Widgets\DonationStatsOverview::class,
-            Widgets\DonationTrendsChart::class,
-            Widgets\DonationTypeChart::class,
         ];
     }
 

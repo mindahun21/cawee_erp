@@ -18,5 +18,39 @@ class EventAttendeeObserver
         if ($recipient) {
             Mail::to($recipient)->send(new EventInvitation($eventAttendee, $eventAttendee->event));
         }
+
+        $eventAttendee->event?->syncCounts();
+    }
+
+    /**
+     * Handle the EventAttendee "updated" event.
+     */
+    public function updated(EventAttendee $eventAttendee): void
+    {
+        $eventAttendee->event?->syncCounts();
+    }
+
+    /**
+     * Handle the EventAttendee "deleted" event.
+     */
+    public function deleted(EventAttendee $eventAttendee): void
+    {
+        $eventAttendee->event?->syncCounts();
+    }
+
+    /**
+     * Handle the EventAttendee "restored" event.
+     */
+    public function restored(EventAttendee $eventAttendee): void
+    {
+        $eventAttendee->event?->syncCounts();
+    }
+
+    /**
+     * Handle the EventAttendee "force deleted" event.
+     */
+    public function forceDeleted(EventAttendee $eventAttendee): void
+    {
+        $eventAttendee->event?->syncCounts();
     }
 }

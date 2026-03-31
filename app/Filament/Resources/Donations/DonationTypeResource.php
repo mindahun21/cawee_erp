@@ -15,6 +15,8 @@ class DonationTypeResource extends Resource
 {
     protected static ?string $model = DonationType::class;
 
+    protected static ?string $slug = 'donation-types';
+    
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-gift';
 
     protected static string | \UnitEnum | null $navigationGroup = 'Donor Fundraising / Settings';
@@ -100,14 +102,16 @@ class DonationTypeResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->description(fn ($record) => new \Illuminate\Support\HtmlString('
-                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
+                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center font-medium">
                             <a href="'.\App\Filament\Resources\Donations\DonationTypeResource::getUrl('view', ['record' => $record]).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
                             <span class="text-gray-200">|</span>
-                            <a href="'.\App\Filament\Resources\Donations\DonationTypeResource::getUrl('edit', ['record' => $record]).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
+                            <button type="button"
+                                x-on:click="$wire.mountTableAction(\'edit\', '.$record->id.')"
+                                class="hover-action-link text-primary-600 hover:text-primary-700">Edit</button>
                             <span class="text-gray-200">|</span>
                             <button type="button" 
                                 x-on:click="$wire.mountTableAction(\'delete\', '.$record->id.')"
-                                class="hover-action-link text-danger-600 hover:text-danger-700 font-medium">Delete</button>
+                                class="hover-action-link text-danger-600 hover:text-danger-700">Delete</button>
                         </div>
                         <div class="text-xs text-gray-500">'.\Illuminate\Support\Str::limit($record->description, 50).'</div>
                     '), position: 'below'),
@@ -148,6 +152,11 @@ class DonationTypeResource extends Resource
                 Tables\Filters\Filter::make('is_in_kind')
                     ->query(fn ($query) => $query->where('is_in_kind', true))
                     ->label('In-Kind Only'),
+            ])
+            ->actions([
+                \Filament\Actions\ViewAction::make(),
+                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([

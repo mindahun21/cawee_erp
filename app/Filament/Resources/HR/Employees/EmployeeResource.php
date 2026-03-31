@@ -84,14 +84,13 @@ class EmployeeResource extends Resource
                                 ->required()
                                 ->maxLength(100),
 
-                            Select::make('gender_id')
-                                ->label('Gender')
-                                ->relationship('genderOption', 'name')
-                                ->required()
-                                ->createOptionForm([
-                                    TextInput::make('name')->required()->unique('genders', 'name'),
-                                    TextInput::make('code'),
-                                ]),
+                            Select::make('gender')
+                                ->options([
+                                    'Male' => 'Male',
+                                    'Female' => 'Female',
+                                    'Other' => 'Other',
+                                ])
+                                ->required(),
 
                             DatePicker::make('date_of_birth')
                                 ->maxDate(now()->subYears(18)),
@@ -171,15 +170,14 @@ class EmployeeResource extends Resource
                                 ->preload()
                                 ->nullable(),
 
-                            Select::make('employment_type_id')
-                                ->label('Employment Type')
-                                ->relationship('employmentType', 'name')
-                                ->searchable()
-                                ->preload()
-                                ->nullable()
-                                ->createOptionForm([
-                                    TextInput::make('name')->required()->unique('employment_types', 'name'),
-                                ]),
+                            Select::make('employment_type')
+                                ->options([
+                                    'Permanent' => 'Permanent',
+                                    'Contract' => 'Contract',
+                                    'Temporary' => 'Temporary',
+                                    'Consultancy' => 'Consultancy',
+                                ])
+                                ->nullable(),
 
                             DatePicker::make('date_of_employment')
                                 ->required(),
@@ -299,8 +297,7 @@ class EmployeeResource extends Resource
                     ->sortable(['first_name'])
                     ->weight('semibold'),
 
-                TextColumn::make('genderOption.name')
-                    ->label('Gender')
+                TextColumn::make('gender')
                     ->badge()
                     ->color(fn ($state): string => match ($state) {
                         'Male' => 'info',
@@ -313,8 +310,7 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('employmentType.name')
-                    ->label('Employment Type')
+                TextColumn::make('employment_type')
                     ->badge()
                     ->color(fn ($state): string => match ($state) {
                         'Permanent'   => 'success',
@@ -366,13 +362,20 @@ class EmployeeResource extends Resource
             ->filters([
                 TrashedFilter::make(),
 
-                SelectFilter::make('gender_id')
-                    ->label('Gender')
-                    ->relationship('genderOption', 'name'),
+                SelectFilter::make('gender')
+                    ->options([
+                        'Male' => 'Male',
+                        'Female' => 'Female',
+                        'Other' => 'Other',
+                    ]),
 
-                SelectFilter::make('employment_type_id')
-                    ->label('Employment Type')
-                    ->relationship('employmentType', 'name'),
+                SelectFilter::make('employment_type')
+                    ->options([
+                        'Permanent' => 'Permanent',
+                        'Contract' => 'Contract',
+                        'Temporary' => 'Temporary',
+                        'Consultancy' => 'Consultancy',
+                    ]),
 
                 SelectFilter::make('location_id')
                     ->label('Location')

@@ -92,8 +92,8 @@ class Employee extends Model
     public function contractType(): BelongsTo  { return $this->belongsTo(ContractType::class); }
     public function educationLevel(): BelongsTo { return $this->belongsTo(EducationLevel::class); }
     public function fieldOfStudy(): BelongsTo  { return $this->belongsTo(FieldOfStudy::class); }
-    public function employmentType(): BelongsTo { return $this->belongsTo(EmploymentType::class); }
-    public function genderOption(): BelongsTo  { return $this->belongsTo(Gender::class, 'gender_id'); }
+    // public function employmentType(): BelongsTo { return $this->belongsTo(EmploymentType::class); }
+    // public function genderOption(): BelongsTo  { return $this->belongsTo(Gender::class, 'gender_id'); }
 
     // ── Leave ──────────────────────────────────────────────────────
     public function leaveRequests(): HasMany { return $this->hasMany(HrLeaveRequest::class, 'employee_id'); }

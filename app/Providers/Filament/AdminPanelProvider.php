@@ -53,8 +53,7 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Reports')
-                    ->collapsible(),
+
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
@@ -110,6 +109,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                \App\Filament\Pages\DonorFundraisingDashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

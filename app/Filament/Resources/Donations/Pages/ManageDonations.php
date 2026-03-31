@@ -20,9 +20,7 @@ class ManageDonations extends ManageRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Resources\Donations\Widgets\DonationTrendsChart::class,
-            \App\Filament\Resources\Donations\Widgets\DonationTypeChart::class,
-            \App\Filament\Resources\Donations\Widgets\TopDonorsWidget::class,
+            \App\Filament\Resources\Donations\Widgets\DonationStatsOverview::class,
         ];
     }
 }
