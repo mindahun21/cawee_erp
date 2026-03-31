@@ -12,7 +12,6 @@ use App\Models\Procurement\Requisition;
 use App\Models\Procurement\Supplier;
 use App\Models\Procurement\Tender;
 use App\Services\Procurement\ProcurementApprovalService;
-use App\Services\Procurement\JsiThresholds;
 use BackedEnum;
 use Filament\Forms\Components\Placeholder;
 use Filament\Actions\Action;
@@ -108,30 +107,7 @@ class RequisitionResource extends Resource
                     ->columnSpanFull(),
             ]),
 
-            // ── JSI Threshold Advisory ───────────────────────────────
-            Section::make('JSI Procurement Method Advisory')
-                ->description('System automatically recommends the correct procurement method based on the estimated total and JSI authorization thresholds.')
-                ->collapsible(false)
-                ->schema([
-                    TextInput::make('estimated_total')
-                        ->label('Estimated Total (ETB)')
-                        ->numeric()
-                        ->prefix('ETB')
-                        ->default(0)
-                        ->required()
-                        ->live(debounce: 800)
-                        ->helperText('Enter the estimated total to receive JSI procurement method guidance.'),
-
-                    Placeholder::make('_jsi_advisory')
-                        ->label('')
-                        ->columnSpanFull()
-                        ->content(function (Get $get) {
-                            $amount = (float) ($get('estimated_total') ?? 0);
-                            return new \Illuminate\Support\HtmlString(
-                                JsiThresholds::advisoryHtml($amount)
-                            );
-                        }),
-                ]),
+            // ── Line Items ───────────────────────────────────────────
             Section::make('Items / Services Requested')->schema([
                 Repeater::make('items')
                     ->relationship()
