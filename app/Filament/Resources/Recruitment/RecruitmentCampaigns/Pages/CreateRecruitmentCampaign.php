@@ -22,10 +22,7 @@ class CreateRecruitmentCampaign extends CreateRecord
                 ->get();
 
             foreach ($skills as $skill) {
-                $campaign->skills()->attach($skill->recruitment_skill_id, [
-                    'is_required' => $skill->is_required,
-                    'min_proficiency' => $skill->min_proficiency,
-                ]);
+                $campaign->skills()->attach($skill->recruitment_skill_id);
             }
         }
     }

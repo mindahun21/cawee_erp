@@ -8,7 +8,7 @@ use App\Mail\Recruitment\RecruitmentPlanRejectedMail;
 use App\Mail\Recruitment\RecruitmentPlanSubmittedMail;
 use App\Models\Recruitment\RecruitmentPlan;
 use App\Models\User;
-// Removed PlanStatus
+use App\Services\Recruitment\RecruitmentApprovalService;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Support\Facades\Log;
@@ -58,35 +58,23 @@ class RecruitmentPlanObserver
         };
     }
 
-    // ── Plan submitted → notify hr_director users ────────────────────
+    // ── Plan submitted → notify ONLY the first stage approver role ───────
 
     private function notifyPlanSubmitted(RecruitmentPlan $plan): void
     {
         $plan->loadMissing(['jobPosition', 'department', 'creator']);
         $viewUrl = $this->getPlanUrl($plan);
 
-        $latestCycle = \App\Models\Recruitment\RecruitmentApprovalRecord::where('approvable_type', get_class($plan))
-            ->where('approvable_id', $plan->id)
-            ->max('submission_cycle') ?? 1;
+        $nextPending = RecruitmentApprovalService::nextPendingRecord($plan, 'recruitment_plan');
 
-        $nextPendingRecord = \App\Models\Recruitment\RecruitmentApprovalRecord::where('approvable_type', get_class($plan))
-            ->where('approvable_id', $plan->id)
-            ->where('submission_cycle', $latestCycle)
-            ->where('status', 'Pending')
-            ->orderBy('stage_order')
-            ->first();
-
-        $roles = ['super_admin'];
-        if ($nextPendingRecord) {
-            $roles[] = $nextPendingRecord->required_role;
-        } else {
-            $roles[] = 'hr_director'; // Fallback if no workflow is set up
+        if (! $nextPending) {
+            return;
         }
 
-        $directors = User::role($roles)->get();
+        $approvers = User::role($nextPending->required_role)->get();
 
-        foreach ($directors as $director) {
-            Mail::to($director->email)->queue(new RecruitmentPlanSubmittedMail($plan, $viewUrl));
+        foreach ($approvers as $approver) {
+            Mail::to($approver->email)->queue(new RecruitmentPlanSubmittedMail($plan, $viewUrl));
 
             FilamentNotification::make()
                 ->title('Recruitment Plan Awaiting Approval')
@@ -99,11 +87,11 @@ class RecruitmentPlanObserver
                         ->url($viewUrl)
                         ->markAsRead(),
                 ])
-                ->sendToDatabase($director);
+                ->sendToDatabase($approver);
         }
     }
 
-    // ── Plan approved → notify the creator ───────────────────────────
+    // ── Plan fully approved → notify the creator only ─────────────────
 
     private function notifyPlanApproved(RecruitmentPlan $plan): void
     {
@@ -132,7 +120,7 @@ class RecruitmentPlanObserver
             ->sendToDatabase($creator);
     }
 
-    // ── Plan rejected → notify the creator ───────────────────────────
+    // ── Plan rejected → notify the creator only ─────────────────────
 
     private function notifyPlanRejected(RecruitmentPlan $plan): void
     {
@@ -145,11 +133,9 @@ class RecruitmentPlanObserver
 
         $viewUrl = $this->getPlanUrl($plan);
 
-        // Pull rejection reason from the latest rejected approval record
-        $rejectionNotes = \App\Services\Recruitment\RecruitmentApprovalService::previousRejectionNotes($plan)
+        $rejectionNotes = RecruitmentApprovalService::previousRejectionNotes($plan)
             ?? 'No reason provided.';
 
-        // Store notes on plan so the email template can access them
         $plan->notes = $rejectionNotes;
 
         Mail::to($creator->email)->queue(new RecruitmentPlanRejectedMail($plan, $viewUrl));

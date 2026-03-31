@@ -34,6 +34,8 @@ class RecruitmentApprovalWorkflow extends Model
         return [
             'recruitment_plan' => 'Recruitment Plan',
             'recruitment_campaign' => 'Recruitment Campaign',
+            'recruitment_interview_schedule' => 'Interview Schedule',
+            'recruitment_offer' => 'Employment Offer',
         ];
     }
 

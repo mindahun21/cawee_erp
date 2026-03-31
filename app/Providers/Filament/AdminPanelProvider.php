@@ -145,7 +145,7 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Recruitment')
                     ->icon('heroicon-o-globe-alt')
                     ->sort(98)
-                    ->url('/recruitment/recruitment_portal', shouldOpenInNewTab: true)
+                    ->url(fn (): string => route('candidate.home'), shouldOpenInNewTab: true)
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
 
                 // ── Finance ────────────────────────────────────────────────────────

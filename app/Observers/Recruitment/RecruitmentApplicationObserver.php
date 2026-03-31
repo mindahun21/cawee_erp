@@ -4,7 +4,6 @@ namespace App\Observers\Recruitment;
 
 use App\Models\Recruitment\RecruitmentApplication;
 use Filament\Notifications\Notification;
-use App\Models\User;
 
 class RecruitmentApplicationObserver
 {
@@ -25,15 +24,23 @@ class RecruitmentApplicationObserver
             };
 
 
-            // In-App Notification to HR/Admins
-            $hrUsers = User::role('super_admin')->get(); // Example fallback role
-            
-            if ($hrUsers->count() > 0) {
+            // Notify the Campaign Manager
+            $application->loadMissing(['candidate', 'campaign.manager']);
+            $recipient = $application->campaign?->manager;
+
+            if ($recipient) {
+                $candidateName = $application->candidate?->full_name ?? 'Unknown Candidate';
+
                 Notification::make()
                     ->title("Application Update")
-                    ->body("Candidate {$application->candidate->first_name} {$application->candidate->last_name}'s status changed to: " . strtoupper($status))
+                    ->body("Candidate {$candidateName}'s status changed to: " . strtoupper($status))
                     ->info()
-                    ->sendToDatabase($hrUsers);
+                    ->actions([
+                        \Filament\Actions\Action::make('view')
+                            ->label('View Application')
+                            ->url(\App\Filament\Resources\Recruitment\RecruitmentApplications\RecruitmentApplicationResource::getUrl('view', ['record' => $application])),
+                    ])
+                    ->sendToDatabase($recipient);
             }
         }
     }

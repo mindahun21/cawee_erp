@@ -6,6 +6,7 @@ use App\Models\Recruitment\RecruitmentPlan;
 use App\Services\Recruitment\RecruitmentApprovalService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -17,7 +18,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\DB;
 
 class RecruitmentPlansTable
 {
@@ -91,6 +91,9 @@ class RecruitmentPlansTable
                     ->color('primary')
                     ->requiresConfirmation()
                     ->visible(function (RecruitmentPlan $record) {
+                        if ($record->created_by !== auth()->id()) {
+                            return false;
+                        }
                         if ($record->status !== RecruitmentPlan::STATUS_DRAFT) {
                             return false;
                         }
@@ -100,10 +103,7 @@ class RecruitmentPlansTable
                         return true;
                     })
                     ->action(function (RecruitmentPlan $record) {
-                        DB::transaction(function () use ($record) {
-                            $record->update(['status' => RecruitmentPlan::STATUS_SUBMITTED]);
-                            RecruitmentApprovalService::initialise($record, 'recruitment_plan');
-                        });
+                        RecruitmentApprovalService::submitForApproval($record);
                         Notification::make()->success()->title('Plan Submitted for Approval')->send();
                     }),
 
@@ -114,11 +114,8 @@ class RecruitmentPlansTable
                     ->requiresConfirmation()
                     ->visible(fn (RecruitmentPlan $record) => RecruitmentApprovalService::canApprove(auth()->user(), $record, 'recruitment_plan'))
                     ->action(function (RecruitmentPlan $record) {
-                        $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $record, 'recruitment_plan');
-                        if ($pending) {
-                            RecruitmentApprovalService::approve($record, 'recruitment_plan', $pending->stage_order, auth()->user());
-                            Notification::make()->success()->title('Stage Approved')->send();
-                        }
+                        RecruitmentApprovalService::approveStage($record, auth()->user());
+                        Notification::make()->success()->title('Stage Approved')->send();
                     }),
 
                 Action::make('reject')
@@ -135,16 +132,15 @@ class RecruitmentPlansTable
                     ])
                     ->visible(fn (RecruitmentPlan $record) => RecruitmentApprovalService::canApprove(auth()->user(), $record, 'recruitment_plan'))
                     ->action(function (RecruitmentPlan $record, array $data) {
-                        $pending = RecruitmentApprovalService::pendingRecordFor(auth()->user(), $record, 'recruitment_plan');
-                        if ($pending) {
-                            RecruitmentApprovalService::reject($record, 'recruitment_plan', $pending->stage_order, auth()->user(), $data['notes']);
-                            Notification::make()->success()->title('Plan Rejected')->send();
-                        }
+                        RecruitmentApprovalService::rejectStage($record, auth()->user(), $data['notes']);
+                        Notification::make()->success()->title('Plan Rejected')->send();
                     }),
 
                 ViewAction::make(),
                 EditAction::make()
                     ->visible(fn (RecruitmentPlan $record) => $record->isEditable()),
+                DeleteAction::make()
+                    ->visible(fn (RecruitmentPlan $record) => $record->status === RecruitmentPlan::STATUS_DRAFT),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

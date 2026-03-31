@@ -127,7 +127,8 @@ class RecruitmentCampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ApplicationsRelationManager::class,
+            RelationManagers\EvaluatedApplicationsRelationManager::class,
         ];
     }
 
@@ -139,6 +140,18 @@ class RecruitmentCampaignResource extends Resource
             'view' => Pages\ViewRecruitmentCampaign::route('/{record}'),
             'edit' => EditRecruitmentCampaign::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where(function ($query) {
+                $query->where('status', '!=', \App\Models\Recruitment\RecruitmentCampaign::STATUS_DRAFT)
+                      ->orWhere('created_by', auth()->id());
+            })
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

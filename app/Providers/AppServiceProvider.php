@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Recruitment Observers
         \App\Models\Recruitment\RecruitmentPlan::observe(\App\Observers\Recruitment\RecruitmentPlanObserver::class);
+        \App\Models\Recruitment\RecruitmentInterviewSchedule::observe(\App\Observers\Recruitment\RecruitmentInterviewScheduleObserver::class);
 
         // Set default pagination to 25 rows across all Filament tables
         \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {

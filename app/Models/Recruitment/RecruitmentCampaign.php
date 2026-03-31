@@ -12,12 +12,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Contracts\Recruitment\Approvable;
 use App\Models\Recruitment\RecruitmentApprovalWorkflow;
 use App\Models\Recruitment\RecruitmentApprovalRecord;
 use App\Observers\Recruitment\RecruitmentCampaignObserver;
 
 #[ObservedBy(RecruitmentCampaignObserver::class)]
-class RecruitmentCampaign extends Model
+class RecruitmentCampaign extends Model implements Approvable
 {
     use HasFactory, SoftDeletes;
 
@@ -78,14 +79,41 @@ class RecruitmentCampaign extends Model
         return $this->morphMany(RecruitmentApprovalRecord::class, 'approvable');
     }
 
+    /* ── Approvable Interface ── */
+
+    public function approvalDocumentType(): string
+    {
+        return 'recruitment_campaign';
+    }
+
+    public function approvedStatus(): string
+    {
+        return self::STATUS_ACTIVE;
+    }
+
+    public function rejectedStatus(): string
+    {
+        return self::STATUS_REJECTED;
+    }
+
+    public function submittedStatus(): string
+    {
+        return self::STATUS_SUBMITTED;
+    }
+
+    public function draftStatus(): string
+    {
+        return self::STATUS_DRAFT;
+    }
+
     public function onFullyApproved(): void
     {
-        $this->update(['status' => self::STATUS_ACTIVE]);
+        $this->update(['status' => $this->approvedStatus()]);
     }
 
     public function onRejected(): void
     {
-        $this->update(['status' => self::STATUS_REJECTED]);
+        $this->update(['status' => $this->rejectedStatus()]);
     }
 
     public function isEditable(): bool

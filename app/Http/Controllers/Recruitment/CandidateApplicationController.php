@@ -31,7 +31,26 @@ class CandidateApplicationController extends Controller
     /** Show the apply form for a given campaign. */
     public function create(RecruitmentCampaign $campaign)
     {
-        if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE || ! $campaign->is_public) {
+        if (! $campaign->is_public) {
+            abort(404);
+        }
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_PAUSED) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position are temporarily paused.');
+        }
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_CLOSED) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position are now closed.');
+        }
+
+        if ($campaign->end_date && $campaign->end_date->isPast()) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'The application deadline for this position has passed.');
+        }
+
+        if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE) {
             abort(404);
         }
 
@@ -59,7 +78,26 @@ class CandidateApplicationController extends Controller
     /** Handle the application form submission. */
     public function store(Request $request, RecruitmentCampaign $campaign)
     {
-        if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE || ! $campaign->is_public) {
+        if (! $campaign->is_public) {
+            abort(404);
+        }
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_PAUSED) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position are temporarily paused.');
+        }
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_CLOSED) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position are now closed.');
+        }
+
+        if ($campaign->end_date && $campaign->end_date->isPast()) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'The application deadline for this position has passed.');
+        }
+
+        if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE) {
             abort(404);
         }
 
@@ -131,7 +169,7 @@ class CandidateApplicationController extends Controller
 
             // ── File upload ────────────────────────────────────────────────────
             if ($definition['type'] === 'file' && $request->hasFile($fieldKey)) {
-                $path = $request->file($fieldKey)->store('candidates/resumes', 'public');
+                $path = $request->file($fieldKey)->store('candidates/resumes');
 
                 if ($target === 'application' && $dbColumn && in_array($dbColumn, self::applicationColumns())) {
                     $applicationData[$dbColumn] = $path;

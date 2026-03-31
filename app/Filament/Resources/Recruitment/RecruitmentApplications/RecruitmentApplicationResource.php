@@ -6,6 +6,7 @@ use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\CreateRecru
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\EditRecruitmentApplication;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\ListRecruitmentApplications;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\ViewRecruitmentApplication;
+use App\Filament\Resources\Recruitment\RecruitmentApplications\Pages\KanbanRecruitmentApplications;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Schemas\RecruitmentApplicationForm;
 use App\Filament\Resources\Recruitment\RecruitmentApplications\Tables\RecruitmentApplicationsTable;
 use App\Models\Recruitment\RecruitmentApplication;
@@ -111,11 +112,11 @@ class RecruitmentApplicationResource extends Resource
                                 ->schema([
                                     TextEntry::make('candidate.resume_path')->label('Resume / CV')
                                         ->formatStateUsing(fn ($state) => $state ? '📄 Download Resume' : '—')
-                                        ->url(fn ($record) => $record->candidate?->resume_path ? asset('storage/' . $record->candidate->resume_path) : null, true)
+                                        ->url(fn ($record) => $record->candidate?->resume_path ? \Illuminate\Support\Facades\Storage::url($record->candidate->resume_path) : null, true)
                                         ->color('primary'),
                                     TextEntry::make('candidate.photo_path')->label('Photo')
                                         ->formatStateUsing(fn ($state) => $state ? '🖼 View Photo' : '—')
-                                        ->url(fn ($record) => $record->candidate?->photo_path ? asset('storage/' . $record->candidate->photo_path) : null, true)
+                                        ->url(fn ($record) => $record->candidate?->photo_path ? \Illuminate\Support\Facades\Storage::url($record->candidate->photo_path) : null, true)
                                         ->color('primary'),
                                 ]),
                         ]),
@@ -296,9 +297,11 @@ class RecruitmentApplicationResource extends Resource
     {
         return [
             'index' => ListRecruitmentApplications::route('/'),
+            'kanban' => KanbanRecruitmentApplications::route('/kanban'),
             'create' => CreateRecruitmentApplication::route('/create'),
             'view' => ViewRecruitmentApplication::route('/{record}'),
             'edit' => EditRecruitmentApplication::route('/{record}/edit'),
+            'comparison' => Pages\CandidateComparisonDashboard::route('/{record}/comparison'),
         ];
     }
 

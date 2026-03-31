@@ -118,8 +118,9 @@
             <a href="{{ route('candidate.campaigns') }}" class="{{ request()->routeIs('candidate.campaigns*') || request()->routeIs('candidate.home') ? 'active' : '' }}">Open Positions</a>
 
             @auth('candidate')
-                <a href="{{ route('candidate.my-applications') }}" class="{{ request()->routeIs('candidate.my-applications') ? 'active' : '' }}">My Applications</a>
-                <a href="{{ route('candidate.profile') }}" class="{{ request()->routeIs('candidate.profile') ? 'active' : '' }}" style="margin-left: 1rem;">Profile</a>
+                <a href="{{ route('candidate.my-applications') }}" class="{{ request()->routeIs('candidate.my-applications*') ? 'active' : '' }}">My Applications</a>
+                <a href="{{ route('candidate.my-offers') }}" class="{{ request()->routeIs('candidate.my-offers*') ? 'active' : '' }}">My Offers</a>
+                <a href="{{ route('candidate.profile') }}" class="{{ request()->routeIs('candidate.profile') ? 'active' : '' }}" style="margin-left: .5rem;">Profile</a>
                 <form method="POST" action="{{ route('candidate.logout') }}" style="margin:0">
                     @csrf
                     <button type="submit" class="rp-btn-outline">Sign Out</button>

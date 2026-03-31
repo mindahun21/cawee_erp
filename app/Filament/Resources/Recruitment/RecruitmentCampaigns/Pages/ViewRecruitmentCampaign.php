@@ -10,7 +10,6 @@ use Filament\Actions\Action;
 use App\Models\Recruitment\RecruitmentCampaign;
 use App\Services\Recruitment\RecruitmentApprovalService;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\DB;
 
 class ViewRecruitmentCampaign extends ViewRecord
 {
@@ -21,6 +20,19 @@ class ViewRecruitmentCampaign extends ViewRecord
         return [
             EditAction::make()
                 ->visible(fn () => $this->record->isEditable()),
+
+            Action::make('create_schedule')
+                ->label('Create Schedule')
+                ->icon('heroicon-o-calendar')
+                ->color('primary')
+                ->visible(fn () => $this->record->applications()
+                    ->whereIn('status', [
+                        \App\Models\Recruitment\RecruitmentApplication::STATUS_UNDER_REVIEW,
+                        \App\Models\Recruitment\RecruitmentApplication::STATUS_SHORTLISTED,
+                    ])->exists())
+                ->url(fn () => \App\Filament\Resources\Recruitment\RecruitmentInterviewSchedules\RecruitmentInterviewScheduleResource::getUrl('create', [
+                    'campaign_id' => $this->record->id,
+                ])),
 
             Action::make('submit')
                 ->label('Submit for Approval')
@@ -37,10 +49,7 @@ class ViewRecruitmentCampaign extends ViewRecord
                 })
                 ->requiresConfirmation()
                 ->action(function () {
-                    DB::transaction(function () {
-                        $this->record->update(['status' => RecruitmentCampaign::STATUS_SUBMITTED]);
-                        RecruitmentApprovalService::initialise($this->record, 'recruitment_campaign');
-                    });
+                    RecruitmentApprovalService::submitForApproval($this->record);
                     Notification::make()->title('Campaign submitted for approval')->success()->send();
                 }),
 
@@ -48,31 +57,20 @@ class ViewRecruitmentCampaign extends ViewRecord
                 ->label('Approve Step')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->visible(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    return RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign');
-                })
+                ->visible(fn () => ($user = auth()->user()) instanceof \App\Models\User && RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign'))
                 ->requiresConfirmation()
                 ->action(function () {
                     /** @var \App\Models\User $user */
                     $user = auth()->user();
-                    $pending = RecruitmentApprovalService::pendingRecordFor($user, $this->record, 'recruitment_campaign');
-                    if ($pending) {
-                        RecruitmentApprovalService::approve($this->record, 'recruitment_campaign', $pending->stage_order, $user);
-                        Notification::make()->title('Stage approved')->success()->send();
-                    }
+                    RecruitmentApprovalService::approveStage($this->record, $user);
+                    Notification::make()->title('Stage approved')->success()->send();
                 }),
 
             Action::make('reject')
                 ->label('Reject Step')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                    return RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign');
-                })
+                ->visible(fn () => ($user = auth()->user()) instanceof \App\Models\User && RecruitmentApprovalService::canApprove($user, $this->record, 'recruitment_campaign'))
                 ->requiresConfirmation()
                 ->modalHeading('Reject Recruitment Campaign')
                 ->form([
@@ -84,15 +82,71 @@ class ViewRecruitmentCampaign extends ViewRecord
                 ->action(function (array $data) {
                     /** @var \App\Models\User $user */
                     $user = auth()->user();
-                    $pending = RecruitmentApprovalService::pendingRecordFor($user, $this->record, 'recruitment_campaign');
-                    if ($pending) {
-                        RecruitmentApprovalService::reject($this->record, 'recruitment_campaign', $pending->stage_order, $user, $data['notes']);
-                        Notification::make()->title('Campaign returned for revision')->danger()->send();
-                    }
+                    RecruitmentApprovalService::rejectStage($this->record, $user, $data['notes']);
+                    Notification::make()->title('Campaign returned for revision')->danger()->send();
+                }),
+
+            Action::make('pause')
+                ->label('Pause Campaign')
+                ->icon('heroicon-o-pause-circle')
+                ->color('warning')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_ACTIVE)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_PAUSED]);
+                    Notification::make()->title('Campaign paused')->warning()->send();
+                }),
+
+            Action::make('resume')
+                ->label('Resume Campaign')
+                ->icon('heroicon-o-play-circle')
+                ->color('success')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_PAUSED)
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_ACTIVE]);
+                    Notification::make()->title('Campaign resumed')->success()->send();
+                }),
+
+            Action::make('close')
+                ->label('Close Campaign')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn () => in_array($this->record->status, [RecruitmentCampaign::STATUS_ACTIVE, RecruitmentCampaign::STATUS_PAUSED]))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_CLOSED]);
+                    Notification::make()->title('Campaign closed')->danger()->send();
+                }),
+
+            Action::make('re_open')
+                ->label('Re-open Campaign')
+                ->icon('heroicon-o-arrow-path')
+                ->color('success')
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_CLOSED && (!$this->record->end_date || $this->record->end_date->isFuture()))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentCampaign::STATUS_ACTIVE]);
+                    Notification::make()->title('Campaign re-opened')->success()->send();
                 }),
 
             DeleteAction::make()
                 ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_DRAFT),
         ];
+    }
+
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return 'Details';
+    }
+
+    public function getContentTabIcon(): ?string
+    {
+        return 'heroicon-o-information-circle';
     }
 }
