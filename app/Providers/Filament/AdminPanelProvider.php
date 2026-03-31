@@ -78,6 +78,8 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('File Sharing')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
                     ->collapsible(),
             ])
