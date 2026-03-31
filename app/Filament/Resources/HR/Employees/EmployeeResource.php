@@ -85,12 +85,13 @@ class EmployeeResource extends Resource
                                 ->maxLength(100),
 
                             Select::make('gender')
+                                ->label('Gender')
                                 ->options([
-                                    'Male' => 'Male',
-                                    'Female' => 'Female',
-                                    'Other' => 'Other',
+                                    'M' => 'Male',
+                                    'F' => 'Female',
                                 ])
-                                ->required(),
+                                ->required()
+                                ->native(false),
 
                             DatePicker::make('date_of_birth')
                                 ->maxDate(now()->subYears(18)),
@@ -300,9 +301,14 @@ class EmployeeResource extends Resource
                 TextColumn::make('gender')
                     ->badge()
                     ->color(fn ($state): string => match ($state) {
-                        'Male' => 'info',
-                        'Female' => 'pink',
+                        'M' => 'info',
+                        'F' => 'pink',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => match($state) {
+                        'M' => 'Male',
+                        'F' => 'Female',
+                        default => $state,
                     }),
 
                 TextColumn::make('jobPosition.title')
@@ -364,9 +370,8 @@ class EmployeeResource extends Resource
 
                 SelectFilter::make('gender')
                     ->options([
-                        'Male' => 'Male',
-                        'Female' => 'Female',
-                        'Other' => 'Other',
+                        'M' => 'Male',
+                        'F' => 'Female',
                     ]),
 
                 SelectFilter::make('employment_type')
