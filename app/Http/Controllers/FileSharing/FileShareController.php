@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileShareController extends Controller
 {
-    public function show(Request $request, string $token): StreamedResponse
+    public function show(Request $request, string $token): StreamedResponse|never
     {
         $share = FileShare::query()
             ->with('file')
@@ -30,7 +30,7 @@ class FileShareController extends Controller
         }
 
         if ($share->password) {
-            $password = (string) $request->query('password', '');
+            $password = (string) $request->input('password', '');
             abort_unless($password !== '' && Hash::check($password, $share->password), 403, 'Invalid share password.');
         }
 

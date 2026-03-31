@@ -8,5 +8,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/shared-files/{token}', [FileShareController::class, 'show'])
+// GET: open/download (no password), POST: submit password for protected shares
+Route::match(['get', 'post'], '/shared-files/{token}', [FileShareController::class, 'show'])
     ->name('file-shares.show');

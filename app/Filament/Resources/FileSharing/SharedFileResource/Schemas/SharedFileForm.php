@@ -41,7 +41,7 @@ class SharedFileForm
 
             FileUpload::make('path')
                 ->label('File')
-                ->disk('local')
+                ->disk(config('filesystems.default'))
                 ->directory('shared-files')
                 ->downloadable()
                 ->openable()
