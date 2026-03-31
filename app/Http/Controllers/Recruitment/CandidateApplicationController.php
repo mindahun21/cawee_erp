@@ -92,6 +92,11 @@ class CandidateApplicationController extends Controller
                 ->with('info', 'Applications for this position are now closed.');
         }
 
+        if ($campaign->end_date && $campaign->end_date->isPast()) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'The application deadline for this position has passed.');
+        }
+
         if ($campaign->status !== RecruitmentCampaign::STATUS_ACTIVE) {
             abort(404);
         }
