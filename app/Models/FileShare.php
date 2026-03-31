@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class FileShare extends Model
 {
@@ -40,6 +41,8 @@ class FileShare extends Model
     protected static function booted(): void
     {
         static::creating(function (self $share): void {
+            $share->ensureSingleTarget();
+
             if (! $share->share_token) {
                 $share->share_token = Str::random(40);
             }
@@ -50,6 +53,8 @@ class FileShare extends Model
         });
 
         static::updating(function (self $share): void {
+            $share->ensureSingleTarget();
+
             if ($share->isDirty('password') && filled($share->password) && ! Str::startsWith($share->password, '$2y$')) {
                 $share->password = Hash::make($share->password);
             }
@@ -88,5 +93,18 @@ class FileShare extends Model
         }
 
         return route('file-shares.show', $this->share_token);
+    }
+
+    protected function ensureSingleTarget(): void
+    {
+        $hasFile = filled($this->shared_file_id);
+        $hasFolder = filled($this->shared_folder_id);
+
+        if ($hasFile === $hasFolder) {
+            throw ValidationException::withMessages([
+                'shared_file_id' => 'A share must target exactly one item: either a file or a folder.',
+                'shared_folder_id' => 'A share must target exactly one item: either a file or a folder.',
+            ]);
+        }
     }
 }

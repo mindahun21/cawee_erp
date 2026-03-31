@@ -20,8 +20,10 @@ class FileShareController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        abort_unless($share->file, 404);
+        abort_unless($share->share_type === 'public', 403, 'This share requires authenticated internal or client access.');
+        abort_unless($share->shared_file_id !== null && $share->file, 404, 'This share does not point to a downloadable file.');
         abort_if($share->expires_at?->isPast(), 403, 'This share link has expired.');
+        abort_unless(in_array($share->access_level, ['download', 'manage'], true), 403, 'This share does not allow file downloads.');
 
         if ($share->max_downloads !== null && $share->download_count >= $share->max_downloads) {
             abort(403, 'This share link has reached its download limit.');

@@ -23,13 +23,15 @@ class FileShareForm
                 ->label('File')
                 ->options(SharedFile::query()->orderBy('display_name')->pluck('display_name', 'id'))
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->rules(['required_without:shared_folder_id', 'prohibits:shared_folder_id']),
 
             Select::make('shared_folder_id')
                 ->label('Folder')
                 ->options(SharedFolder::query()->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->rules(['required_without:shared_file_id', 'prohibits:shared_file_id']),
 
             Select::make('share_type')
                 ->options([
