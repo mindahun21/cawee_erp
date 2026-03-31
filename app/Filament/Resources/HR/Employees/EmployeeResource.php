@@ -172,13 +172,17 @@ class EmployeeResource extends Resource
                                 ->nullable(),
 
                             Select::make('employment_type')
+                                ->label('Employment Type')
                                 ->options([
-                                    'Permanent' => 'Permanent',
-                                    'Contract' => 'Contract',
-                                    'Temporary' => 'Temporary',
+                                    'Contract'    => 'Contract',
+                                    'Temporary'   => 'Temporary',
                                     'Consultancy' => 'Consultancy',
+                                    'Other'       => 'Other',
                                 ])
-                                ->nullable(),
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->native(false),
 
                             DatePicker::make('date_of_employment')
                                 ->required(),
@@ -299,16 +303,17 @@ class EmployeeResource extends Resource
                     ->weight('semibold'),
 
                 TextColumn::make('gender')
+                    ->label('Gender')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'M' => 'Male',
+                        'F' => 'Female',
+                        default => $state ?? '',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
                         'M' => 'info',
                         'F' => 'pink',
                         default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'M' => 'Male',
-                        'F' => 'Female',
-                        default => $state,
                     }),
 
                 TextColumn::make('jobPosition.title')
@@ -317,8 +322,9 @@ class EmployeeResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('employment_type')
+                    ->label('Employment Type')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Permanent'   => 'success',
                         'Contract'    => 'warning',
                         'Temporary'   => 'info',
@@ -369,17 +375,19 @@ class EmployeeResource extends Resource
                 TrashedFilter::make(),
 
                 SelectFilter::make('gender')
+                    ->label('Gender')
                     ->options([
                         'M' => 'Male',
                         'F' => 'Female',
                     ]),
 
                 SelectFilter::make('employment_type')
+                    ->label('Employment Type')
                     ->options([
-                        'Permanent' => 'Permanent',
-                        'Contract' => 'Contract',
-                        'Temporary' => 'Temporary',
+                        'Contract'    => 'Contract',
+                        'Temporary'   => 'Temporary',
                         'Consultancy' => 'Consultancy',
+                        'Other'       => 'Other',
                     ]),
 
                 SelectFilter::make('location_id')

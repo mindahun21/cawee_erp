@@ -18,7 +18,6 @@ class Employee extends Model
         'education_level', 'field_of_study',
         'extra_attributes',
         'position', 'employment_type',
-        'employment_type_id', 'gender_id',
         'department_id', 'job_position_id', 'contract_type_id',
         'education_level_id', 'field_of_study_id',
         'date_of_employment', 'date_transferred', 'date_resigned',
@@ -92,7 +91,6 @@ class Employee extends Model
     public function contractType(): BelongsTo  { return $this->belongsTo(ContractType::class); }
     public function educationLevel(): BelongsTo { return $this->belongsTo(EducationLevel::class); }
     public function fieldOfStudy(): BelongsTo  { return $this->belongsTo(FieldOfStudy::class); }
-
     // Employment type is stored as enum on employees.employment_type. Keep as attribute, not a relation.
     // Gender is stored as enum on employees.gender (M/F). Keep as attribute, not a relation.
 
