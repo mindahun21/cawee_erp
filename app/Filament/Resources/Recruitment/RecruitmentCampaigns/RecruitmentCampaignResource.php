@@ -128,6 +128,7 @@ class RecruitmentCampaignResource extends Resource
     {
         return [
             RelationManagers\ApplicationsRelationManager::class,
+            RelationManagers\EvaluatedApplicationsRelationManager::class,
         ];
     }
 

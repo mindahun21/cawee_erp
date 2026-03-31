@@ -258,13 +258,13 @@ class RecruitmentApprovalService
         return $document->updated_at->gt($rejectedAt);
     }
 
-    /* ── DRY orchestration methods (Task 8) ── */
 
     public static function submitForApproval(Model&Approvable $document): void
     {
         DB::transaction(function () use ($document) {
             self::initialise($document, $document->approvalDocumentType());
             $document->update(['status' => $document->submittedStatus()]);
+            self::notifyNextStageApprover($document);
         });
     }
 
@@ -323,7 +323,6 @@ class RecruitmentApprovalService
             ? $document->getApprovalSubmittedMailable($viewUrl) 
             : null;
 
-        // Legacy fallback to prevent breaking existing behavior
         if (! $mailable) {
             if ($document->approvalDocumentType() === 'recruitment_plan') {
                 $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentPlans\RecruitmentPlanResource::getUrl('view', ['record' => $document]);
@@ -334,6 +333,9 @@ class RecruitmentApprovalService
             } elseif ($document->approvalDocumentType() === 'recruitment_interview_schedule') {
                 $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentInterviewSchedules\RecruitmentInterviewScheduleResource::getUrl('view', ['record' => $document]);
                 $mailable = new \App\Mail\Recruitment\RecruitmentInterviewScheduleSubmittedMail($document, $viewUrl);
+            } elseif ($document->approvalDocumentType() === 'recruitment_offer') {
+                $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentOffers\RecruitmentOfferResource::getUrl('view', ['record' => $document]);
+                $mailable = new \App\Mail\Recruitment\RecruitmentOfferSubmittedMail($document, $viewUrl);
             }
         }
 
@@ -366,9 +368,6 @@ class RecruitmentApprovalService
             ->first();
     }
 
-    /**
-     * Render the full multi-cycle approval trail as HTML.
-     */
     public static function renderApprovalTrailHtml(Model $document, string $documentType): string
     {
         return view('components.recruitment.approval-trail', [

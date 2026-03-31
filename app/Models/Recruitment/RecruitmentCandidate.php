@@ -58,6 +58,11 @@ class RecruitmentCandidate extends Authenticatable
         return $this->hasMany(RecruitmentApplication::class, 'candidate_id');
     }
 
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(RecruitmentCandidateEvaluation::class, 'candidate_id');
+    }
+
     public function skills(): BelongsToMany
     {
         return $this->belongsToMany(RecruitmentSkill::class, 'recruitment_candidate_skill', 'candidate_id', 'recruitment_skill_id')

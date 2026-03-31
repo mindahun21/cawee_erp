@@ -301,6 +301,7 @@ class RecruitmentApplicationResource extends Resource
             'create' => CreateRecruitmentApplication::route('/create'),
             'view' => ViewRecruitmentApplication::route('/{record}'),
             'edit' => EditRecruitmentApplication::route('/{record}/edit'),
+            'comparison' => Pages\CandidateComparisonDashboard::route('/{record}/comparison'),
         ];
     }
 

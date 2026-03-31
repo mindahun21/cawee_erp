@@ -62,7 +62,7 @@
                             <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                 {{ $record->status }} 
                                 @if($record->decidedBy) by <strong>{{ $record->decidedBy->name }}</strong> @endif
-                                @if($record->decided_at) on {{ $record->decided_at->format('M d, Y H:i') }} @endif
+                                @if($record->decided_at) on {{ $record->decided_at->timezone('Africa/Addis_Ababa')->format('M d, Y H:i') }} @endif
                             </p>
                         @endif
                         

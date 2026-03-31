@@ -17,6 +17,48 @@ class ViewRecruitmentInterviewSchedule extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('mark_completed')
+                ->label('Mark Completed')
+                ->icon('heroicon-o-check-badge')
+                ->color('success')
+                ->visible(function () {
+                    if ($this->record->status !== RecruitmentInterviewSchedule::STATUS_SCHEDULED) {
+                        return false;
+                    }
+
+                    // Ensure we compare the actual Date + Time in the correct timezone (UTC+3)
+                    $startTime = \Carbon\Carbon::parse(
+                        $this->record->interview_date->format('Y-m-d') . ' ' . $this->record->from_time,
+                        'Africa/Addis_Ababa'
+                    );
+                    
+                    if (now('Africa/Addis_Ababa')->lessThan($startTime)) {
+                        return false;
+                    }
+
+                    $isCreator = $this->record->created_by === auth()->id();
+                    $isChair = $this->record->interviewers()
+                        ->where('user_id', auth()->id())
+                        ->wherePivotIn('role', ['chair', 'Chair'])
+                        ->exists();
+                    
+                    return $isCreator || $isChair;
+                })
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => RecruitmentInterviewSchedule::STATUS_COMPLETED]);
+                    
+                    foreach ($this->record->candidates as $candidate) {
+                        \App\Models\Recruitment\RecruitmentApplication::query()
+                            ->where('campaign_id', $this->record->campaign_id)
+                            ->where('candidate_id', $candidate->id)
+                            ->where('status', \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEW_SCHEDULED)
+                            ->update(['status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEWED]);
+                    }
+                    
+                    Notification::make()->title('Schedule and associated applications marked as completed/interviewed')->success()->send();
+                }),
+
             EditAction::make()
                 ->visible(fn () => in_array($this->record->status, [RecruitmentInterviewSchedule::STATUS_DRAFT, RecruitmentInterviewSchedule::STATUS_REJECTED])),
 

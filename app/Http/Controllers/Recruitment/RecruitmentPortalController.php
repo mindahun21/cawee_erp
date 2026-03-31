@@ -89,7 +89,10 @@ class RecruitmentPortalController extends Controller
     public function myApplications()
     {
         $candidate = auth('candidate')->user();
-        $applications = $candidate->applications()->with('campaign.jobPosition')->orderByDesc('created_at')->get();
+        $applications = $candidate->applications()
+            ->with(['campaign.jobPosition', 'offer'])
+            ->orderByDesc('created_at')
+            ->get();
         return view('recruitment.portal.my-applications', compact('candidate', 'applications'));
     }
 
@@ -134,6 +137,7 @@ class RecruitmentPortalController extends Controller
             'candidate.seniorities',
             'candidate.literacies',
             'candidate.references',
+            'offer',
         ]);
 
         return view('recruitment.portal.show-application', compact('application', 'candidate'));

@@ -22,6 +22,9 @@ class RecruitmentApplication extends Model
     const STATUS_UNDER_REVIEW = 'under_review';
     const STATUS_SHORTLISTED = 'shortlisted';
     const STATUS_INTERVIEW_SCHEDULED = 'interview_scheduled';
+    const STATUS_INTERVIEWED = 'interviewed';
+    const STATUS_SELECTED = 'selected';
+    const STATUS_WAITLISTED = 'waitlisted';
     const STATUS_OFFER_PENDING = 'offer_pending';
     const STATUS_OFFER_ACCEPTED = 'offer_accepted';
     const STATUS_OFFER_DECLINED = 'offer_declined';
@@ -56,5 +59,10 @@ class RecruitmentApplication extends Model
     public function shortlister(): BelongsTo
     {
         return $this->belongsTo(User::class, 'shortlisted_by');
+    }
+
+    public function offer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RecruitmentOffer::class, 'application_id');
     }
 }

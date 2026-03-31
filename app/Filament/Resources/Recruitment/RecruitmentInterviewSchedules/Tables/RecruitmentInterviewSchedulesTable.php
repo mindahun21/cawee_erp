@@ -106,6 +106,47 @@ class RecruitmentInterviewSchedulesTable
                         \App\Services\Recruitment\RecruitmentApprovalService::submitForApproval($record);
                         \Filament\Notifications\Notification::make()->title('Schedule submitted for approval')->success()->send();
                     }),
+                \Filament\Actions\Action::make('mark_completed')
+                    ->label('Mark Completed')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(function ($record) {
+                        if ($record->status !== \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_SCHEDULED) {
+                            return false;
+                        }
+                        
+                        // Ensure we compare the actual Date + Time in the correct timezone (UTC+3)
+                        $startTime = \Carbon\Carbon::parse(
+                            $record->interview_date->format('Y-m-d') . ' ' . $record->from_time,
+                            'Africa/Addis_Ababa'
+                        );
+                        
+                        if (now('Africa/Addis_Ababa')->lessThan($startTime)) {
+                            return false;
+                        }
+                        
+                        $isCreator = $record->created_by === auth()->id();
+                        $isChair = $record->interviewers()
+                            ->where('user_id', auth()->id())
+                            ->wherePivotIn('role', ['chair', 'Chair'])
+                            ->exists();
+                        
+                        return $isCreator || $isChair;
+                    })
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update(['status' => \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_COMPLETED]);
+                        
+                        foreach ($record->candidates as $candidate) {
+                            \App\Models\Recruitment\RecruitmentApplication::query()
+                                ->where('campaign_id', $record->campaign_id)
+                                ->where('candidate_id', $candidate->id)
+                                ->where('status', \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEW_SCHEDULED)
+                                ->update(['status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_INTERVIEWED]);
+                        }
+                        
+                        \Filament\Notifications\Notification::make()->title('Schedule marked as completed')->success()->send();
+                    }),
             ])
             ->defaultSort('interview_date', 'desc');
     }

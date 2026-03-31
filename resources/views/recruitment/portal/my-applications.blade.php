@@ -8,12 +8,21 @@
     <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--navy); margin-top: .5rem; margin-bottom: .35rem;">My Applications</h1>
 </div>
 
+@php
+    $counts = [
+        'active'    => $applications->filter(fn($a) => in_array($a->status, ['applied', 'under_review', 'shortlisted', 'interview_scheduled', 'offer_pending', 'interviewed', 'selected', 'waitlisted']))->count(),
+        'hired'     => $applications->filter(fn($a) => in_array($a->status, ['hired', 'offer_accepted']))->count(),
+        'rejected'  => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'offer_declined']))->count(),
+        'withdrawn' => $applications->filter(fn($a) => $a->status === 'withdrawn')->count(),
+    ];
+@endphp
+
 <div x-data="{ 
     activeTab: 'active',
     apps: {{ $applications->toJson() }},
     get filteredApps() {
         if (this.activeTab === 'active') {
-            return this.apps.filter(a => ['applied', 'under_review', 'shortlisted', 'interview_scheduled', 'offer_pending'].includes(a.status));
+            return this.apps.filter(a => ['applied', 'under_review', 'shortlisted', 'interview_scheduled', 'offer_pending', 'interviewed', 'selected', 'waitlisted'].includes(a.status));
         }
         if (this.activeTab === 'hired') {
             return this.apps.filter(a => ['hired', 'offer_accepted'].includes(a.status));
@@ -27,26 +36,26 @@
         return this.apps;
     }
 }">
-    <div style="display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.4rem; border-radius: 12px; margin-bottom: 2rem; width: fit-content;">
+    <div style="display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.4rem; border-radius: 12px; margin-bottom: 2rem; width: fit-content; overflow-x: auto; max-width: 100%;">
         <button @click="activeTab = 'active'" 
                 :class="activeTab === 'active' ? 'rp-tab-active' : 'rp-tab-inactive'"
-                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s;">
-            Active
+                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; white-space: nowrap;">
+            Active ({{ $counts['active'] }})
         </button>
         <button @click="activeTab = 'hired'" 
                 :class="activeTab === 'hired' ? 'rp-tab-active' : 'rp-tab-inactive'"
-                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s;">
-            Hired
+                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; white-space: nowrap;">
+            Hired ({{ $counts['hired'] }})
         </button>
         <button @click="activeTab = 'rejected'" 
                 :class="activeTab === 'rejected' ? 'rp-tab-active' : 'rp-tab-inactive'"
-                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s;">
-            Rejected
+                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; white-space: nowrap;">
+            Rejected ({{ $counts['rejected'] }})
         </button>
         <button @click="activeTab = 'withdrawn'" 
                 :class="activeTab === 'withdrawn' ? 'rp-tab-active' : 'rp-tab-inactive'"
-                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s;">
-            Withdrawn
+                style="border: none; padding: .6rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; white-space: nowrap;">
+            Withdrawn ({{ $counts['withdrawn'] }})
         </button>
     </div>
 

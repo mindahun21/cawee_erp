@@ -111,6 +111,27 @@
             @endif
         </div>
     </div>
+    
+    {{-- Offer Banner (if exists) --}}
+    @if($application->offer && $application->offer->status === 'approved')
+    <div style="background: #fff beb; border: 1px solid #fcd34d; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="background: #fef 3c7; padding: .6rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 24px; height: 24px; color: #92400e;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+            </div>
+            <div>
+                <h4 style="color: #92400e; margin: 0 0 .1rem 0; font-size: 1rem; font-weight: 800;">Congratulations! You have an offer.</h4>
+                <p style="color: #a16207; margin: 0; font-size: .85rem; font-weight: 500;">Please review your employment offer and respond by clicking the button.</p>
+            </div>
+        </div>
+        <a href="{{ route('candidate.my-offers.show', $application->offer) }}" 
+           style="background: #92400e; color: #fff; padding: .6rem 1.5rem; border-radius: 8px; font-size: .88rem; font-weight: 700; text-decoration: none; transition: transform .2s;"
+           onmouseover="this.style.transform='translateY(-1px)'"
+           onmouseout="this.style.transform='none'">
+            View Offer →
+        </a>
+    </div>
+    @endif
 
     {{-- Tabs --}}
     <div x-data="{ tab: 'application' }">
