@@ -148,7 +148,7 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn (): string => route('candidate.home'), shouldOpenInNewTab: true)
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
 
-                // ── Finance ────────────────────────────────────────────────────────
+                // ── Finance Settings (Phase 1 + Phase 2 FSC) ───────────────────────
                 \Filament\Navigation\NavigationItem::make('Finance Settings')
                     ->group('Finance')
                     ->icon('heroicon-o-cog-6-tooth')
@@ -163,6 +163,8 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Resources\Finance\Settings\CashierResource::getRouteBaseName() . '.*',
                         \App\Filament\Resources\Finance\Settings\AccountingPeriodResource::getRouteBaseName() . '.*',
                         \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
+                        // Phase 2 — Financial Statement Categories
+                        \App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource::getRouteBaseName() . '.*',
                     ])),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')

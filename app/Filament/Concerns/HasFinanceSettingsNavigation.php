@@ -11,6 +11,7 @@ use App\Filament\Resources\Finance\Settings\CostCenterResource;
 use App\Filament\Resources\Finance\Settings\FinanceSettingResource;
 use App\Filament\Resources\Finance\Settings\PerdiemTypeResource;
 use App\Filament\Resources\Finance\Settings\TaxTypeResource;
+use App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource;
 
 trait HasFinanceSettingsNavigation
 {
@@ -21,6 +22,11 @@ trait HasFinanceSettingsNavigation
                 ->icon('heroicon-o-rectangle-stack')
                 ->url(AccountTypeResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(AccountTypeResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Statement Categories')
+                ->icon('heroicon-o-document-chart-bar')
+                ->url(FinancialStatementCategoryResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(FinancialStatementCategoryResource::getRouteBaseName() . '.*')),
 
             NavigationItem::make('Budget Types')
                 ->icon('heroicon-o-banknotes')
