@@ -40,12 +40,10 @@ class TopDonorsWidget extends BaseWidget
             ->orderByDesc('total_amount')
             ->limit(10);
 
-        // Use DB::table() on the subquery so Filament has no Donation model
-        // context and cannot append an invalid 'donations.id' secondary sort.
-        $query = DB::table(
-            DB::raw('(' . $inner->toSql() . ') as top_donors')
-        )
-            ->mergeBindings($inner->getQuery())
+        // Use fromSub() on an Eloquent query so Filament still gets an Eloquent
+        // Builder, but bound to our pre-aggregated 'top_donors' alias.
+        $query = Donation::query()
+            ->fromSub($inner, 'top_donors')
             ->select('*')
             ->orderByDesc('total_amount');
 
