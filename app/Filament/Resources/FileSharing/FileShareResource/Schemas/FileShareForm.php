@@ -9,6 +9,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class FileShareForm
@@ -24,14 +26,38 @@ class FileShareForm
                 ->options(SharedFile::query()->orderBy('display_name')->pluck('display_name', 'id'))
                 ->searchable()
                 ->preload()
-                ->rules(['required_without:shared_folder_id', 'prohibits:shared_folder_id']),
+                ->live()
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if (filled($state)) {
+                        $set('shared_folder_id', null);
+                    }
+                })
+                ->helperText('Choose a file OR a folder, not both.')
+                ->required(fn (Get $get): bool => blank($get('shared_folder_id')))
+                ->rule(fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get): void {
+                    if (filled($value) && filled($get('shared_folder_id'))) {
+                        $fail('Choose either a file or a folder, not both.');
+                    }
+                }),
 
             Select::make('shared_folder_id')
                 ->label('Folder')
                 ->options(SharedFolder::query()->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
                 ->preload()
-                ->rules(['required_without:shared_file_id', 'prohibits:shared_file_id']),
+                ->live()
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if (filled($state)) {
+                        $set('shared_file_id', null);
+                    }
+                })
+                ->helperText('Choose a file OR a folder, not both.')
+                ->required(fn (Get $get): bool => blank($get('shared_file_id')))
+                ->rule(fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get): void {
+                    if (filled($value) && filled($get('shared_file_id'))) {
+                        $fail('Choose either a file or a folder, not both.');
+                    }
+                }),
 
             Select::make('share_type')
                 ->options([
@@ -40,6 +66,21 @@ class FileShareForm
                     'public' => 'Public',
                 ])
                 ->default('staff')
+                ->live()
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === 'staff') {
+                        $set('shared_with_email', null);
+                    }
+
+                    if ($state === 'client') {
+                        $set('shared_with_user_id', null);
+                    }
+
+                    if ($state === 'public') {
+                        $set('shared_with_user_id', null);
+                        $set('shared_with_email', null);
+                    }
+                })
                 ->required(),
 
             Select::make('access_level')
@@ -56,10 +97,16 @@ class FileShareForm
                 ->label('Recipient User')
                 ->options(User::query()->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->visible(fn ($get) => $get('share_type') === 'staff')
+                ->dehydrated(fn ($get) => $get('share_type') === 'staff')
+                ->rules(['required_if:share_type,staff']),
 
             TextInput::make('shared_with_email')
-                ->email(),
+                ->email()
+                ->visible(fn ($get) => $get('share_type') === 'client')
+                ->dehydrated(fn ($get) => $get('share_type') === 'client')
+                ->rules(['required_if:share_type,client']),
 
             TextInput::make('password')
                 ->password()

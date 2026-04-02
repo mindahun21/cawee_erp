@@ -42,6 +42,7 @@ class FileShare extends Model
     {
         static::creating(function (self $share): void {
             $share->ensureSingleTarget();
+            $share->ensureRecipientRules();
 
             if (! $share->share_token) {
                 $share->share_token = Str::random(40);
@@ -54,6 +55,7 @@ class FileShare extends Model
 
         static::updating(function (self $share): void {
             $share->ensureSingleTarget();
+            $share->ensureRecipientRules();
 
             if ($share->isDirty('password') && filled($share->password) && ! Str::startsWith($share->password, '$2y$')) {
                 $share->password = Hash::make($share->password);
@@ -106,5 +108,81 @@ class FileShare extends Model
                 'shared_folder_id' => 'A share must target exactly one item: either a file or a folder.',
             ]);
         }
+    }
+
+    protected function ensureRecipientRules(): void
+    {
+        $type = $this->share_type;
+        $hasUser = filled($this->shared_with_user_id);
+        $hasEmail = filled($this->shared_with_email);
+
+        if ($type === 'staff' && ! $hasUser) {
+            throw ValidationException::withMessages([
+                'shared_with_user_id' => 'Staff shares must target an internal user.',
+            ]);
+        }
+
+        if ($type === 'staff' && $hasEmail) {
+            throw ValidationException::withMessages([
+                'shared_with_email' => 'Staff shares should not set an external email recipient.',
+            ]);
+        }
+
+        if ($type === 'client' && ! $hasEmail) {
+            throw ValidationException::withMessages([
+                'shared_with_email' => 'Client shares must target a client email address.',
+            ]);
+        }
+
+        if ($type === 'client' && $hasUser) {
+            throw ValidationException::withMessages([
+                'shared_with_user_id' => 'Client shares should not target an internal user record.',
+            ]);
+        }
+
+        if ($type === 'public' && ($hasUser || $hasEmail)) {
+            throw ValidationException::withMessages([
+                'share_type' => 'Public shares should not target a specific user or email recipient.',
+            ]);
+        }
+    }
+
+    public function canBeAccessedBy(?User $user): bool
+    {
+        return match ($this->share_type) {
+            'public' => true,
+            'staff' => $this->canBeAccessedByStaff($user),
+            'client' => $user !== null
+                && filled($this->shared_with_email)
+                && strcasecmp((string) $this->shared_with_email, (string) $user->email) === 0,
+            default => false,
+        };
+    }
+
+    public function canBeAccessedByStaff(?User $user): bool
+    {
+        return $user !== null && (int) $this->shared_with_user_id === (int) $user->getKey();
+    }
+
+    public function canBeAccessedByClientEmail(?string $email): bool
+    {
+        return filled($email)
+            && filled($this->shared_with_email)
+            && strcasecmp((string) $this->shared_with_email, (string) $email) === 0;
+    }
+
+    public function allowsPreview(): bool
+    {
+        return in_array($this->access_level, ['view', 'download', 'manage'], true);
+    }
+
+    public function allowsDownload(): bool
+    {
+        return in_array($this->access_level, ['download', 'manage'], true);
+    }
+
+    public function passwordSessionKey(): string
+    {
+        return 'file_share_access.'.$this->getKey();
     }
 }

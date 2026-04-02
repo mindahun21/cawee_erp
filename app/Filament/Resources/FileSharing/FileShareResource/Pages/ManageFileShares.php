@@ -13,7 +13,8 @@ class ManageFileShares extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make('create')
+                ->successNotificationTitle('Share created successfully'),
         ];
     }
 }
