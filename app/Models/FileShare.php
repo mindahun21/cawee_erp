@@ -185,4 +185,9 @@ class FileShare extends Model
     {
         return 'file_share_access.'.$this->getKey();
     }
+
+    public function isExpired(): bool
+    {
+        return (bool) $this->expires_at?->isPast();
+    }
 }

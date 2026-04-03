@@ -5,6 +5,7 @@ namespace App\Http\Controllers\FileSharing;
 use App\Http\Controllers\Controller;
 use App\Models\FileAccessLog;
 use App\Models\FileShare;
+use App\Models\SharedFile;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class FileShareController extends Controller
         return view('file-sharing.show', [
             'share' => $share,
             'file' => $share->file,
+            'folder' => $share->folder,
+            'folderFiles' => $share->folder?->files()->orderBy('display_name')->get() ?? collect(),
             'isUnlocked' => $this->isUnlocked($request, $share),
             'canPreview' => $share->shared_file_id !== null && $share->allowsPreview(),
             'canDownload' => $share->shared_file_id !== null && $share->allowsDownload(),
@@ -121,10 +124,67 @@ class FileShareController extends Controller
         );
     }
 
+    public function previewFolderFile(Request $request, string $token, SharedFile $file): StreamedResponse|Response
+    {
+        $share = $this->resolveShare($request, $token);
+        $this->ensureAccessible($request, $share);
+        $this->ensureUnlocked($request, $share);
+
+        if (! $share->allowsPreview()) {
+            return $this->deny($request, $share, Response::HTTP_FORBIDDEN, 'This share does not allow file preview.');
+        }
+
+        if ($share->shared_folder_id === null || (int) $file->folder_id !== (int) $share->shared_folder_id) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'This file does not belong to the shared folder.');
+        }
+
+        if (! Storage::disk($file->disk)->exists($file->path)) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'The shared file is not available.');
+        }
+
+        $this->logAccess($request, $share, 'previewed', null, $file->id);
+
+        return Storage::disk($file->disk)->response(
+            $file->path,
+            $file->original_name ?: $file->display_name
+        );
+    }
+
+    public function downloadFolderFile(Request $request, string $token, SharedFile $file): StreamedResponse|Response
+    {
+        $share = $this->resolveShare($request, $token);
+        $this->ensureAccessible($request, $share);
+        $this->ensureUnlocked($request, $share);
+
+        if (! $share->allowsDownload()) {
+            return $this->deny($request, $share, Response::HTTP_FORBIDDEN, 'This share does not allow file downloads.');
+        }
+
+        if ($share->shared_folder_id === null || (int) $file->folder_id !== (int) $share->shared_folder_id) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'This file does not belong to the shared folder.');
+        }
+
+        if ($share->max_downloads !== null && $share->download_count >= $share->max_downloads) {
+            return $this->deny($request, $share, Response::HTTP_FORBIDDEN, 'This share link has reached its download limit.');
+        }
+
+        if (! Storage::disk($file->disk)->exists($file->path)) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'The shared file is not available.');
+        }
+
+        $share->increment('download_count');
+        $this->logAccess($request, $share, 'downloaded', null, $file->id);
+
+        return Storage::disk($file->disk)->download(
+            $file->path,
+            $file->original_name ?: $file->display_name
+        );
+    }
+
     protected function resolveShare(Request $request, string $token): FileShare
     {
         return FileShare::query()
-            ->with('file')
+            ->with(['file', 'folder'])
             ->where('share_token', $token)
             ->where('is_active', true)
             ->firstOrFail();
@@ -191,10 +251,10 @@ class FileShareController extends Controller
             && Storage::disk($share->file->disk)->exists($share->file->path);
     }
 
-    protected function logAccess(Request $request, FileShare $share, string $action, ?string $notes = null): void
+    protected function logAccess(Request $request, FileShare $share, string $action, ?string $notes = null, ?int $sharedFileId = null): void
     {
         FileAccessLog::create([
-            'shared_file_id' => $share->shared_file_id,
+            'shared_file_id' => $sharedFileId ?? $share->shared_file_id,
             'file_share_id' => $share->id,
             'user_id' => auth()->id(),
             'action' => $action,
