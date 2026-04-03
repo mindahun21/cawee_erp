@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FileSharing\FileShareResource\Schemas;
 
+use App\Models\FileSharingSetting;
 use App\Models\SharedFile;
 use App\Models\SharedFolder;
 use App\Models\User;
@@ -17,6 +18,10 @@ class FileShareForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $publicSharingEnabled = FileSharingSetting::isPublicSharingEnabled();
+        $requiresPublicPassword = FileSharingSetting::requiresPublicPassword();
+        $defaultExpiryDays = FileSharingSetting::defaultLinkExpiryDays();
+
         return $schema->components([
             Hidden::make('created_by')
                 ->default(fn () => auth()->id()),
@@ -60,11 +65,18 @@ class FileShareForm
                 }),
 
             Select::make('share_type')
-                ->options([
-                    'staff' => 'Staff',
-                    'client' => 'Client',
-                    'public' => 'Public',
-                ])
+                ->options(function (Get $get) use ($publicSharingEnabled): array {
+                    $options = [
+                        'staff' => 'Staff',
+                        'client' => 'Client',
+                    ];
+
+                    if ($publicSharingEnabled || $get('share_type') === 'public') {
+                        $options['public'] = 'Public';
+                    }
+
+                    return $options;
+                })
                 ->default('staff')
                 ->live()
                 ->afterStateUpdated(function ($state, Set $set): void {
@@ -81,6 +93,7 @@ class FileShareForm
                         $set('shared_with_email', null);
                     }
                 })
+                ->helperText($publicSharingEnabled ? null : 'Public sharing is disabled by policy.')
                 ->required(),
 
             Select::make('access_level')
@@ -110,14 +123,21 @@ class FileShareForm
 
             TextInput::make('password')
                 ->password()
-                ->revealable(),
+                ->revealable()
+                ->required(fn (Get $get): bool => $get('share_type') === 'public' && $requiresPublicPassword)
+                ->helperText($requiresPublicPassword ? 'Public share links must have a password.' : null),
 
             TextInput::make('max_downloads')
                 ->numeric()
                 ->minValue(1),
 
             DateTimePicker::make('expires_at')
-                ->seconds(false),
+                ->seconds(false)
+                ->default(
+                    $defaultExpiryDays > 0
+                        ? now()->addDays($defaultExpiryDays)
+                        : null
+                ),
 
             Select::make('is_active')
                 ->options([
