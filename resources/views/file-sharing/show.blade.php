@@ -37,7 +37,7 @@
         }
 
         .card {
-            width: min(42rem, 100%);
+            width: min(62rem, 100%);
             background: var(--panel);
             border: 1px solid var(--border);
             border-radius: 1.25rem;
@@ -163,6 +163,66 @@
             background: #fff;
         }
 
+        .folder-files {
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .folder-files h2 {
+            margin: 0;
+            padding: 1rem 1.2rem;
+            font-size: 1.05rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .folder-files .table-wrap {
+            overflow-x: auto;
+        }
+
+        .folder-files table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .folder-files th,
+        .folder-files td {
+            padding: 0.9rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .folder-files th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            background: #fffaf2;
+        }
+
+        .folder-files tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .inline-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .file-name {
+            min-width: 24rem;
+            word-break: break-word;
+        }
+
+        .button.small {
+            padding: 0.55rem 0.9rem;
+            border-radius: 0.8rem;
+            font-size: 0.92rem;
+        }
+
         label {
             display: block;
             font-weight: 600;
@@ -182,7 +242,7 @@
     <main class="card">
         <section class="hero">
             <span class="eyebrow">{{ ucfirst($share->share_type) }} Share</span>
-            <h1>{{ $file?->display_name ?? 'Shared item' }}</h1>
+            <h1>{{ $file?->display_name ?? $folder?->name ?? 'Shared item' }}</h1>
             <p>
                 Access level: <strong>{{ ucfirst($share->access_level) }}</strong>
                 @if ($share->expires_at)
@@ -207,11 +267,11 @@
             <div class="meta">
                 <div class="meta-item">
                     <strong>Original Name</strong>
-                    <span>{{ $file?->original_name ?? 'Unavailable' }}</span>
+                    <span>{{ $file?->original_name ?? $folder?->name ?? 'Unavailable' }}</span>
                 </div>
                 <div class="meta-item">
                     <strong>Size</strong>
-                    <span>{{ $file?->human_size ?? 'Unknown' }}</span>
+                    <span>{{ $file?->human_size ?? (($folderFiles ?? collect())->count() . ' files') }}</span>
                 </div>
                 <div class="meta-item">
                     <strong>Downloads</strong>
@@ -244,6 +304,50 @@
                         <a class="button primary" href="{{ route('file-shares.download', $share->share_token) }}">Download</a>
                     @endif
                 </div>
+
+                @if ($share->shared_folder_id !== null)
+                    <div class="folder-files">
+                        <h2>Folder Contents</h2>
+                        @if (($folderFiles ?? collect())->isEmpty())
+                            <p style="padding: 1rem 1.2rem; color: var(--muted);">This shared folder does not contain any files yet.</p>
+                        @else
+                            <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($folderFiles as $folderFile)
+                                        <tr>
+                                            <td class="file-name">
+                                                <strong>{{ $folderFile->display_name }}</strong><br>
+                                                <span style="color: var(--muted);">{{ $folderFile->original_name ?? '-' }}</span>
+                                            </td>
+                                            <td>{{ strtoupper($folderFile->extension ?: '-') }}</td>
+                                            <td>{{ $folderFile->human_size }}</td>
+                                            <td>
+                                                <div class="inline-actions">
+                                                    @if ($share->allowsPreview())
+                                                        <a class="button secondary small" href="{{ route('file-shares.folder-files.preview', ['token' => $share->share_token, 'file' => $folderFile->id]) }}" target="_blank" rel="noreferrer">Preview</a>
+                                                    @endif
+                                                    @if ($share->allowsDownload())
+                                                        <a class="button primary small" href="{{ route('file-shares.folder-files.download', ['token' => $share->share_token, 'file' => $folderFile->id]) }}">Download</a>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             @endif
         </section>
     </main>
