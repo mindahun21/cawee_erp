@@ -195,6 +195,30 @@
             font-weight: 800;
         }
 
+        .fs-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .8rem;
+        }
+
+        .fs-export-btn {
+            border: 1px solid #d8e3fb;
+            background: #f4f8ff;
+            color: #1d4ed8;
+            border-radius: .6rem;
+            font-size: .75rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: .45rem .62rem;
+            transition: all .18s ease;
+        }
+
+        .fs-export-btn:hover {
+            border-color: #93b4f8;
+            background: #eaf2ff;
+        }
+
         .fs-panel-sub {
             margin-top: .2rem;
             font-size: .88rem;
@@ -568,7 +592,12 @@
 
         <section class="fs-grid-two">
             <div class="fs-panel">
-                <div class="fs-panel-title">Recent Share Activity</div>
+                <div class="fs-panel-header">
+                    <div class="fs-panel-title">Recent Share Activity</div>
+                    <button type="button" class="fs-export-btn" wire:click="exportRecentActivityCsv">
+                        Export CSV
+                    </button>
+                </div>
                 <div class="fs-panel-sub">Latest actions across previews, downloads, and share events.</div>
 
                 <div class="fs-chart-stack">
@@ -611,7 +640,12 @@
             </div>
 
             <div class="fs-panel">
-                <div class="fs-panel-title">Denied Access Attempts</div>
+                <div class="fs-panel-header">
+                    <div class="fs-panel-title">Denied Access Attempts</div>
+                    <button type="button" class="fs-export-btn" wire:click="exportDeniedAccessCsv">
+                        Export CSV
+                    </button>
+                </div>
                 <div class="fs-panel-sub">Recent blocked access attempts that may need investigation.</div>
 
                 <div class="fs-denied-bars">
