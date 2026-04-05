@@ -26,7 +26,11 @@ class RecruitmentInterviewScheduleForm
                     ->schema([
                         Grid::make(3)->schema([
                             Select::make('campaign_id')
-                                ->relationship('campaign', 'title')
+                                ->relationship('campaign', 'title', fn ($query) => $query->whereIn('status', [
+                                    RecruitmentCampaign::STATUS_ACTIVE,
+                                    RecruitmentCampaign::STATUS_FULL,
+                                    RecruitmentCampaign::STATUS_PAUSED,
+                                ])->whereHas('applications', fn ($q) => $q->whereIn('status', ['shortlisted', 'interview_scheduled'])))
                                 ->required()
                                 ->reactive()
                                 ->searchable()
@@ -42,6 +46,7 @@ class RecruitmentInterviewScheduleForm
                         ]),
                         Grid::make(3)->schema([
                             DatePicker::make('interview_date')
+                                ->minDate(today())
                                 ->required(),
                             TimePicker::make('from_time')
                                 ->label('Session Start')
@@ -53,26 +58,7 @@ class RecruitmentInterviewScheduleForm
                                 ->seconds(false)
                                 ->required()
                                 ->reactive()
-                                ->after('from_time')
-                                ->rules([
-                                    fn ($get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
-                                         if (!$get('interview_date') || !$get('campaign_id') || !$get('from_time')) {
-                                             return;
-                                         }
-                                         
-                                         $overlaps = \App\Models\Recruitment\RecruitmentInterviewSchedule::where('campaign_id', $get('campaign_id'))
-                                             ->where('interview_date', $get('interview_date'))
-                                             ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
-                                             ->where(function ($q) use ($get, $value) {
-                                                 $q->where('from_time', '<', $value)
-                                                   ->where('to_time', '>', $get('from_time'));
-                                             })->exists();
-                                         
-                                         if ($overlaps) {
-                                             $fail('Another schedule for this campaign already overlaps with this time range.');
-                                         }
-                                    },
-                                ]),
+                                ->after('from_time'),
                         ]),
                         Grid::make(2)->schema([
                             Select::make('interview_type')
@@ -134,7 +120,14 @@ class RecruitmentInterviewScheduleForm
                                         ->relationship('user', 'name')
                                         ->required()
                                         ->searchable()
-                                        ->preload(),
+                                        ->preload()
+                                        ->disableOptionWhen(function ($value, $state, \Filament\Schemas\Components\Utilities\Get $get) {
+                                            $selected = collect($get('../../scheduleInterviewers'))
+                                                ->pluck('user_id')
+                                                ->filter(fn ($id) => $id !== null && $id != $state)
+                                                ->values();
+                                            return $selected->contains($value);
+                                        }),
                                     Select::make('role')
                                         ->options([
                                             'chair' => 'Chair',
@@ -150,6 +143,15 @@ class RecruitmentInterviewScheduleForm
                                 ])
                                 ->columns(2)
                                 ->defaultItems(1)
+                                ->rule(function () {
+                                    return function (string $attribute, $value, \Closure $fail) {
+                                        $slots = array_values(is_array($value) ? $value : []);
+                                        $chairs = collect($slots)->where('role', 'chair')->count();
+                                        if ($chairs !== 1) {
+                                            $fail('There must be exactly one Chair for the interview panel.');
+                                        }
+                                    };
+                                })
                                 ->itemLabel(fn (array $state): ?string => ($state['user_id'] ?? null) ? \App\Models\User::find($state['user_id'])?->name : null),
                     ]),
 
@@ -241,9 +243,12 @@ class RecruitmentInterviewScheduleForm
                 Section::make('Approval Workflow')
                     ->schema([
                         Select::make('approval_workflow_id')
+                            ->label('Approval Workflow')
                             ->relationship('approvalWorkflow', 'name', fn($query) => $query->where('document_type', 'recruitment_interview_schedule')->where('is_active', true))
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} (" . $record->stages()->count() . " stages)")
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->required(),
                     ]),
             ]);
     }

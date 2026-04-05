@@ -26,7 +26,6 @@ class ViewRecruitmentInterviewSchedule extends ViewRecord
                         return false;
                     }
 
-                    // Ensure we compare the actual Date + Time in the correct timezone (UTC+3)
                     $startTime = \Carbon\Carbon::parse(
                         $this->record->interview_date->format('Y-m-d') . ' ' . $this->record->from_time,
                         'Africa/Addis_Ababa'
@@ -68,6 +67,9 @@ class ViewRecruitmentInterviewSchedule extends ViewRecord
                 ->color('primary')
                 ->visible(function () {
                     if (!in_array($this->record->status, [RecruitmentInterviewSchedule::STATUS_DRAFT, RecruitmentInterviewSchedule::STATUS_REJECTED])) {
+                        return false;
+                    }
+                    if ($this->record->interview_date && $this->record->interview_date < today()) {
                         return false;
                     }
                     if (\App\Services\Recruitment\RecruitmentApprovalService::hasBeenRejected($this->record)) {

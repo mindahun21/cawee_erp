@@ -72,9 +72,9 @@ class RecruitmentOffer extends Model implements Approvable
             return null;
         }
 
-        return \Illuminate\Support\Facades\Storage::temporaryUrl(
-            $this->offer_letter_path,
-            now()->addHours(24)
+        return \Illuminate\Support\Facades\URL::signedRoute(
+            'candidate.my-offers.download',
+            ['offer' => $this->id]
         );
     }
 
@@ -117,10 +117,8 @@ class RecruitmentOffer extends Model implements Approvable
             return;
         }
 
-        // Determine the correct portal URL for the candidate
         $portalOfferUrl = route('candidate.my-offers.show', $this->id);
 
-        // If candidate has never set a password, use a signed one-time link
         if (! $candidate->password) {
             $loginUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'candidate.offer-access',
@@ -131,11 +129,9 @@ class RecruitmentOffer extends Model implements Approvable
             $loginUrl = route('candidate.login');
         }
 
-        // Send congratulation email to candidate
         \Illuminate\Support\Facades\Mail::to($candidate->email)
             ->queue(new \App\Mail\Recruitment\RecruitmentOfferCandidateMail($this, $portalOfferUrl, $loginUrl));
 
-        // Notify the issuer (in-app)
         \Filament\Notifications\Notification::make()
             ->title('Offer Approved & Candidate Notified')
             ->body("The offer for {$candidate->first_name} {$candidate->last_name} has been approved. A congratulation email was sent to the candidate.")

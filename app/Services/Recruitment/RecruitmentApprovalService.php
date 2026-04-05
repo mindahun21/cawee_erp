@@ -186,7 +186,11 @@ class RecruitmentApprovalService
         ]);
 
         if (self::isFullyApproved($document, $documentType)) {
-            $document->update(['status' => 'Approved']);
+            if ($document instanceof Approvable) {
+                $document->update(['status' => $document->approvedStatus()]);
+            } else {
+                $document->update(['status' => 'approved']);
+            }
             if (method_exists($document, 'onFullyApproved')) {
                 $document->onFullyApproved();
             }
@@ -212,7 +216,7 @@ class RecruitmentApprovalService
         } elseif (method_exists($document, 'onRejected')) {
             $document->onRejected();
         } else {
-            $document->update(['status' => 'Draft']);
+            $document->update(['status' => 'draft']);
         }
     }
 
@@ -257,7 +261,6 @@ class RecruitmentApprovalService
         }
         return $document->updated_at->gt($rejectedAt);
     }
-
 
     public static function submitForApproval(Model&Approvable $document): void
     {

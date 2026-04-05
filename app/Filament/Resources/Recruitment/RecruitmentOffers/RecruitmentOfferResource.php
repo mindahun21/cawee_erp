@@ -44,7 +44,13 @@ class RecruitmentOfferResource extends Resource
                         ->relationship(
                             'application',
                             'id',
-                            fn (Builder $query) => $query->where('status', 'selected')
+                            fn (Builder $query, ?RecruitmentOffer $record) => $query->where('status', 'selected')
+                                ->where(function($q) use ($record) {
+                                    $q->whereDoesntHave('offer');
+                                    if ($record && $record->application_id) {
+                                        $q->orWhere('id', $record->application_id);
+                                    }
+                                })
                                 ->with('candidate', 'campaign')
                         )
                         ->getOptionLabelFromRecordUsing(fn ($record) => 
@@ -60,12 +66,47 @@ class RecruitmentOfferResource extends Resource
                     TextInput::make('offered_salary')
                         ->label('Offered Salary')
                         ->numeric()
-                        ->prefix('ETB')
+                        ->prefix(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                            $applicationId = $get('application_id');
+                            if (!$applicationId) return 'ETB';
+                            $application = RecruitmentApplication::with('campaign')->find($applicationId);
+                            return $application?->campaign?->currency ?? 'ETB';
+                        })
+                        ->placeholder(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                            $applicationId = $get('application_id');
+                            if (!$applicationId) return null;
+                            $application = RecruitmentApplication::with('campaign')->find($applicationId);
+                            if (!$application || !$application->campaign) return null;
+                            $min = $application->campaign->salary_min;
+                            $max = $application->campaign->salary_max;
+                            if ($min && $max) return "between {$min} and {$max}";
+                            if ($max) return "up to {$max}";
+                            if ($min) return "at least {$min}";
+                            return null;
+                        })
+                        ->rule(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                            return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                if (!$value) return;
+                                
+                                $applicationId = $get('application_id');
+                                if (!$applicationId) return;
+                                
+                                $application = RecruitmentApplication::with('campaign')->find($applicationId);
+                                if (!$application || !$application->campaign) return;
+                                
+                                $maxSalary = $application->campaign->salary_max;
+                                if ($maxSalary && $value > $maxSalary) {
+                                    $fail("The offered salary cannot exceed the campaign's maximum salary of {$maxSalary}.");
+                                }
+                            };
+                        })
                         ->nullable(),
 
                     DatePicker::make('offer_date')
                         ->label('Offer Date')
                         ->default(now())
+                        ->disabled()
+                        ->dehydrated()
                         ->required(),
 
                     DatePicker::make('offer_expiry_date')
@@ -88,8 +129,9 @@ class RecruitmentOfferResource extends Resource
                         ->relationship('approvalWorkflow', 'name',
                             fn (Builder $query) => $query->where('document_type', 'recruitment_offer')->where('is_active', true)
                         )
+                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} (" . $record->stages()->count() . " stages)")
                         ->preload()
-                        ->nullable(),
+                        ->required(),
 
                     RichEditor::make('notes')
                         ->label('Custom Message/Notes')
@@ -111,6 +153,18 @@ class RecruitmentOfferResource extends Resource
             Section::make('Offer Details')
                 ->icon('heroicon-o-document-check')
                 ->schema([
+                    TextEntry::make('status')
+                        ->label('Offer Status')
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'approved', 'accepted' => 'success',
+                            'declined', 'expired', 'withdrawn' => 'danger',
+                            'submitted' => 'warning',
+                            default => 'gray',
+                        })
+                        ->formatStateUsing(fn ($state) => \Illuminate\Support\Str::headline($state))
+                        ->columnSpanFull(),
+
                     TextEntry::make('application.candidate.first_name')
                         ->label('Candidate First Name'),
                     TextEntry::make('application.candidate.last_name')
@@ -124,6 +178,14 @@ class RecruitmentOfferResource extends Resource
                     TextEntry::make('decline_reason')
                         ->label('Decline Reason')
                         ->placeholder('—')
+                        ->columnSpanFull(),
+                    
+                    TextEntry::make('offer_letter_status')
+                        ->label('Offer Document Status')
+                        ->getStateUsing(fn ($record) => $record->offer_letter_path ? 'Document Attached (Click Download Action Above)' : 'No Document Attached')
+                        ->badge()
+                        ->color(fn ($state) => $state === 'No Document Attached' ? 'gray' : 'info')
+                        ->icon(fn ($state) => $state === 'No Document Attached' ? 'heroicon-o-minus' : 'heroicon-o-document-arrow-down')
                         ->columnSpanFull(),
                     
                     TextEntry::make('notes')
@@ -153,12 +215,14 @@ class RecruitmentOfferResource extends Resource
         return Select::make('approval_workflow_id')
             ->label('Approval Workflow')
             ->options(
-                \App\Models\Recruitment\RecruitmentApprovalWorkflow::where('document_type', 'recruitment_offer')
+                \App\Models\Recruitment\RecruitmentApprovalWorkflow::with('stages')
+                    ->where('document_type', 'recruitment_offer')
                     ->where('is_active', true)
-                    ->pluck('name', 'id')
+                    ->get()
+                    ->mapWithKeys(fn ($w) => [$w->id => "{$w->name} ({$w->stages->count()} stages)"])
             )
             ->preload()
-            ->nullable();
+            ->required();
     }
 
     public static function getPages(): array

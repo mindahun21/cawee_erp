@@ -97,6 +97,9 @@ class RecruitmentPlansTable
                         if ($record->status !== RecruitmentPlan::STATUS_DRAFT) {
                             return false;
                         }
+                        if ($record->end_date && $record->end_date < today()) {
+                            return false;
+                        }
                         if (RecruitmentApprovalService::hasBeenRejected($record)) {
                             return RecruitmentApprovalService::wasEditedAfterRejection($record);
                         }

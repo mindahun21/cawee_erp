@@ -42,6 +42,15 @@ class ViewRecruitmentCampaign extends ViewRecord
                     if ($this->record->status !== RecruitmentCampaign::STATUS_DRAFT) {
                         return false;
                     }
+                    if ($this->record->end_date && $this->record->end_date < today()) {
+                        return false;
+                    }
+                    if ($this->record->recruitment_plan_id) {
+                        $plan = $this->record->recruitmentPlan;
+                        if (!$plan || $plan->status === \App\Models\Recruitment\RecruitmentPlan::STATUS_CLOSED || ($plan->end_date && $plan->end_date < today())) {
+                            return false;
+                        }
+                    }
                     if (RecruitmentApprovalService::hasBeenRejected($this->record)) {
                         return RecruitmentApprovalService::wasEditedAfterRejection($this->record);
                     }
@@ -101,7 +110,7 @@ class ViewRecruitmentCampaign extends ViewRecord
                 ->label('Resume Campaign')
                 ->icon('heroicon-o-play-circle')
                 ->color('success')
-                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_PAUSED)
+                ->visible(fn () => $this->record->status === RecruitmentCampaign::STATUS_PAUSED && (!$this->record->end_date || $this->record->end_date >= today()))
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update(['status' => RecruitmentCampaign::STATUS_ACTIVE]);
