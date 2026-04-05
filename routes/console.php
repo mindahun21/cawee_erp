@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('hr:car-rent-alerts')->dailyAt('08:00');
 Schedule::command('recruitment:expire-offers')->daily();
+Schedule::command('recruitment:daily-maintenance')->daily();
