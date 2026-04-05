@@ -68,10 +68,6 @@ class CandidateOfferController extends Controller
 
         $offer->application?->update(['status' => 'offer_accepted']);
 
-        if ($offer->application) {
-            \App\Events\Recruitment\CandidateHired::dispatch($offer->application);
-        }
-
         if ($issuer = $offer->issuer) {
             $candidateName = $candidate->full_name;
             $jobTitle = $offer->application?->campaign?->jobPosition?->title ?? 'Position';

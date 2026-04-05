@@ -2,7 +2,6 @@
 
 namespace App\Services\Recruitment;
 
-use App\Events\Recruitment\CandidateHired;
 use App\Models\Recruitment\RecruitmentApplication;
 use App\Models\Recruitment\RecruitmentApplicationStatusLog;
 use App\Models\User;
@@ -109,11 +108,6 @@ class RecruitmentApplicationService
                 'changed_by' => $byUser?->id,
                 'reason' => $reason,
             ]);
-
-            // Dispatch domain events
-            if ($toStatus === RecruitmentApplication::STATUS_HIRED) {
-                event(new CandidateHired($application));
-            }
 
             DB::commit();
 
