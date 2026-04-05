@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 
 class CandidateOfferController extends Controller
 {
@@ -37,7 +37,6 @@ class CandidateOfferController extends Controller
     {
         $candidate = Auth::guard('candidate')->user();
 
-        // Ensure the offer belongs to this candidate
         if ($offer->application?->candidate_id !== $candidate->id) {
             abort(403);
         }
@@ -67,22 +66,24 @@ class CandidateOfferController extends Controller
             'responded_at' => now(),
         ]);
 
-        // Update application status to offer_accepted
         $offer->application?->update(['status' => 'offer_accepted']);
 
-        // Notify the issuer (HR)
+        if ($offer->application) {
+            \App\Events\Recruitment\CandidateHired::dispatch($offer->application);
+        }
+
         if ($issuer = $offer->issuer) {
             $candidateName = $candidate->full_name;
             $jobTitle = $offer->application?->campaign?->jobPosition?->title ?? 'Position';
             $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentOffers\RecruitmentOfferResource::getUrl('view', ['record' => $offer]);
 
-            Notification::make()
+            \Filament\Notifications\Notification::make()
                 ->title('Employment Offer Accepted')
                 ->body("{$candidateName} has accepted the offer for \"{$jobTitle}\".")
                 ->success()
                 ->icon('heroicon-o-check-circle')
                 ->actions([
-                    Action::make('view')
+                    \Filament\Actions\Action::make('view')
                         ->label('View Offer')
                         ->url($viewUrl)
                         ->markAsRead(),
@@ -119,22 +120,20 @@ class CandidateOfferController extends Controller
             'decline_reason' => $request->decline_reason,
         ]);
 
-        // Update application status to offer_declined
         $offer->application?->update(['status' => 'offer_declined']);
 
-        // Notify the issuer (HR)
         if ($issuer = $offer->issuer) {
             $candidateName = $candidate->full_name;
             $jobTitle = $offer->application?->campaign?->jobPosition?->title ?? 'Position';
             $viewUrl = \App\Filament\Resources\Recruitment\RecruitmentOffers\RecruitmentOfferResource::getUrl('view', ['record' => $offer]);
 
-            Notification::make()
+            \Filament\Notifications\Notification::make()
                 ->title('Employment Offer Declined')
                 ->body("{$candidateName} has declined the offer for \"{$jobTitle}\".")
                 ->danger()
                 ->icon('heroicon-o-x-circle')
                 ->actions([
-                    Action::make('view')
+                    \Filament\Actions\Action::make('view')
                         ->label('View Offer')
                         ->url($viewUrl)
                         ->markAsRead(),
@@ -144,6 +143,27 @@ class CandidateOfferController extends Controller
 
         return redirect()->route('candidate.my-offers')
             ->with('success', 'You have declined the offer. If you have questions, feel free to contact our HR team.');
+    }
+
+    /**
+     * DOWNLOAD — Download the offer letter PDF
+     */
+    public function downloadLetter(\Illuminate\Http\Request $request, RecruitmentOffer $offer)
+    {
+        $candidate = \Illuminate\Support\Facades\Auth::guard('candidate')->user();
+
+        if ($offer->application?->candidate_id !== $candidate->id) {
+            abort(403);
+        }
+
+        if (! $offer->offer_letter_path || ! \Illuminate\Support\Facades\Storage::disk('private')->exists($offer->offer_letter_path)) {
+            abort(404, 'Offer letter not found.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('private')->download(
+            $offer->offer_letter_path,
+            'Employment_Offer_Letter.pdf'
+        );
     }
 
     /**

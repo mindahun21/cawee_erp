@@ -44,7 +44,26 @@
 
 {{-- Offer Detail Card --}}
 <div style="background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem;">
-    <h2 style="color: var(--navy); margin: 0 0 1.25rem; font-size: 1.1rem;">Offer Details</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h2 style="color: var(--navy); margin: 0; font-size: 1.1rem;">Offer Details</h2>
+        @php
+            $badgeBg = match($offer->status) {
+                'approved', 'accepted' => '#dcf5ea',
+                'declined', 'expired', 'withdrawn' => '#fee2e2',
+                'submitted' => '#fef3c7',
+                 default => '#f1f5f9',
+            };
+            $badgeText = match($offer->status) {
+                'approved', 'accepted' => '#0d5c38',
+                'declined', 'expired', 'withdrawn' => '#991b1b',
+                'submitted' => '#92400e',
+                 default => '#475569',
+            };
+        @endphp
+        <span style="background: {{ $badgeBg }}; color: {{ $badgeText }}; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px; text-transform: uppercase;">
+            {{ $offer->status === 'approved' ? 'AWAITING RESPONSE' : $offer->status }}
+        </span>
+    </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem;">
         <div>
@@ -91,6 +110,25 @@
         </div>
         @endif
     </div>
+
+    @if($offer->notes)
+    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+        <span style="font-size: .8rem; color: var(--muted); font-weight: 500; display: block; margin-bottom: .5rem;">Message from HR </span>
+        <div style="color: var(--navy); font-size: .95rem; line-height: 1.5;">
+            {!! $offer->notes !!}
+        </div>
+    </div>
+    @endif
+
+    @if($offer->getSignedLetterUrl())
+    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: .9rem; color: var(--navy); font-weight: 500;">Offer Letter Document</span>
+        <a href="{{ $offer->getSignedLetterUrl() }}" target="_blank" download style="display: inline-flex; align-items: center; gap: .5rem; background: var(--navy); color: #fff; padding: .6rem 1.2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; text-decoration: none; transition: background .2s;">
+            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download Letter
+        </a>
+    </div>
+    @endif
 
     @if($offer->decline_reason)
     <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">

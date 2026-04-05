@@ -16,13 +16,14 @@ class CandidateAuthController extends Controller
         if (auth('candidate')->check()) {
             return redirect()->route('candidate.campaigns');
         }
+
         return view('recruitment.portal.auth.login');
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
@@ -42,6 +43,7 @@ class CandidateAuthController extends Controller
         if (auth('candidate')->check()) {
             return redirect()->route('candidate.campaigns');
         }
+
         return view('recruitment.portal.auth.register');
     }
 
@@ -49,10 +51,10 @@ class CandidateAuthController extends Controller
     {
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:200'],
-            'last_name'  => ['nullable', 'string', 'max:200'],
-            'email'      => ['required', 'email', 'max:150', 'unique:recruitment_candidates,email'],
-            'phone'      => ['nullable', 'string', 'max:50'],
-            'password'   => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'last_name' => ['nullable', 'string', 'max:200'],
+            'email' => ['required', 'email', 'max:150', 'unique:recruitment_candidates,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
         ]);
 
         $data['password'] = Hash::make($data['password']);
@@ -76,6 +78,7 @@ class CandidateAuthController extends Controller
         Auth::guard('candidate')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('candidate.login');
     }
 }

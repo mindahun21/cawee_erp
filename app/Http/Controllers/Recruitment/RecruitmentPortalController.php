@@ -18,28 +18,25 @@ class RecruitmentPortalController extends Controller
             ->where('is_public', true)
             ->where(function ($q) {
                 $q->whereNull('end_date')
-                  ->orWhere('end_date', '>=', now()->startOfDay());
+                    ->orWhere('end_date', '>=', now()->startOfDay());
             })
             ->with(['jobPosition.department', 'channel']);
 
-        // 1. Text Search (Campaign title or Job Position title)
         if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhereHas('jobPosition', function($q2) use ($search) {
-                      $q2->where('title', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('jobPosition', function ($q2) use ($search) {
+                        $q2->where('title', 'like', "%{$search}%");
+                    });
             });
         }
 
-        // 2. Category / Department Filter
         if ($category = $request->input('category')) {
-            $query->whereHas('jobPosition.department', function($q) use ($category) {
+            $query->whereHas('jobPosition.department', function ($q) use ($category) {
                 $q->where('id', $category);
             });
         }
 
-        // 3. Employment Type Filter
         if ($type = $request->input('type')) {
             $query->where('employment_type', $type);
         }
@@ -48,14 +45,14 @@ class RecruitmentPortalController extends Controller
 
         // Get filter options
         $departments = \App\Models\Department::orderBy('name')->get();
-        
+
         // Pluck unique employment types from active public campaigns (also respecting deadline)
         $employmentTypes = RecruitmentCampaign::query()
             ->where('status', RecruitmentCampaign::STATUS_ACTIVE)
             ->where('is_public', true)
             ->where(function ($q) {
                 $q->whereNull('end_date')
-                  ->orWhere('end_date', '>=', now()->startOfDay());
+                    ->orWhere('end_date', '>=', now()->startOfDay());
             })
             ->select('employment_type')
             ->distinct()
@@ -72,8 +69,9 @@ class RecruitmentPortalController extends Controller
     {
         $allowedStatuses = [
             RecruitmentCampaign::STATUS_ACTIVE,
+            RecruitmentCampaign::STATUS_FULL,
             RecruitmentCampaign::STATUS_PAUSED,
-            RecruitmentCampaign::STATUS_CLOSED
+            RecruitmentCampaign::STATUS_CLOSED,
         ];
 
         // We allow viewing expired active campaigns (so they can see the 'Deadline Passed' message)
@@ -93,6 +91,7 @@ class RecruitmentPortalController extends Controller
             ->with(['campaign.jobPosition', 'offer'])
             ->orderByDesc('created_at')
             ->get();
+
         return view('recruitment.portal.my-applications', compact('candidate', 'applications'));
     }
 
@@ -146,6 +145,7 @@ class RecruitmentPortalController extends Controller
     public function profile()
     {
         $candidate = auth('candidate')->user();
+
         return view('recruitment.portal.profile', compact('candidate'));
     }
 }
