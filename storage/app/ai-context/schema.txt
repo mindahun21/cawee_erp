@@ -1,0 +1,86 @@
+TABLE: recruitment_approval_workflows
+- id, document_type (recruitment_plan|recruitment_campaign|recruitment_interview_schedule|recruitment_offer), name, description (nullable), is_active (boolean, default true), timestamps
+
+TABLE: recruitment_approval_stages
+- id, workflow_id (FK→recruitment_approval_workflows), stage_name, stage_order (tinyint), required_role (spatie role name), can_reject (boolean, default true), timestamps
+
+TABLE: recruitment_approval_records
+- id, submission_cycle (smallint, default 1), approvable_type+approvable_id (morph), stage_id (FK→recruitment_approval_stages), stage_order (snapshot), stage_name (snapshot), required_role (snapshot), status (Pending|Approved|Rejected), decided_by (FK→users, nullable), decided_at (datetime, nullable), notes (nullable), timestamps
+
+TABLE: recruitment_skill_categories
+- id, name (unique), slug (unique), is_active (boolean), timestamps
+
+TABLE: recruitment_skills
+- id, name (unique), category_id (FK→recruitment_skill_categories, nullable), timestamps
+
+TABLE: recruitment_channels
+- id, name, type (online|offline|agency|internal), status (active|inactive), responsible_person_id (FK→users, nullable), language (en|am), submit_button_text, success_message (nullable), notify_on_submission (boolean), notification_target (specific_staff|staff_with_roles|responsible_person), notification_person_id (FK→users, nullable), form_schema (json, nullable), is_active (boolean), timestamps, soft_deletes
+
+TABLE: recruitment_evaluation_criterias
+- id, name, description (nullable), criteria_type (group_criteria|evaluation_criteria), score_1_desc through score_5_desc (all nullable), is_active (boolean), created_by (FK→users, nullable), soft_deletes, timestamps
+
+TABLE: recruitment_evaluation_form_templates
+- id, name, job_position_id (FK→hr_job_positions, nullable — NULL=fallback for all positions), is_active (boolean), created_by (FK→users, nullable), timestamps
+
+TABLE: recruitment_evaluation_form_template_lines
+- id, template_id (FK→templates, cascade), group_criteria_id (FK→criterias where type=group_criteria, restrict), criteria_id (FK→criterias where type=evaluation_criteria, restrict), proportion (tinyint — all lines per template must sum to 100), sort_order, timestamps
+
+TABLE: recruitment_plans
+- id, title (nullable), department_id (FK→hr_departments, restrict), job_position_id (FK→hr_job_positions, restrict), manager_id (FK→users, nullable), vacancies_needed (smallint, default 1), working_from (nullable: Internship|Full-Time|Part-Time|Contract|Temporary), workplace (nullable), salary_from (decimal, nullable), salary_to (decimal, nullable), salary_currency (default ETB: ETB|USD|EUR), start_date (date), end_date (date), budget (decimal, nullable), reason (longText, nullable), job_description (longText, nullable), approval_workflow_id (FK→workflows, nullable), status (draft|submitted|approved|rejected|closed, default draft), created_by (FK→users), notes (nullable), timestamps, soft_deletes
+
+TABLE: recruitment_job_position_skill (pivot)
+- job_position_id (FK→hr_job_positions), recruitment_skill_id (FK→recruitment_skills, restrict), composite PK
+
+TABLE: recruitment_campaigns
+- id, job_position_id (FK→hr_job_positions, restrict), approval_workflow_id (FK→workflows, nullable), channel_id (FK→channels, restrict), recruitment_plan_id (FK→plans, nullable), campaign_code (unique, nullable, auto: CP_001), title, description (nullable), requirements (nullable), location (nullable), employment_type (full_time|part_time|contract|internship), vacancies_needed (smallint, default 1), salary_min (decimal, nullable), salary_max (decimal, nullable), currency (default USD), display_salary (boolean, default false), status (draft|submitted|rejected|active|paused|full|closed, default draft), is_public (boolean, default true), max_applications (nullable), start_date (nullable), end_date (nullable), reason_for_recruitment (nullable), manager_id (FK→users, nullable), meta_title (nullable), meta_description (nullable), created_by (FK→users), notes (nullable), candidate_age_from (nullable), candidate_age_to (nullable), candidate_gender (nullable), candidate_height_min (nullable), candidate_weight_min (nullable), candidate_literacy (nullable), candidate_seniority (nullable), timestamps, soft_deletes
+NOTE: department_id NOT stored — derived via campaign→jobPosition→department
+
+TABLE: recruitment_campaign_followers (pivot)
+- campaign_id (FK→campaigns, cascade), user_id (FK→users, cascade), composite PK
+
+TABLE: recruitment_campaign_skill (pivot with extras)
+- id, campaign_id (FK→campaigns, cascade), recruitment_skill_id (FK→skills, restrict), is_required (boolean, default true), min_proficiency (tinyint, nullable, 1-5), timestamps. Unique: (campaign_id, recruitment_skill_id)
+
+TABLE: recruitment_candidates
+- id, user_id (FK→users, nullable), candidate_code (unique, auto: ID00001), first_name, last_name (nullable), birthday (nullable), gender (male|female, nullable), currency (nullable), birthplace (nullable), home_town (nullable), identification (nullable), days_for_identity (date, nullable), place_of_issue (nullable), marital_status (single|married, nullable), nationality (nullable), nation (nullable), religion (nullable), height_m (nullable), weight_kg (nullable), phone (nullable), alternate_phone (nullable), email (unique), skype (nullable), facebook (nullable), linkedin_url (nullable), resident (nullable), current_accommodation (nullable), photo_path (nullable), resume_path (nullable), seniority (no_experience_yet|less_than_1_year|1_year|2_years|3_years|4_years|5_years|over_5_years, nullable), interests (nullable), skills_snapshot (json, cache), password (hashed, nullable), portal_access (boolean, default false), email_verified_at (nullable), remember_token, timestamps, soft_deletes
+NOTE: extends Authenticatable for portal auth. desired_salary and introduce_yourself moved to applications table.
+
+TABLE: recruitment_candidate_skill (pivot)
+- candidate_id (FK→candidates, cascade), recruitment_skill_id (FK→skills, restrict), proficiency (tinyint 1-5, nullable), timestamps, composite PK
+
+TABLE: recruitment_candidate_seniorities (work history)
+- id, candidate_id (FK→candidates, cascade), from_date, to_date (nullable=current), company, position, contact_person, salary (decimal), reason_for_leaving, job_description, sort_order, timestamps
+
+TABLE: recruitment_candidate_literacies (education)
+- id, candidate_id (FK→candidates, cascade), from_date, to_date, diploma, training_places, specialized, percentage (decimal), sort_order, timestamps
+
+TABLE: recruitment_candidate_references
+- id, candidate_id (FK→candidates, cascade), relationship, name, birthday, job, address, phone, sort_order, timestamps
+
+TABLE: recruitment_applications
+- id, candidate_id (FK→candidates, cascade), campaign_id (FK→campaigns, cascade), channel_id (FK→channels, nullable), cover_letter (nullable), introduce_yourself (nullable), desired_salary (decimal, nullable), status (applied|under_review|shortlisted|interview_scheduled|interviewed|selected|waitlisted|offer_pending|offer_accepted|offer_declined|hired|rejected|withdrawn, default applied), applied_at (timestamp, useCurrent), reviewed_by (FK→users, nullable), shortlisted_by (FK→users, nullable), rejection_reason (nullable, internal), internal_notes (nullable), timestamps, soft_deletes
+UNIQUE: (candidate_id, campaign_id) — one application per candidate per campaign
+
+TABLE: recruitment_application_status_logs
+- id, application_id (FK→applications, cascade), from_status, to_status, changed_by (FK→users, nullable), reason (nullable), timestamps
+
+TABLE: recruitment_interview_schedules
+- id, campaign_id (FK→campaigns, cascade), name, round (tinyint, nullable), interview_date (date), from_time (time), to_time (time), location, evaluation_template_id (FK→templates, nullable), interview_type (in_person|online|hybrid|telephone, default in_person), status (draft|submitted|scheduled|completed|cancelled|rejected, default draft), approval_workflow_id (FK→workflows, nullable), created_by (FK→users), notes (nullable), timestamps, soft_deletes
+
+TABLE: recruitment_schedule_interviewers (pivot with extras)
+- id, schedule_id (FK→schedules, cascade), user_id (FK→users, cascade), role (chair|interviewer|observer, default interviewer), notes (nullable), timestamps. Unique: (schedule_id, user_id)
+
+TABLE: recruitment_schedule_candidates (pivot with time slot)
+- id, schedule_id (FK→schedules, cascade), candidate_id (FK→candidates, cascade), candidate_from_time (nullable), candidate_to_time (nullable), timestamps. Unique: (schedule_id, candidate_id)
+
+TABLE: recruitment_candidate_evaluations
+- id, schedule_id (FK→schedules, cascade), candidate_id (FK→candidates, cascade), interviewer_id (FK→users, cascade), template_id (FK→templates), overall_score (decimal(8,2), nullable), comments (nullable), timestamps, soft_deletes. Unique: (schedule_id, candidate_id, interviewer_id)
+
+TABLE: recruitment_evaluation_scores
+- id, evaluation_id (FK→evaluations, cascade), criteria_id (FK→criterias, cascade), score (integer, 1-5), comment (nullable), timestamps. Unique: (evaluation_id, criteria_id)
+
+TABLE: recruitment_offers
+- id, application_id (FK→applications, cascade, unique — one offer per application), offered_salary (decimal, nullable), offer_letter_path (nullable, private disk), offer_date (date), offer_expiry_date (nullable), status (draft|submitted|approved|accepted|declined|expired|withdrawn, default draft), responded_at (nullable), decline_reason (nullable), issued_by (FK→users), approval_workflow_id (FK→workflows, nullable), notes (nullable), timestamps, soft_deletes
+
+EXTENDED: hr_job_positions (added by recruitment)
+- description (text, nullable), requirements (text, nullable), salary_min (decimal, nullable), salary_max (decimal, nullable), vacancy_count (int, default 1), is_active (boolean, default true)
