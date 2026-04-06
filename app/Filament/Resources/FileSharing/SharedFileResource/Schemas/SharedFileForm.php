@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FileSharing\SharedFileResource\Schemas;
 
+use App\Models\FileSharingSetting;
 use App\Models\SharedFolder;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -15,6 +16,10 @@ class SharedFileForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $maxMb = FileSharingSetting::maxFileSizeMb();
+        $allowedExtensions = FileSharingSetting::allowedFileExtensions();
+        $acceptedTypes = collect($allowedExtensions)->map(fn (string $ext): string => '.'.$ext)->all();
+
         return $schema->components([
             Hidden::make('uploaded_by')
                 ->default(fn () => auth()->id()),
@@ -47,6 +52,13 @@ class SharedFileForm
                 ->openable()
                 ->preserveFilenames()
                 ->storeFileNamesIn('original_name')
+                ->maxSize($maxMb * 1024)
+                ->acceptedFileTypes($acceptedTypes)
+                ->helperText(
+                    'Max size: '.$maxMb.' MB'.(count($allowedExtensions) > 0
+                        ? ' | Allowed: '.implode(', ', $allowedExtensions)
+                        : '')
+                )
                 ->required(),
 
             DateTimePicker::make('expires_at')

@@ -84,11 +84,15 @@ class SharedFilesTable
                             ->options(User::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
-                            ->visible(fn ($get) => $get('share_type') === 'staff'),
+                            ->visible(fn ($get) => $get('share_type') === 'staff')
+                            ->dehydrated(fn ($get) => $get('share_type') === 'staff')
+                            ->rules(['required_if:share_type,staff']),
                         TextInput::make('shared_with_email')
                             ->email()
                             ->label('Recipient Email')
-                            ->visible(fn ($get) => in_array($get('share_type'), ['client', 'public'], true)),
+                            ->visible(fn ($get) => $get('share_type') === 'client')
+                            ->dehydrated(fn ($get) => $get('share_type') === 'client')
+                            ->rules(['required_if:share_type,client']),
                         TextInput::make('password')
                             ->password()
                             ->revealable()

@@ -37,8 +37,11 @@ class FileSharesTable
                     ->placeholder('-'),
                 TextColumn::make('share_url')
                     ->label('Share URL')
-                    ->limit(40)
-                    ->copyable(),
+                    ->copyable()
+                    ->tooltip(fn ($state) => $state)
+                    ->url(fn ($record) => $record->share_url, true)
+                    ->openUrlInNewTab()
+                    ->wrap(),
                 TextColumn::make('download_count')
                     ->sortable(),
                 IconColumn::make('is_active')
@@ -57,11 +60,12 @@ class FileSharesTable
                     ]),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make('edit')
+                    ->successNotificationTitle('Share updated successfully'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make('deleteBulk'),
                 ]),
             ]);
     }

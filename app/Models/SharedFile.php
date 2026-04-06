@@ -121,7 +121,7 @@ class SharedFile extends Model
 
     protected function populateDerivedAttributes(): void
     {
-        $disk = $this->disk ?: 'local';
+        $disk = $this->disk ?: config('filesystems.default', 'local');
         $path = $this->path;
 
         if (! $path || ! Storage::disk($disk)->exists($path)) {
