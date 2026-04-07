@@ -303,6 +303,10 @@
                     @if ($canDownload)
                         <a class="button primary" href="{{ route('file-shares.download', $share->share_token) }}">Download</a>
                     @endif
+
+                    @if ($share->shared_folder_id !== null && $share->allowsDownload())
+                        <a class="button primary" href="{{ route('file-shares.folder.download', $share->share_token) }}">Download Folder</a>
+                    @endif
                 </div>
 
                 @if ($share->shared_folder_id !== null)

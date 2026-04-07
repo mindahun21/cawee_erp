@@ -5,10 +5,14 @@ namespace App\Filament\Resources\FileSharing;
 use App\Filament\Resources\FileSharing\FileSharingSettingResource\Pages\ManageFileSharingSettings;
 use App\Models\FileSharingSetting;
 use BackedEnum;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -32,36 +36,81 @@ class FileSharingSettingResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        return true;
     }
 
     public static function canDelete($record): bool
     {
-        return false;
+        return true;
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
             TextInput::make('label')
-                ->disabled()
-                ->dehydrated(false),
-            TextInput::make('key')
-                ->disabled()
-                ->dehydrated(false),
-            TextInput::make('data_type')
-                ->label('Data Type')
-                ->disabled()
-                ->dehydrated(false),
-            Textarea::make('value')
-                ->label('Value')
-                ->rows(3)
                 ->required()
-                ->helperText('Use JSON array for json fields (example: ["pdf","docx"]). Use true/false for boolean fields.'),
-            Textarea::make('description')
-                ->disabled()
-                ->dehydrated(false)
-                ->rows(2),
+                ->maxLength(140),
+            Select::make('group')
+                ->options(FileSharingSetting::groups())
+                ->default('general')
+                ->required(),
+            TextInput::make('key')
+                ->required()
+                ->maxLength(100)
+                ->alphaDash()
+                ->unique(ignoreRecord: true)
+                ->helperText('Use a stable machine-friendly key, for example: password_expiry_days'),
+            Select::make('data_type')
+                ->label('Data Type')
+                ->options([
+                    'string' => 'String',
+                    'integer' => 'Integer',
+                    'boolean' => 'Boolean',
+                    'json' => 'List / JSON',
+                ])
+                ->default('string')
+                ->required()
+                ->live(),
+            TextInput::make('value')
+                ->label('Value')
+                ->required()
+                ->numeric()
+                ->integer()
+                ->minValue(0)
+                ->visible(fn (Get $get): bool => $get('data_type') === 'integer')
+                ->helperText('Enter a numeric value only.'),
+            TextInput::make('value')
+                ->label('Value')
+                ->required()
+                ->visible(fn (Get $get): bool => $get('data_type') === 'string')
+                ->helperText('Use plain text for custom string settings.'),
+            Toggle::make('value')
+                ->label('Enabled')
+                ->visible(fn (Get $get): bool => $get('data_type') === 'boolean')
+                ->afterStateHydrated(function (Toggle $component, $state): void {
+                    $component->state(filter_var($state, FILTER_VALIDATE_BOOLEAN));
+                })
+                ->dehydrateStateUsing(fn (bool $state): string => $state ? 'true' : 'false')
+                ->helperText('Switch this policy on or off.'),
+            TagsInput::make('value')
+                ->label('Allowed File Types')
+                ->visible(fn (Get $get): bool => $get('data_type') === 'json')
+                ->afterStateHydrated(function (TagsInput $component, $state): void {
+                    $decoded = json_decode((string) $state, true);
+
+                    $component->state(is_array($decoded) ? $decoded : []);
+                })
+                ->dehydrateStateUsing(fn (array $state): string => json_encode(
+                    collect($state)
+                        ->map(fn ($ext) => strtolower(ltrim(trim((string) $ext), '.')))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all()
+                ))
+                ->helperText('Add extensions only, for example: pdf, docx, jpg.'),
+            TextInput::make('description')
+                ->columnSpanFull(),
         ]);
     }
 
@@ -81,7 +130,13 @@ class FileSharingSettingResource extends Resource
                     ->fontFamily('mono')
                     ->searchable(),
                 TextColumn::make('value')
-                    ->fontFamily('mono')
+                    ->formatStateUsing(function ($state, FileSharingSetting $record): string {
+                        return match ($record->data_type) {
+                            'boolean' => filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'Enabled' : 'Disabled',
+                            'json' => implode(', ', array_filter(json_decode((string) $state, true) ?: [])),
+                            default => (string) $state,
+                        };
+                    })
                     ->limit(70)
                     ->toggleable(),
             ])
@@ -91,6 +146,7 @@ class FileSharingSettingResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()->label('Edit Value'),
+                DeleteAction::make(),
             ])
             ->defaultSort('group')
             ->paginated(false);

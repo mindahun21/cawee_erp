@@ -12,8 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use ZipArchive;
 
 class FileShareController extends Controller
 {
@@ -179,6 +181,65 @@ class FileShareController extends Controller
             $file->path,
             $file->original_name ?: $file->display_name
         );
+    }
+
+    public function downloadFolder(Request $request, string $token): BinaryFileResponse|Response
+    {
+        $share = $this->resolveShare($request, $token);
+        $this->ensureAccessible($request, $share);
+        $this->ensureUnlocked($request, $share);
+
+        if (! $share->allowsDownload()) {
+            return $this->deny($request, $share, Response::HTTP_FORBIDDEN, 'This share does not allow folder downloads.');
+        }
+
+        if ($share->shared_folder_id === null || ! $share->folder) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'This share does not point to a downloadable folder.');
+        }
+
+        if ($share->max_downloads !== null && $share->download_count >= $share->max_downloads) {
+            return $this->deny($request, $share, Response::HTTP_FORBIDDEN, 'This share link has reached its download limit.');
+        }
+
+        $folderFiles = $share->folder->files()->orderBy('display_name')->get();
+
+        if ($folderFiles->isEmpty()) {
+            return $this->deny($request, $share, Response::HTTP_NOT_FOUND, 'This shared folder does not contain any downloadable files.');
+        }
+
+        $zipPath = storage_path('app/tmp/shared-folder-'.$share->id.'-'.now()->format('YmdHis').'.zip');
+        $zipDir = dirname($zipPath);
+
+        if (! is_dir($zipDir)) {
+            mkdir($zipDir, 0777, true);
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return $this->deny($request, $share, Response::HTTP_INTERNAL_SERVER_ERROR, 'Could not prepare folder download.');
+        }
+
+        foreach ($folderFiles as $folderFile) {
+            if (! Storage::disk($folderFile->disk)->exists($folderFile->path)) {
+                continue;
+            }
+
+            $sourcePath = Storage::disk($folderFile->disk)->path($folderFile->path);
+            $entryName = $folderFile->original_name ?: ($folderFile->display_name.'.'.$folderFile->extension);
+
+            $zip->addFile($sourcePath, $entryName);
+        }
+
+        $zip->close();
+
+        $share->increment('download_count');
+        $this->logAccess($request, $share, 'downloaded', 'Folder archive downloaded.');
+
+        $archiveName = str($share->folder->name)->slug('_')->value() ?: 'shared-folder';
+
+        return response()
+            ->download($zipPath, $archiveName.'.zip')
+            ->deleteFileAfterSend(true);
     }
 
     protected function resolveShare(Request $request, string $token): FileShare

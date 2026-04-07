@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\FileSharing\FileShareController;
 use App\Http\Controllers\FileSharing\RecipientShareController;
+use App\Http\Controllers\FileSharing\SharedFolderArchiveController;
 use Illuminate\Support\Facades\Route;
 // Recruitment routes removed.
 
@@ -17,6 +18,8 @@ Route::get('/shared-files/{token}/preview', [FileShareController::class, 'previe
     ->name('file-shares.preview');
 Route::get('/shared-files/{token}/download', [FileShareController::class, 'download'])
     ->name('file-shares.download');
+Route::get('/shared-files/{token}/folder-download', [FileShareController::class, 'downloadFolder'])
+    ->name('file-shares.folder.download');
 Route::get('/shared-files/{token}/files/{file}/preview', [FileShareController::class, 'previewFolderFile'])
     ->name('file-shares.folder-files.preview');
 Route::get('/shared-files/{token}/files/{file}/download', [FileShareController::class, 'downloadFolderFile'])
@@ -27,3 +30,8 @@ Route::middleware('auth')->prefix('my-shares')->name('recipient-shares.')->group
     Route::get('/{token}/preview', [RecipientShareController::class, 'staffPreview'])->name('preview');
     Route::get('/{token}/download', [RecipientShareController::class, 'staffDownload'])->name('download');
 });
+
+Route::middleware('auth')->get('/file-sharing/folders/{folder}/download', SharedFolderArchiveController::class)
+    ->name('file-sharing.folders.download');
+Route::middleware('auth')->get('/file-sharing/folders/download-all', [SharedFolderArchiveController::class, 'downloadAll'])
+    ->name('file-sharing.folders.download-all');

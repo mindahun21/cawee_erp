@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\FileSharing\SharedFolderResource\Tables;
 
+use App\Models\SharedFolder;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -37,6 +39,12 @@ class SharedFoldersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
+                Action::make('download_zip')
+                    ->label('Download ZIP')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('warning')
+                    ->url(fn (SharedFolder $record): string => route('file-sharing.folders.download', $record))
+                    ->openUrlInNewTab(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
