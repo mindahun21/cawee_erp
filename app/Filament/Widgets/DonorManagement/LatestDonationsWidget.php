@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class LatestDonationsWidget extends BaseWidget
 {
     protected static ?string $heading = 'Latest Contributions';
-    protected ?string $view = 'filament.widgets.latest-donations-widget';
+    protected string $view = 'filament.widgets.latest-donations-widget';
 
     protected int | string | array $columnSpan = 'half';
 
