@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Recruitment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Recruitment\RecruitmentApplication;
+use App\Models\Recruitment\RecruitmentApplicationStatusLog;
 use App\Models\Recruitment\RecruitmentCampaign;
 use App\Models\Recruitment\RecruitmentChannel;
 use App\Models\Recruitment\RecruitmentSkill;
@@ -16,6 +17,7 @@ class CandidateApplicationController extends Controller
 {
     /** Columns that actually exist in recruitment_candidates — cached once per request. */
     private static ?array $candidateColumns = null;
+
     private static ?array $applicationColumns = null;
 
     private static function candidateColumns(): array
@@ -38,6 +40,11 @@ class CandidateApplicationController extends Controller
         if ($campaign->status === RecruitmentCampaign::STATUS_PAUSED) {
             return redirect()->route('candidate.campaigns.show', $campaign)
                 ->with('info', 'Applications for this position are temporarily paused.');
+        }
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_FULL) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position have reached maximum capacity and are now full.');
         }
 
         if ($campaign->status === RecruitmentCampaign::STATUS_CLOSED) {
@@ -87,6 +94,11 @@ class CandidateApplicationController extends Controller
                 ->with('info', 'Applications for this position are temporarily paused.');
         }
 
+        if ($campaign->status === RecruitmentCampaign::STATUS_FULL) {
+            return redirect()->route('candidate.campaigns.show', $campaign)
+                ->with('info', 'Applications for this position have reached maximum capacity and are now full.');
+        }
+
         if ($campaign->status === RecruitmentCampaign::STATUS_CLOSED) {
             return redirect()->route('candidate.campaigns.show', $campaign)
                 ->with('info', 'Applications for this position are now closed.');
@@ -119,16 +131,16 @@ class CandidateApplicationController extends Controller
         $campaign->load('channel');
         $channel = $campaign->channel;
 
-        $schema          = $channel ? ($channel->form_schema ?? []) : [];
+        $schema = $channel ? ($channel->form_schema ?? []) : [];
         $fieldDefinitions = RecruitmentChannel::availableFields();
 
-        $candidateData    = [];
-        $applicationData  = [];
-        $skillIds         = [];   // IDs of known skills to sync in pivot
-        $unknownSkills    = [];   // raw labels not found in DB
+        $candidateData = [];
+        $applicationData = [];
+        $skillIds = [];   // IDs of known skills to sync in pivot
+        $unknownSkills = [];   // raw labels not found in DB
 
         foreach ($schema as $fieldRow) {
-            $data     = $fieldRow['data'] ?? $fieldRow;
+            $data = $fieldRow['data'] ?? $fieldRow;
             $fieldKey = $data['field_key'] ?? null;
 
             if (! $fieldKey || in_array($fieldKey, ['header', 'paragraph'])) {
@@ -140,7 +152,7 @@ class CandidateApplicationController extends Controller
                 continue;
             }
 
-            $target   = $definition['target'] ?? 'candidate';
+            $target = $definition['target'] ?? 'candidate';
             $dbColumn = $definition['db_column'] ?? null;
 
             // ── Skills — special handling ──────────────────────────────────────
@@ -153,7 +165,7 @@ class CandidateApplicationController extends Controller
                 // Options saved in the schema carry value=skillId for DB skills
                 $schemaOptions = $data['options'] ?? [];
                 $knownValueMap = collect($schemaOptions)
-                    ->filter(fn($o) => is_numeric($o['value'] ?? null))
+                    ->filter(fn ($o) => is_numeric($o['value'] ?? null))
                     ->keyBy('value'); // value => option
 
                 foreach ($submitted as $raw) {
@@ -164,6 +176,7 @@ class CandidateApplicationController extends Controller
                         $unknownSkills[] = $raw;
                     }
                 }
+
                 continue;
             }
 
@@ -176,6 +189,7 @@ class CandidateApplicationController extends Controller
                 } elseif ($dbColumn && in_array($dbColumn, self::candidateColumns())) {
                     $candidateData[$dbColumn] = $path;
                 }
+
                 continue;
             }
 
@@ -198,13 +212,12 @@ class CandidateApplicationController extends Controller
             $candidate, $campaign, $channel, $candidateData, $applicationData,
             $coverLetter, $skillIds, $unknownSkills
         ) {
-            // 1. Update candidate profile
+
             if (! empty($candidateData)) {
                 $candidate->fill($candidateData);
                 $candidate->save();
             }
 
-            // 2. Sync skills to pivot table
             if (! empty($skillIds) || ! empty($unknownSkills)) {
                 // Create any new skills from the unknown list
                 $newIds = [];
@@ -218,7 +231,7 @@ class CandidateApplicationController extends Controller
 
                 // Merge all IDs and sync the pivot (no detaching existing unrelated skills)
                 $allSkillIds = array_unique(array_merge($skillIds, $newIds));
-                $pivotData   = array_fill_keys($allSkillIds, ['proficiency' => null]);
+                $pivotData = array_fill_keys($allSkillIds, ['proficiency' => null]);
                 $candidate->skills()->syncWithoutDetaching($pivotData);
 
                 // Also update skills_snapshot for quick access
@@ -232,19 +245,33 @@ class CandidateApplicationController extends Controller
                 $candidate->save();
             }
 
-            // 3. Create the application
-            RecruitmentApplication::create(array_merge(
+            $app = RecruitmentApplication::create(array_merge(
                 [
                     'candidate_id' => $candidate->id,
-                    'campaign_id'  => $campaign->id,
-                    'channel_id'   => $channel?->id,
+                    'campaign_id' => $campaign->id,
+                    'channel_id' => $channel?->id,
                     'cover_letter' => $coverLetter,
-                    'status'       => 'applied',
-                    'applied_at'   => now(),
+                    'status' => RecruitmentApplication::STATUS_APPLIED,
+                    'applied_at' => now(),
                 ],
                 $applicationData
             ));
+
+            RecruitmentApplicationStatusLog::create([
+                'application_id' => $app->id,
+                'from_status' => 'none',
+                'to_status' => RecruitmentApplication::STATUS_APPLIED,
+                'changed_by' => null, // System/Candidate
+                'reason' => 'Initial application submission',
+            ]);
         });
+
+        if ($campaign->max_applications > 0) {
+            $appCount = RecruitmentApplication::where('campaign_id', $campaign->id)->count();
+            if ($appCount >= $campaign->max_applications) {
+                $campaign->update(['status' => RecruitmentCampaign::STATUS_FULL]);
+            }
+        }
 
         $successMessage = $channel?->success_message
             ?? 'Your application has been submitted successfully. We will be in touch!';

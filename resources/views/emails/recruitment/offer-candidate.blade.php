@@ -41,12 +41,12 @@
     <div style="margin: 20px 0; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
         {!! $offer->notes !!}
     </div>
-    @endif
-
+    @else
     <p>
       We are thrilled to inform you that after a thorough review of your application and interviews, we are pleased to extend you a formal <strong>employment offer</strong>.
       Congratulations — your skills and dedication stood out!
     </p>
+    @endif
 
     <div class="detail-box">
       <div class="detail-row">

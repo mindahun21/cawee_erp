@@ -41,6 +41,7 @@ class RecruitmentCampaign extends Model implements Approvable
     const STATUS_REJECTED = 'rejected';
     const STATUS_ACTIVE = 'active';
     const STATUS_PAUSED = 'paused';
+    const STATUS_FULL = 'full';
     const STATUS_CLOSED = 'closed';
 
     protected static function booted()

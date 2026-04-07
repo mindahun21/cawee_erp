@@ -15,11 +15,11 @@ class RecruitmentPlan extends Model implements Approvable
 {
     use SoftDeletes;
 
-    const STATUS_DRAFT     = 'Draft';
-    const STATUS_SUBMITTED = 'Submitted';
-    const STATUS_APPROVED  = 'Approved';
-    const STATUS_REJECTED  = 'Rejected';
-    const STATUS_CLOSED    = 'Closed';
+    const STATUS_DRAFT     = 'draft';
+    const STATUS_SUBMITTED = 'submitted';
+    const STATUS_APPROVED  = 'approved';
+    const STATUS_REJECTED  = 'rejected';
+    const STATUS_CLOSED    = 'closed';
 
     protected $table = 'recruitment_plans';
 

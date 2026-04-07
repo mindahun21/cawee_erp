@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Recruitment\RecruitmentOffer;
+use App\Models\Recruitment\RecruitmentApplication;
+use App\Services\Recruitment\RecruitmentApplicationService;
 use Illuminate\Console\Command;
 
 class ExpireRecruitmentOffers extends Command
@@ -12,13 +14,34 @@ class ExpireRecruitmentOffers extends Command
 
     public function handle(): void
     {
-        $count = RecruitmentOffer::whereIn('status', [
+        $expiredOffers = RecruitmentOffer::query()
+            ->whereIn('status', [
                 RecruitmentOffer::STATUS_APPROVED,
-                RecruitmentOffer::STATUS_SUBMITTED, // edge case: never approved but past expiry
+                RecruitmentOffer::STATUS_SUBMITTED,
             ])
             ->whereNotNull('offer_expiry_date')
             ->whereDate('offer_expiry_date', '<', today())
-            ->update(['status' => RecruitmentOffer::STATUS_EXPIRED]);
+            ->get();
+
+        $count = $expiredOffers->count();
+        $service = app(\App\Services\Recruitment\RecruitmentApplicationService::class);
+
+        foreach ($expiredOffers as $offer) {
+            $offer->update(['status' => RecruitmentOffer::STATUS_EXPIRED]);
+            
+            if ($offer->application && $offer->application->status === \App\Models\Recruitment\RecruitmentApplication::STATUS_OFFER_PENDING) {
+                try {
+                    $service->transition(
+                        $offer->application, 
+                        \App\Models\Recruitment\RecruitmentApplication::STATUS_SELECTED, 
+                        null, 
+                        'Offer expired automatically'
+                    );
+                } catch (\Exception $e) {
+                    $this->error("Failed to transition application {$offer->application_id}: " . $e->getMessage());
+                }
+            }
+        }
 
         $this->info("Expired {$count} recruitment offer(s).");
     }

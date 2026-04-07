@@ -112,7 +112,15 @@ class RecruitmentApplicationResource extends Resource
                                 ->schema([
                                     TextEntry::make('candidate.resume_path')->label('Resume / CV')
                                         ->formatStateUsing(fn ($state) => $state ? '📄 Download Resume' : '—')
-                                        ->url(fn ($record) => $record->candidate?->resume_path ? \Illuminate\Support\Facades\Storage::url($record->candidate->resume_path) : null, true)
+                                        ->action(
+                                            \Filament\Actions\Action::make('download_resume')
+                                                ->action(function ($record) {
+                                                    $path = $record->candidate?->resume_path;
+                                                    if (!$path) return;
+                                                    $disk = \Illuminate\Support\Facades\Storage::disk('private')->exists($path) ? 'private' : 'public';
+                                                    return response()->download(\Illuminate\Support\Facades\Storage::disk($disk)->path($path));
+                                                })
+                                        )
                                         ->color('primary'),
                                     TextEntry::make('candidate.photo_path')->label('Photo')
                                         ->formatStateUsing(fn ($state) => $state ? '🖼 View Photo' : '—')

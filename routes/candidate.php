@@ -48,6 +48,9 @@ Route::prefix('recruitment')->name('candidate.')->group(function () {
         Route::get('/my-offers/{offer}', [CandidateOfferController::class, 'show'])->name('my-offers.show');
         Route::post('/my-offers/{offer}/accept', [CandidateOfferController::class, 'accept'])->name('my-offers.accept');
         Route::post('/my-offers/{offer}/decline', [CandidateOfferController::class, 'decline'])->name('my-offers.decline');
+        Route::get('/my-offers/{offer}/download', [CandidateOfferController::class, 'downloadLetter'])
+            ->name('my-offers.download')
+            ->middleware('signed');
 
         // First-time password setup (accessed after signed link login)
         Route::get('/set-password', [CandidateOfferController::class, 'showSetPasswordForm'])->name('set-password');

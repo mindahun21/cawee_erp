@@ -46,16 +46,32 @@ class CandidatesRelationManager extends RelationManager
                     ->color('primary')
                     ->visible(function ($record, $livewire) {
                         $schedule = $livewire->getOwnerRecord();
+
+                        $invalidStatuses = [
+                            \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_DRAFT,
+                            \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_REJECTED,
+                            \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_CANCELLED,
+                        ];
                         
-                        if ($schedule->status !== \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_COMPLETED) {
+                        if (in_array($schedule->status, $invalidStatuses)) {
                             return false;
                         }
-                        
-                        $isInterviewer = $schedule->interviewers()
+
+                        if ($schedule->interview_date && $record->pivot && $record->pivot->candidate_from_time) {
+                            $startTimeStr = $schedule->interview_date->format('Y-m-d') . ' ' . $record->pivot->candidate_from_time;
+                            $startTime = \Carbon\Carbon::parse($startTimeStr, 'Africa/Addis_Ababa');
+                            
+                            if (now('Africa/Addis_Ababa')->lessThan($startTime)) {
+                                return false;
+                            }
+                        }
+
+                        $isPanelist = $schedule->interviewers()
                             ->where('user_id', auth()->id())
-                            ->wherePivot('role', 'Interviewer')
+                            ->wherePivotIn('role', ['chair', 'interviewer', 'Chair', 'Interviewer'])
                             ->exists();
-                        if (!$isInterviewer) {
+                            
+                        if (!$isPanelist) {
                             return false;
                         }
                         

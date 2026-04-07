@@ -70,16 +70,30 @@ class RecruitmentCampaignResource extends Resource
                         ->default('— None —'),
                 ])->columns(['sm' => 2, 'xl' => 4]),
 
-            \Filament\Schemas\Components\Section::make('Description & Requirements')
+            \Filament\Schemas\Components\Section::make('Description')
                 ->icon('heroicon-o-document-text')
                 ->collapsible()
                 ->schema([
                     \Filament\Infolists\Components\TextEntry::make('description')
+                        ->hiddenLabel()
                         ->html()->columnSpanFull()->default('—'),
+                ]),
+
+            \Filament\Schemas\Components\Section::make('Requirements')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->collapsible()
+                ->schema([
                     \Filament\Infolists\Components\TextEntry::make('requirements')
+                        ->hiddenLabel()
                         ->html()->columnSpanFull()->default('—'),
+                ]),
+
+            \Filament\Schemas\Components\Section::make('Internal Reason for Recruitment')
+                ->icon('heroicon-o-information-circle')
+                ->collapsible()
+                ->schema([
                     \Filament\Infolists\Components\TextEntry::make('reason_for_recruitment')
-                        ->label('Internal Reason')
+                        ->hiddenLabel()
                         ->html()->columnSpanFull()->default('—'),
                 ]),
 

@@ -32,4 +32,16 @@ class RecruitmentOfferCandidateMail extends Mailable
             view: 'emails.recruitment.offer-candidate',
         );
     }
+
+    public function attachments(): array
+    {
+        $attachments = [];
+        if ($this->offer->offer_letter_path && \Illuminate\Support\Facades\Storage::disk('private')->exists($this->offer->offer_letter_path)) {
+            $attachments[] = \Illuminate\Mail\Mailables\Attachment::fromStorageDisk(
+                'private', 
+                $this->offer->offer_letter_path
+            )->as('Employment_Offer_Letter.pdf');
+        }
+        return $attachments;
+    }
 }

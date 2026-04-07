@@ -100,7 +100,18 @@ class RecruitmentInterviewSchedulesTable
                     ->label('Submit for Approval')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('primary')
-                    ->visible(fn ($record) => in_array($record->status, ['draft', 'rejected']))
+                    ->visible(function ($record) {
+                        if (!in_array($record->status, ['draft', 'rejected'])) {
+                            return false;
+                        }
+                        if ($record->interview_date && $record->interview_date < today()) {
+                            return false;
+                        }
+                        if (\App\Services\Recruitment\RecruitmentApprovalService::hasBeenRejected($record)) {
+                            return \App\Services\Recruitment\RecruitmentApprovalService::wasEditedAfterRejection($record);
+                        }
+                        return true;
+                    })
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         \App\Services\Recruitment\RecruitmentApprovalService::submitForApproval($record);
@@ -114,8 +125,7 @@ class RecruitmentInterviewSchedulesTable
                         if ($record->status !== \App\Models\Recruitment\RecruitmentInterviewSchedule::STATUS_SCHEDULED) {
                             return false;
                         }
-                        
-                        // Ensure we compare the actual Date + Time in the correct timezone (UTC+3)
+
                         $startTime = \Carbon\Carbon::parse(
                             $record->interview_date->format('Y-m-d') . ' ' . $record->from_time,
                             'Africa/Addis_Ababa'

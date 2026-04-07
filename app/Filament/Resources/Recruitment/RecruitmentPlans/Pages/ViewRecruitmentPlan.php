@@ -28,6 +28,9 @@ class ViewRecruitmentPlan extends ViewRecord
                     if ($this->record->status !== RecruitmentPlan::STATUS_DRAFT) {
                         return false;
                     }
+                    if ($this->record->end_date && $this->record->end_date < today()) {
+                        return false;
+                    }
                     if (RecruitmentApprovalService::hasBeenRejected($this->record)) {
                         return RecruitmentApprovalService::wasEditedAfterRejection($this->record);
                     }

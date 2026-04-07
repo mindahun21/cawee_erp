@@ -17,6 +17,23 @@ use Illuminate\Support\Facades\Mail;
 class RecruitmentCampaignObserver
 {
     /**
+     * Handle the RecruitmentCampaign "saving" event.
+     */
+    public function saving(RecruitmentCampaign $campaign): void
+    {
+
+        if ($campaign->status === RecruitmentCampaign::STATUS_ACTIVE && $campaign->max_applications > 0) {
+            if ($campaign->applications()->count() >= $campaign->max_applications) {
+                $campaign->status = RecruitmentCampaign::STATUS_FULL;
+            }
+        } elseif ($campaign->status === RecruitmentCampaign::STATUS_FULL) {
+            if (!$campaign->max_applications || $campaign->max_applications > $campaign->applications()->count()) {
+                $campaign->status = RecruitmentCampaign::STATUS_ACTIVE;
+            }
+        }
+    }
+
+    /**
      * Handle the RecruitmentCampaign "updated" event.
      */
     public function updated(RecruitmentCampaign $campaign): void

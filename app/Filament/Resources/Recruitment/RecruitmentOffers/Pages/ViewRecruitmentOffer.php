@@ -17,6 +17,13 @@ class ViewRecruitmentOffer extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('download_offer')
+                ->label('Download Offer Letter')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('info')
+                ->visible(fn () => !empty($this->record->offer_letter_path))
+                ->action(fn () => response()->download(\Illuminate\Support\Facades\Storage::disk('private')->path($this->record->offer_letter_path))),
+
             EditAction::make()
                 ->visible(fn () => $this->record->status === RecruitmentOffer::STATUS_DRAFT),
 
@@ -26,6 +33,9 @@ class ViewRecruitmentOffer extends ViewRecord
                 ->color('primary')
                 ->visible(function () {
                     if ($this->record->status !== RecruitmentOffer::STATUS_DRAFT) {
+                        return false;
+                    }
+                    if ($this->record->offer_expiry_date && $this->record->offer_expiry_date < today()) {
                         return false;
                     }
                     if (RecruitmentApprovalService::hasBeenRejected($this->record)) {

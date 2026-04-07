@@ -134,11 +134,30 @@ class EvaluatedApplicationsRelationManager extends RelationManager
                         \Filament\Forms\Components\TextInput::make('offered_salary')
                             ->label('Offered Salary')
                             ->numeric()
-                            ->prefix('ETB')
+                            ->prefix(fn (RecruitmentApplication $record) => $record->campaign?->currency ?? 'ETB')
+                            ->placeholder(function (RecruitmentApplication $record) {
+                                $min = $record->campaign?->salary_min;
+                                $max = $record->campaign?->salary_max;
+                                if ($min && $max) return "between {$min} and {$max}";
+                                if ($max) return "up to {$max}";
+                                if ($min) return "at least {$min}";
+                                return null;
+                            })
+                            ->rule(function (RecruitmentApplication $record) {
+                                return function (string $attribute, $value, \Closure $fail) use ($record) {
+                                    if (!$value) return;
+                                    $maxSalary = $record->campaign?->salary_max;
+                                    if ($maxSalary && $value > $maxSalary) {
+                                        $fail("The offered salary cannot exceed the campaign's maximum salary of {$maxSalary}.");
+                                    }
+                                };
+                            })
                             ->nullable(),
                         \Filament\Forms\Components\DatePicker::make('offer_date')
                             ->label('Offer Date')
                             ->default(now()->toDateString())
+                            ->disabled()
+                            ->dehydrated()
                             ->required(),
                         \Filament\Forms\Components\DatePicker::make('offer_expiry_date')
                             ->label('Offer Expiry Date')
@@ -152,8 +171,9 @@ class EvaluatedApplicationsRelationManager extends RelationManager
                             ->acceptedFileTypes(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
                             ->nullable(),
 
-                        \Filament\Forms\Components\Textarea::make('notes')
+                        \Filament\Forms\Components\RichEditor::make('notes')
                             ->label('Custom Message/Notes')
+                            ->columnSpanFull()
                             ->placeholder('Add a custom message for the candidate...')
                             ->nullable(),
                     ])
@@ -215,6 +235,98 @@ class EvaluatedApplicationsRelationManager extends RelationManager
                     ->label('Compare Data')
                     ->icon('heroicon-o-chart-bar-square')
                     ->url(fn ($record) => \App\Filament\Resources\Recruitment\RecruitmentApplications\RecruitmentApplicationResource::getUrl('comparison', ['record' => $record])),
+
+                \Filament\Actions\Action::make('hire_candidate')
+                    ->label('Convert to Employee')
+                    ->icon('heroicon-o-user-group')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === \App\Models\Recruitment\RecruitmentApplication::STATUS_OFFER_ACCEPTED)
+                    ->form(function (\App\Models\Recruitment\RecruitmentApplication $record) {
+                        return [
+                            \Filament\Forms\Components\TextInput::make('employee_name')
+                                ->label('Candidate Name')
+                                ->default($record->candidate?->full_name)
+                                ->disabled()
+                                ->dehydrated(false),
+                            \Filament\Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(\App\Models\Department::pluck('name', 'id'))
+                                ->default($record->campaign?->jobPosition?->department_id)
+                                ->disabled()
+                                ->dehydrated(),
+                            \Filament\Forms\Components\Select::make('job_position_id')
+                                ->label('Job Position')
+                                ->options(\App\Models\JobPosition::pluck('title', 'id'))
+                                ->default($record->campaign?->job_position_id)
+                                ->disabled()
+                                ->dehydrated(),
+                            \Filament\Forms\Components\Select::make('gender')
+                                ->label('Gender')
+                                ->options(['M' => 'Male', 'F' => 'Female'])
+                                ->default($record->candidate?->gender ? strtoupper(substr($record->candidate->gender, 0, 1)) : null)
+                                ->required()
+                                ->dehydrated(),
+                            \Filament\Forms\Components\Select::make('employment_type')
+                                ->label('Employment Type')
+                                ->options([
+                                    'Contract'    => 'Contract',
+                                    'Temporary'   => 'Temporary',
+                                    'Consultancy' => 'Consultancy',
+                                    'Other'       => 'Other',
+                                ])
+                                ->default(match ($record->campaign?->employment_type) {
+                                    'contract' => 'Contract',
+                                    'internship' => 'Temporary',
+                                    'full_time' => 'Contract',
+                                    'part_time' => 'Contract',
+                                    default => 'Other',
+                                })
+                                ->disabled()
+                                ->dehydrated(),
+                            \Filament\Forms\Components\DatePicker::make('date_of_employment')
+                                ->label('Start Date')
+                                ->default($record->offer?->offer_date ?? now())
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('basic_salary')
+                                ->label('Basic Salary')
+                                ->numeric()
+                                ->prefix('ETB')
+                                ->default($record->offer?->offered_salary)
+                                ->disabled()
+                                ->dehydrated(),
+                        ];
+                    })
+                    ->modalHeading('Hire Candidate & Create Employee Record')
+                    ->modalDescription('This will transfer the candidate\'s locked profile and legal offer data over to the native HR Module, successfully concluding the Recruitment pipeline.')
+                    ->action(function (\App\Models\Recruitment\RecruitmentApplication $record, array $data) {
+                        $candidate = $record->candidate;
+                        
+                        $employee = \App\Models\Employee::create([
+                            'user_id' => $candidate->user_id,
+                            'first_name' => $candidate->first_name,
+                            'last_name' => $candidate->last_name,
+                            'gender' => $data['gender'],
+                            'date_of_birth' => $candidate->birthday,
+                            'national_id' => $candidate->identification,
+                            'phone_number' => $candidate->phone,
+                            'email' => $candidate->email,
+                            'department_id' => $data['department_id'],
+                            'job_position_id' => $data['job_position_id'],
+                            'grade_id' => $record->campaign?->jobPosition?->grade_id,
+                            'basic_salary' => $data['basic_salary'] ?? 0,
+                            'employment_type' => $data['employment_type'],
+                            'date_of_employment' => $data['date_of_employment'],
+                        ]);
+
+                        $record->update(['status' => \App\Models\Recruitment\RecruitmentApplication::STATUS_HIRED]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Candidate successfully hired! Redirecting to HR Profile...')
+                            ->success()
+                            ->send();
+
+                        $this->redirect(\App\Filament\Resources\HR\Employees\EmployeeResource::getUrl('edit', ['record' => $employee->id]));
+                    }),
             ]);
     }
 }

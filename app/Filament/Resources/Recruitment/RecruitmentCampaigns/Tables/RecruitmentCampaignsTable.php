@@ -125,6 +125,15 @@ class RecruitmentCampaignsTable
                         if ($record->status !== RecruitmentCampaign::STATUS_DRAFT) {
                             return false;
                         }
+                        if ($record->end_date && $record->end_date < today()) {
+                            return false;
+                        }
+                        if ($record->recruitment_plan_id) {
+                            $plan = $record->recruitmentPlan;
+                            if (!$plan || $plan->status === \App\Models\Recruitment\RecruitmentPlan::STATUS_CLOSED || ($plan->end_date && $plan->end_date < today())) {
+                                return false;
+                            }
+                        }
                         if (RecruitmentApprovalService::hasBeenRejected($record)) {
                             return RecruitmentApprovalService::wasEditedAfterRejection($record);
                         }
