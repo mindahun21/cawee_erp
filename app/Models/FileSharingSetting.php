@@ -86,4 +86,32 @@ class FileSharingSetting extends Model
             ->values()
             ->all();
     }
+
+    /**
+     * @return string[]
+     */
+    public static function acceptedUploadTypes(): array
+    {
+        $mimeMap = [
+            'pdf' => ['application/pdf'],
+            'doc' => ['application/msword'],
+            'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'xls' => ['application/vnd.ms-excel'],
+            'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'png' => ['image/png'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'txt' => ['text/plain'],
+            'csv' => ['text/csv', 'text/plain', 'application/vnd.ms-excel'],
+            'zip' => ['application/zip', 'application/x-zip-compressed', 'multipart/x-zip'],
+        ];
+
+        return collect(static::allowedFileExtensions())
+            ->flatMap(function (string $ext) use ($mimeMap): array {
+                return array_merge(['.'.$ext], $mimeMap[$ext] ?? []);
+            })
+            ->unique()
+            ->values()
+            ->all();
+    }
 }
