@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\FileAccessLog;
 use App\Models\FileShare;
 use App\Models\SharedFile;
+use App\Models\SharedFolder;
 use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
@@ -36,6 +37,10 @@ class FileSharingReports extends Page
     public Collection $deniedAccess;
 
     public Collection $uploadsByUser;
+
+    public Collection $topRecipients;
+
+    public Collection $topFolders;
 
     public array $activityByAction = [];
 
@@ -95,8 +100,13 @@ class FileSharingReports extends Page
     {
         $rows = $this->baseAccessLogQuery()
             ->with(['file', 'share', 'user'])
-            ->whereNotNull('notes')
-            ->where('notes', 'like', 'Denied access:%')
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('action', 'access_denied')
+                    ->orWhere(fn (Builder $legacy) => $legacy
+                        ->whereNotNull('notes')
+                        ->where('notes', 'like', 'Denied access:%'));
+            })
             ->latest('accessed_at')
             ->limit(500)
             ->get();
@@ -163,8 +173,13 @@ class FileSharingReports extends Page
 
         $this->deniedAccess = FileAccessLog::query()
             ->with(['file', 'share', 'user'])
-            ->whereNotNull('notes')
-            ->where('notes', 'like', 'Denied access:%')
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('action', 'access_denied')
+                    ->orWhere(fn (Builder $legacy) => $legacy
+                        ->whereNotNull('notes')
+                        ->where('notes', 'like', 'Denied access:%'));
+            })
             ->when($from, fn (Builder $query) => $query->where('accessed_at', '>=', $from))
             ->latest('accessed_at')
             ->limit(8)
@@ -179,6 +194,33 @@ class FileSharingReports extends Page
             ->limit(5)
             ->get();
 
+        $this->topRecipients = FileShare::query()
+            ->selectRaw('share_type, shared_with_employee_id, shared_with_user_id, shared_with_email, COUNT(*) as shares_count')
+            ->when($from, fn (Builder $query) => $query->where('created_at', '>=', $from))
+            ->where(function (Builder $query): void {
+                $query
+                    ->whereNotNull('shared_with_employee_id')
+                    ->orWhereNotNull('shared_with_user_id')
+                    ->orWhereNotNull('shared_with_email');
+            })
+            ->with(['recipient.employee', 'employeeRecipient'])
+            ->groupBy('share_type', 'shared_with_employee_id', 'shared_with_user_id', 'shared_with_email')
+            ->orderByDesc('shares_count')
+            ->limit(5)
+            ->get();
+
+        $this->topFolders = SharedFolder::query()
+            ->withCount([
+                'shares as shares_count' => fn (Builder $query) => $query
+                    ->when($from, fn (Builder $query) => $query->where('created_at', '>=', $from)),
+                'files',
+                'children',
+            ])
+            ->having('shares_count', '>', 0)
+            ->orderByDesc('shares_count')
+            ->limit(5)
+            ->get();
+
         $this->activityByAction = FileAccessLog::query()
             ->selectRaw('action, COUNT(*) as total')
             ->when($from, fn (Builder $query) => $query->where('accessed_at', '>=', $from))
@@ -190,8 +232,13 @@ class FileSharingReports extends Page
 
         $deniedByDay = FileAccessLog::query()
             ->selectRaw('DATE(accessed_at) as day, COUNT(*) as total')
-            ->whereNotNull('notes')
-            ->where('notes', 'like', 'Denied access:%')
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('action', 'access_denied')
+                    ->orWhere(fn (Builder $legacy) => $legacy
+                        ->whereNotNull('notes')
+                        ->where('notes', 'like', 'Denied access:%'));
+            })
             ->where('accessed_at', '>=', $deniedStart)
             ->groupBy('day')
             ->orderBy('day')
@@ -247,5 +294,21 @@ class FileSharingReports extends Page
             '90' => '90d',
             default => 'all',
         };
+    }
+
+    public function recipientLabel(FileShare $share): string
+    {
+        if ($share->share_type === 'staff') {
+            return $share->employeeRecipient?->full_name
+                ?? $share->recipient?->employee?->full_name
+                ?? $share->recipient?->name
+                ?? 'Employee recipient';
+        }
+
+        if ($share->share_type === 'client') {
+            return (string) ($share->shared_with_email ?: 'Client recipient');
+        }
+
+        return 'Public';
     }
 }

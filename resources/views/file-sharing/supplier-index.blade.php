@@ -1,86 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Shared With My Company</title>
-    <style>
-        body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f7f5ef; color: #1f2937; }
-        .hero { max-width: 980px; margin: 2rem auto 0; padding: 0 1rem; }
-        .back { display: inline-flex; align-items: center; gap: .4rem; margin: 0 0 .85rem; color: #475569; text-decoration: none; font-weight: 600; }
-        .back:hover { color: #0f172a; }
-        .hero-box { background: linear-gradient(135deg, #fff6e9, #fff); border: 1px solid #efd9ba; border-radius: 14px; padding: 1.2rem 1.4rem; }
-        .hero h1 { margin: 0; font-size: 1.4rem; }
-        .hero p { margin: .45rem 0 0; color: #6b7280; }
-        .wrap { max-width: 980px; margin: 1rem auto 2rem; padding: 0 1rem; }
-        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: .9rem 1rem; border-bottom: 1px solid #f1f5f9; text-align: left; vertical-align: top; }
-        th { background: #f8fafc; font-size: .82rem; text-transform: uppercase; color: #64748b; letter-spacing: .03em; }
-        .muted { color: #6b7280; }
-        .badge { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 600; }
-        .ok { background: #ecfdf3; color: #166534; }
-        .warn { background: #fff7ed; color: #9a3412; }
-        .dead { background: #f3f4f6; color: #6b7280; }
-        .btn { display: inline-block; text-decoration: none; border-radius: 8px; padding: .36rem .7rem; font-size: .85rem; font-weight: 600; margin-right: .4rem; }
-        .btn-preview { background: #e2e8f0; color: #1f2937; }
-        .btn-download { background: #b45309; color: #fff; }
-        .disabled { opacity: .45; pointer-events: none; }
-        .pager { padding: 1rem; }
-    </style>
-</head>
-<body>
-<div class="hero">
-    <a class="back" href="{{ route('supplier.dashboard') }}">&#8592; Back to Dashboard</a>
-    <div class="hero-box">
-        <h1>Shared Documents</h1>
-        <p>Files shared with your company account are listed below.</p>
-    </div>
-</div>
-<div class="wrap">
-    <div class="card">
-        <table>
-            <thead>
-            <tr>
-                <th>File</th>
-                <th>Access</th>
-                <th>Expires</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            @forelse($shares as $share)
-                @php
-                    $expired = $share->isExpired();
-                    $statusClass = $expired ? 'dead' : 'ok';
-                    $statusText = $expired ? 'Expired' : 'Active';
-                @endphp
-                <tr>
-                    <td>
-                        <strong>{{ $share->file?->display_name ?? 'Shared file' }}</strong><br>
-                        <span class="muted">{{ $share->file?->original_name ?? '-' }}</span>
-                    </td>
-                    <td><span class="badge warn">{{ ucfirst($share->access_level) }}</span></td>
-                    <td>{{ $share->expires_at?->format('M d, Y h:i A') ?? 'No expiry' }}</td>
-                    <td><span class="badge {{ $statusClass }}">{{ $statusText }}</span></td>
-                    <td>
-                        <a class="btn btn-preview {{ $expired || ! $share->allowsPreview() ? 'disabled' : '' }}" href="{{ route('supplier.shares.preview', $share->share_token) }}">Preview</a>
-                        <a class="btn btn-download {{ $expired || ! $share->allowsDownload() ? 'disabled' : '' }}" href="{{ route('supplier.shares.download', $share->share_token) }}">Download</a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" class="muted">No files are shared with your company yet.</td>
-                </tr>
-            @endforelse
-            </tbody>
-        </table>
+@extends('supplier.layouts.portal')
 
-        <div class="pager">
-            {{ $shares->links() }}
+@section('title', 'Shared Documents')
+@section('description', 'Documents shared with your company account through EliSOFT ERP.')
+
+@section('content')
+<div class="sp-page">
+    <div class="sp-page-header">
+        <div class="sp-breadcrumb">
+            <a href="{{ route('supplier.dashboard') }}">Dashboard</a>
+            <span>/</span>
+            <span>Shared Documents</span>
+        </div>
+        <h1>Shared Documents</h1>
+        <p>Review files shared with your company, track expiry windows, and open preview or download actions from one place.</p>
+    </div>
+
+    <div class="sp-grid-3" style="margin-bottom: 1.5rem;">
+        <div class="sp-stat">
+            <div class="sp-stat-label">Active Shares</div>
+            <div class="sp-stat-value">{{ $shares->getCollection()->filter(fn ($share) => ! $share->isExpired())->count() }}</div>
+            <div class="sp-stat-sub">Currently accessible documents</div>
+        </div>
+        <div class="sp-stat" style="border-left-color:#b45309;">
+            <div class="sp-stat-label">View Only</div>
+            <div class="sp-stat-value" style="color:#b45309;">{{ $shares->getCollection()->where('access_level', 'view')->count() }}</div>
+            <div class="sp-stat-sub">Preview allowed, download blocked</div>
+        </div>
+        <div class="sp-stat" style="border-left-color:#003366;">
+            <div class="sp-stat-label">Downloads Allowed</div>
+            <div class="sp-stat-value" style="color:#003366;">{{ $shares->getCollection()->filter(fn ($share) => $share->allowsDownload())->count() }}</div>
+            <div class="sp-stat-sub">Files you can download</div>
         </div>
     </div>
+
+    <div class="sp-card">
+        <div class="sp-card-header">
+            <div>
+                <div class="sp-card-title">Company Share Inbox</div>
+                <div class="sp-card-sub">Only shares addressed to {{ auth('supplier')->user()?->email }}</div>
+            </div>
+        </div>
+
+        @if($shares->isEmpty())
+            <div class="sp-alert sp-alert-info">No files have been shared with your company yet.</div>
+        @else
+            <div class="sp-table-wrap">
+                <table class="sp-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Access</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($shares as $share)
+                            @php
+                                $expired = $share->isExpired();
+                                $statusClass = $expired ? 'badge-gray' : 'badge-success';
+                                $statusText = $expired ? 'Expired' : 'Active';
+                            @endphp
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">{{ $share->file?->display_name ?? 'Shared file' }}</div>
+                                    <div style="font-size:.8rem;color:var(--muted);">{{ $share->file?->original_name ?? 'Original name unavailable' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-warn">{{ ucfirst($share->access_level) }}</span>
+                                </td>
+                                <td>{{ $share->expires_at?->format('M d, Y h:i A') ?? 'No expiry' }}</td>
+                                <td><span class="badge {{ $statusClass }}">{{ $statusText }}</span></td>
+                                <td>
+                                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                                        <a class="sp-btn sp-btn-outline sp-btn-sm {{ $expired || ! $share->allowsPreview() ? 'disabled' : '' }}" href="{{ route('supplier.shares.preview', $share->share_token) }}">Preview</a>
+                                        <a class="sp-btn sp-btn-primary sp-btn-sm {{ $expired || ! $share->allowsDownload() ? 'disabled' : '' }}" href="{{ route('supplier.shares.download', $share->share_token) }}">Download</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                {{ $shares->links() }}
+            </div>
+        @endif
+    </div>
 </div>
-</body>
-</html>
+@endsection

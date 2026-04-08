@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class FileSharingSetting extends Model
 {
+    public const CORE_KEYS = [
+        'max_file_size_mb',
+        'allowed_file_types',
+        'default_link_expiry_days',
+        'public_sharing_enabled',
+        'require_public_password',
+    ];
+
     protected $table = 'file_sharing_settings';
 
     protected $fillable = [
@@ -24,6 +32,21 @@ class FileSharingSetting extends Model
             'sharing' => 'Sharing',
             'security' => 'Security',
         ];
+    }
+
+    public static function dataTypes(): array
+    {
+        return [
+            'string' => 'String',
+            'integer' => 'Integer',
+            'boolean' => 'Boolean',
+            'json' => 'List / JSON',
+        ];
+    }
+
+    public function isCore(): bool
+    {
+        return in_array($this->key, self::CORE_KEYS, true);
     }
 
     public static function get(string $key, mixed $default = null): mixed

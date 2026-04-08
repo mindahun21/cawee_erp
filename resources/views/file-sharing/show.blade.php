@@ -170,6 +170,66 @@
             overflow: hidden;
         }
 
+        .folder-shell {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .folder-breadcrumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .folder-breadcrumbs span:last-child {
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .folder-panel {
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .folder-panel h2 {
+            margin: 0;
+            padding: 1rem 1.2rem;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--border);
+            background: #fffaf2;
+        }
+
+        .folder-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .folder-list li {
+            padding: 0.9rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .folder-list li:last-child {
+            border-bottom: 0;
+        }
+
+        .folder-list strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
         .folder-files h2 {
             margin: 0;
             padding: 1rem 1.2rem;
@@ -217,6 +277,12 @@
             word-break: break-word;
         }
 
+        .file-meta {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin-top: 0.25rem;
+        }
+
         .button.small {
             padding: 0.55rem 0.9rem;
             border-radius: 0.8rem;
@@ -235,6 +301,16 @@
             border-radius: 0.75rem;
             border: 1px solid var(--border);
             font: inherit;
+        }
+
+        @media (max-width: 840px) {
+            .folder-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .file-name {
+                min-width: 16rem;
+            }
         }
     </style>
 </head>
@@ -310,46 +386,82 @@
                 </div>
 
                 @if ($share->shared_folder_id !== null)
-                    <div class="folder-files">
-                        <h2>Folder Contents</h2>
-                        @if (($folderFiles ?? collect())->isEmpty())
-                            <p style="padding: 1rem 1.2rem; color: var(--muted);">This shared folder does not contain any files yet.</p>
-                        @else
-                            <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Type</th>
-                                        <th>Size</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($folderFiles as $folderFile)
-                                        <tr>
-                                            <td class="file-name">
-                                                <strong>{{ $folderFile->display_name }}</strong><br>
-                                                <span style="color: var(--muted);">{{ $folderFile->original_name ?? '-' }}</span>
-                                            </td>
-                                            <td>{{ strtoupper($folderFile->extension ?: '-') }}</td>
-                                            <td>{{ $folderFile->human_size }}</td>
-                                            <td>
-                                                <div class="inline-actions">
-                                                    @if ($share->allowsPreview())
-                                                        <a class="button secondary small" href="{{ route('file-shares.folder-files.preview', ['token' => $share->share_token, 'file' => $folderFile->id]) }}" target="_blank" rel="noreferrer">Preview</a>
-                                                    @endif
-                                                    @if ($share->allowsDownload())
-                                                        <a class="button primary small" href="{{ route('file-shares.folder-files.download', ['token' => $share->share_token, 'file' => $folderFile->id]) }}">Download</a>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                    <div class="folder-shell">
+                        @if (! empty($folderBreadcrumbs))
+                            <div class="folder-breadcrumbs">
+                                @foreach ($folderBreadcrumbs as $crumb)
+                                    <span>{{ $crumb['name'] }}</span>
+                                    @if (! $loop->last)
+                                        <span>/</span>
+                                    @endif
+                                @endforeach
                             </div>
                         @endif
+
+                        <div class="folder-grid">
+                            <aside class="folder-panel">
+                                <h2>Nested Folders</h2>
+                                @if (($childFolders ?? collect())->isEmpty())
+                                    <p style="padding: 1rem 1.2rem; color: var(--muted);">No nested folders inside this shared folder.</p>
+                                @else
+                                    <ul class="folder-list">
+                                        @foreach ($childFolders as $childFolder)
+                                            <li>
+                                                <strong>{{ $childFolder->name }}</strong>
+                                                <span style="color: var(--muted); font-size: 0.88rem;">
+                                                    {{ $childFolder->files_count }} file{{ $childFolder->files_count === 1 ? '' : 's' }}
+                                                    . {{ $childFolder->children_count }} subfolder{{ $childFolder->children_count === 1 ? '' : 's' }}
+                                                </span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </aside>
+
+                            <div class="folder-files">
+                                <h2>Folder Contents</h2>
+                                @if (($folderFiles ?? collect())->isEmpty())
+                                    <p style="padding: 1rem 1.2rem; color: var(--muted);">This shared folder does not contain any files yet.</p>
+                                @else
+                                    <div class="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>File</th>
+                                                <th>Location</th>
+                                                <th>Type</th>
+                                                <th>Size</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($folderFiles as $folderFile)
+                                                <tr>
+                                                    <td class="file-name">
+                                                        <strong>{{ $folderFile->display_name }}</strong>
+                                                        <div class="file-meta">{{ $folderFile->original_name ?? '-' }}</div>
+                                                    </td>
+                                                    <td>{{ $folderFile->relative_folder_path }}</td>
+                                                    <td>{{ strtoupper($folderFile->extension ?: '-') }}</td>
+                                                    <td>{{ $folderFile->human_size }}</td>
+                                                    <td>
+                                                        <div class="inline-actions">
+                                                            @if ($share->allowsPreview())
+                                                                <a class="button secondary small" href="{{ route('file-shares.folder-files.preview', ['token' => $share->share_token, 'file' => $folderFile->id]) }}" target="_blank" rel="noreferrer">Preview</a>
+                                                            @endif
+                                                            @if ($share->allowsDownload())
+                                                                <a class="button primary small" href="{{ route('file-shares.folder-files.download', ['token' => $share->share_token, 'file' => $folderFile->id]) }}">Download</a>
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 @endif
             @endif

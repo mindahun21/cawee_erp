@@ -52,4 +52,37 @@ class SharedFolder extends Model
     {
         return $this->morphTo();
     }
+
+    public function breadcrumbTrail(): array
+    {
+        $trail = [];
+        $current = $this;
+
+        while ($current) {
+            array_unshift($trail, [
+                'id' => $current->id,
+                'name' => $current->name,
+            ]);
+
+            $current = $current->parent;
+        }
+
+        return $trail;
+    }
+
+    public function descendantsAndSelfIds(): array
+    {
+        $ids = [$this->getKey()];
+
+        foreach ($this->children as $child) {
+            $ids = array_merge($ids, $child->descendantsAndSelfIds());
+        }
+
+        return $ids;
+    }
+
+    public function pathLabel(): string
+    {
+        return implode(' / ', array_column($this->breadcrumbTrail(), 'name'));
+    }
 }
