@@ -34,7 +34,7 @@
     <div class="card">
         <div class="head">
             <h1 class="title">My Shared Files</h1>
-            <p class="sub">Files that were shared directly with your staff account.</p>
+            <p class="sub">Files that were shared directly with your employee account.</p>
         </div>
 
         <table>

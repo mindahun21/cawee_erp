@@ -13,7 +13,10 @@ class ManageFileSharingSettings extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label('Add Setting')
+                ->modalHeading('Add File Sharing Setting')
+                ->successNotificationTitle('Setting created'),
         ];
     }
 }
