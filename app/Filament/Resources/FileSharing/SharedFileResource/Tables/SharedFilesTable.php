@@ -3,13 +3,14 @@
 namespace App\Filament\Resources\FileSharing\SharedFileResource\Tables;
 
 use App\Models\FileAccessLog;
-use App\Models\User;
+use App\Support\FileSharing\EmployeeRecipientOptions;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -63,7 +64,7 @@ class SharedFilesTable
                     ->schema([
                         Select::make('share_type')
                             ->options([
-                                'staff' => 'Staff',
+                                'staff' => 'Employee',
                                 'client' => 'Client',
                                 'public' => 'Public',
                             ])
@@ -80,12 +81,21 @@ class SharedFilesTable
                             ->default('download')
                             ->required(),
                         Select::make('shared_with_user_id')
-                            ->label('Recipient User')
-                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->hidden(),
+                        Hidden::make('shared_with_employee_id')
+                            ->hidden(),
+                        Select::make('recipient_employee_id')
+                            ->label('Recipient Employee')
+                            ->options(fn (): array => EmployeeRecipientOptions::employeeOptions())
                             ->searchable()
                             ->preload()
+                            ->afterStateUpdated(function ($state, $set): void {
+                                $set('shared_with_employee_id', $state);
+                                $set('shared_with_user_id', EmployeeRecipientOptions::userIdForEmployeeId($state));
+                            })
+                            ->helperText('All employees are listed. If an employee has no linked login yet, the share still keeps the employee recipient record.')
                             ->visible(fn ($get) => $get('share_type') === 'staff')
-                            ->dehydrated(fn ($get) => $get('share_type') === 'staff')
+                            ->dehydrated(false)
                             ->rules(['required_if:share_type,staff']),
                         TextInput::make('shared_with_email')
                             ->email()
@@ -108,6 +118,7 @@ class SharedFilesTable
                             'share_type' => $data['share_type'],
                             'access_level' => $data['access_level'],
                             'shared_with_user_id' => $data['shared_with_user_id'] ?? null,
+                            'shared_with_employee_id' => $data['shared_with_employee_id'] ?? null,
                             'shared_with_email' => $data['shared_with_email'] ?? null,
                             'password' => $data['password'] ?? null,
                             'max_downloads' => $data['max_downloads'] ?? null,

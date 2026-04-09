@@ -40,11 +40,14 @@ class TopDonorsWidget extends BaseWidget
             ->orderByDesc('total_amount')
             ->limit(10);
 
-        // Use fromSub() on an Eloquent query so Filament still gets an Eloquent
-        // Builder, but bound to our pre-aggregated 'top_donors' alias.
-        $query = Donation::query()
+        // Use a model instance bound to the subquery alias so Filament's
+        // implicit ORDER BY uses top_donors.id (not donations.id).
+        $model = new Donation();
+        $model->setTable('top_donors');
+
+        $query = $model->newQuery()
             ->fromSub($inner, 'top_donors')
-            ->select('*')
+            ->select('top_donors.*')
             ->orderByDesc('total_amount');
 
         return $table
