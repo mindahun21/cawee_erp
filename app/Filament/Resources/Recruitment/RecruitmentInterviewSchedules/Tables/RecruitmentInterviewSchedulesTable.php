@@ -3,6 +3,11 @@
 namespace App\Filament\Resources\Recruitment\RecruitmentInterviewSchedules\Tables;
 
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Forms\Components\DatePicker;
+use App\Filament\Helpers\ExportHelper;
 use Filament\Tables\Table;
 
 class RecruitmentInterviewSchedulesTable
@@ -42,6 +47,7 @@ class RecruitmentInterviewSchedulesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                TrashedFilter::make(),
                 \Filament\Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'draft' => 'Draft',
@@ -91,8 +97,7 @@ class RecruitmentInterviewSchedulesTable
                         });
                     }),
             ])
-            ->filtersFormColumns(3)
-            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(2)
             ->actions([
                 \Filament\Actions\EditAction::make()
                     ->visible(fn ($record) => in_array($record->status, ['draft', 'rejected'])),
@@ -158,6 +163,20 @@ class RecruitmentInterviewSchedulesTable
                         \Filament\Notifications\Notification::make()->title('Schedule marked as completed')->success()->send();
                     }),
             ])
-            ->defaultSort('interview_date', 'desc');
+            ->defaultSort('interview_date', 'desc')
+            ->bulkActions([
+                ExportHelper::makeBulkAction('export'),
+                \Filament\Actions\DeleteBulkAction::make()
+                    ->visible(fn () => auth()->user()->can('Delete:RecruitmentInterviewSchedule'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Schedules')
+                    ->modalDescription('Are you sure you want to delete the selected interview schedules?')
+                    ->modalSubmitActionLabel('Yes, delete them')
+                    ->deselectRecordsAfterCompletion(),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\ForceDeleteBulkAction::make(),
+                    \Filament\Actions\RestoreBulkAction::make(),
+                ]),
+            ]);
     }
 }

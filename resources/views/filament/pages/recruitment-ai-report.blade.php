@@ -169,6 +169,70 @@
             </div>
             @endif
 
+            {{-- Tables --}}
+            @if(!empty($report['tables']))
+            @foreach($report['tables'] as $tableIndex => $tableData)
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-2">
+                        <x-heroicon-o-table-cells class="h-5 w-5 text-indigo-500" />
+                        <span>{{ $tableData['title'] ?? 'Data Table' }}</span>
+                    </div>
+                </x-slot>
+                @if(!empty($tableData['description']))
+                <x-slot name="description">{{ $tableData['description'] }}</x-slot>
+                @endif
+
+                <div class="space-y-4">
+                    {{-- Export Button --}}
+                    <div class="flex justify-end">
+                        <button
+                            type="button"
+                            onclick="exportTableToCSV('ai-table-{{ $tableIndex }}', '{{ Str::slug($tableData['title'] ?? 'table') }}.csv')"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-all"
+                        >
+                            <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
+                            Export CSV
+                        </button>
+                    </div>
+
+                    {{-- Table --}}
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+                        <table id="ai-table-{{ $tableIndex }}" class="min-w-full divide-y divide-gray-200 dark:divide-white/10">
+                            <thead class="bg-gray-50 dark:bg-white/5">
+                                <tr>
+                                    @foreach($tableData['columns'] ?? [] as $column)
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                        {{ $column['label'] ?? $column['key'] ?? '' }}
+                                    </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-transparent divide-y divide-gray-200 dark:divide-white/5">
+                                @foreach($tableData['rows'] ?? [] as $row)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                    @foreach($tableData['columns'] ?? [] as $column)
+                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                                        {{ $row[$column['key']] ?? '—' }}
+                                    </td>
+                                    @endforeach
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if(empty($tableData['rows']))
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <x-heroicon-o-inbox class="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p class="text-sm">No data available</p>
+                    </div>
+                    @endif
+                </div>
+            </x-filament::section>
+            @endforeach
+            @endif
+
             {{-- Insights --}}
             @if(!empty($report['insights']))
             <x-filament::section>
@@ -232,6 +296,33 @@
     <script>
         // Keep track of chart instances to destroy before re-rendering
         window.__aiCharts = window.__aiCharts || {};
+
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
+                    data = data.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(','));
+            }
+
+            const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
 
         function aiReportApp() {
             return {

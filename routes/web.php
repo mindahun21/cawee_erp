@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\FileSharing\FileShareController;
 use App\Http\Controllers\FileSharing\RecipientShareController;
+use App\Http\Controllers\RecruitmentPrintController;
 use Illuminate\Support\Facades\Route;
-// Recruitment routes removed.
+
+Route::middleware('auth')->get('/admin/recruitment/print', [RecruitmentPrintController::class, 'print'])->name('recruitment.print');
+
 
 Route::get('/', function () {
     return view('welcome');

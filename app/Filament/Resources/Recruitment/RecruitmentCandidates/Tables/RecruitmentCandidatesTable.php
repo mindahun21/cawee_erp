@@ -9,7 +9,13 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
+use App\Filament\Helpers\ExportHelper;
+use Filament\Actions\ImportAction;
+use App\Filament\Imports\RecruitmentCandidateImporter;
 
 class RecruitmentCandidatesTable
 {
@@ -112,13 +118,73 @@ class RecruitmentCandidatesTable
             ])
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('gender')
+                    ->options([
+                        'male' => 'Male',
+                        'female' => 'Female',
+                    ]),
+                SelectFilter::make('seniority')
+                    ->options([
+                        'Intern' => 'Intern',
+                        'Junior' => 'Junior',
+                        'Mid-Level' => 'Mid-Level',
+                        'Senior' => 'Senior',
+                        'Lead' => 'Lead',
+                    ]),
+                SelectFilter::make('marital_status')
+                    ->options([
+                        'Single' => 'Single',
+                        'Married' => 'Married',
+                        'Divorced' => 'Divorced',
+                    ]),
+                SelectFilter::make('nationality')
+                    ->options(function () {
+                        return \App\Models\Recruitment\RecruitmentCandidate::distinct()
+                            ->whereNotNull('nationality')
+                            ->pluck('nationality', 'nationality')
+                            ->toArray();
+                    })
+                    ->searchable(),
+                SelectFilter::make('religion')
+                    ->options(function () {
+                        return \App\Models\Recruitment\RecruitmentCandidate::distinct()
+                            ->whereNotNull('religion')
+                            ->pluck('religion', 'religion')
+                            ->toArray();
+                    })
+                    ->searchable(),
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')
+                            ->label('Registered From'),
+                        DatePicker::make('created_until')
+                            ->label('Registered Until'),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query
+                            ->when($data['created_from'], fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+                            ->when($data['created_until'], fn ($q, $date) => $q->whereDate('created_at', '<=', $date));
+                    }),
             ])
+            ->filtersFormColumns(2)
             ->recordActions([
                 EditAction::make(),
             ])
-            ->toolbarActions([
+            ->headerActions([
+                ImportAction::make()
+                    ->importer(RecruitmentCandidateImporter::class)
+                    ->icon('heroicon-o-arrow-up-tray'),
+            ])
+            ->bulkActions([
+                ExportHelper::makeBulkAction('export'),
+                DeleteBulkAction::make()
+                    ->visible(fn () => auth()->user()->can('Delete:RecruitmentCandidate'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Candidates')
+                    ->modalDescription('Are you sure you want to delete the selected candidates? This will also delete all their applications and related data.')
+                    ->modalSubmitActionLabel('Yes, delete them')
+                    ->deselectRecordsAfterCompletion(),
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
