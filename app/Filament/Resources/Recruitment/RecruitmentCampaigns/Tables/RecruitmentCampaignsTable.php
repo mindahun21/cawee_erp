@@ -16,6 +16,11 @@ use App\Models\Recruitment\RecruitmentCampaign;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Forms\Components\DatePicker;
+use App\Filament\Helpers\ExportHelper;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
 
@@ -110,7 +115,59 @@ class RecruitmentCampaignsTable
             ])
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('status')
+                    ->options([
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'rejected' => 'Rejected',
+                        'active' => 'Active',
+                        'paused' => 'Paused',
+                        'full' => 'Full',
+                        'closed' => 'Closed',
+                    ]),
+                SelectFilter::make('employment_type')
+                    ->options([
+                        'full_time' => 'Full Time',
+                        'part_time' => 'Part Time',
+                        'contract' => 'Contract',
+                        'internship' => 'Internship',
+                    ]),
+                SelectFilter::make('job_position_id')
+                    ->relationship('jobPosition', 'title')
+                    ->label('Job Position')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('channel_id')
+                    ->relationship('channel', 'name')
+                    ->label('Channel')
+                    ->searchable()
+                    ->preload(),
+                TernaryFilter::make('is_public')
+                    ->label('Public Campaign')
+                    ->placeholder('All campaigns')
+                    ->trueLabel('Public only')
+                    ->falseLabel('Internal only'),
+                SelectFilter::make('created_by')
+                    ->label('Created By')
+                    ->options(function () {
+                        return \App\Models\User::pluck('name', 'id')->toArray();
+                    })
+                    ->searchable()
+                    ->preload(),
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('start_from')
+                            ->label('Start Date From'),
+                        DatePicker::make('start_until')
+                            ->label('Start Date Until'),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query
+                            ->when($data['start_from'], fn ($q, $date) => $q->whereDate('start_date', '>=', $date))
+                            ->when($data['start_until'], fn ($q, $date) => $q->whereDate('start_date', '<=', $date));
+                    }),
             ])
+            ->filtersFormColumns(2)
             ->recordActions([
                 ViewAction::make(),
                 Action::make('submit_for_approval')
@@ -178,9 +235,16 @@ class RecruitmentCampaignsTable
                 DeleteAction::make()
                     ->visible(fn (RecruitmentCampaign $record) => $record->status === RecruitmentCampaign::STATUS_DRAFT),
             ])
-            ->toolbarActions([
+            ->bulkActions([
+                ExportHelper::makeBulkAction('export'),
+                DeleteBulkAction::make()
+                    ->visible(fn () => auth()->user()->can('Delete:RecruitmentCampaign'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Campaigns')
+                    ->modalDescription('Are you sure you want to delete the selected campaigns? This will also delete all related applications, interview schedules, offers, and other associated data.')
+                    ->modalSubmitActionLabel('Yes, delete them')
+                    ->deselectRecordsAfterCompletion(),
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
