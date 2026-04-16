@@ -5,7 +5,8 @@ namespace App\Filament\Resources\FileSharing\FileShareResource\Schemas;
 use App\Models\FileSharingSetting;
 use App\Models\SharedFile;
 use App\Models\SharedFolder;
-use App\Models\User;
+use App\Support\FileSharing\EmployeeRecipientOptions;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -67,7 +68,7 @@ class FileShareForm
             Select::make('share_type')
                 ->options(function (Get $get) use ($publicSharingEnabled): array {
                     $options = [
-                        'staff' => 'Staff',
+                        'staff' => 'Employee',
                         'client' => 'Client',
                     ];
 
@@ -107,12 +108,30 @@ class FileShareForm
                 ->required(),
 
             Select::make('shared_with_user_id')
-                ->label('Recipient User')
-                ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                ->hidden(),
+
+            Hidden::make('shared_with_employee_id')
+                ->hidden(),
+
+            Select::make('recipient_employee_id')
+                ->label('Recipient Employee')
+                ->options(fn (): array => EmployeeRecipientOptions::employeeOptions())
                 ->searchable()
                 ->preload()
+                ->afterStateHydrated(function (Field $component, $state, ?\Illuminate\Database\Eloquent\Model $record): void {
+                    if ($record && filled($record->shared_with_employee_id)) {
+                        $component->state($record->shared_with_employee_id);
+                    } elseif ($record && filled($record->shared_with_user_id)) {
+                        $component->state(EmployeeRecipientOptions::employeeIdForUserId($record->shared_with_user_id));
+                    }
+                })
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    $set('shared_with_employee_id', $state);
+                    $set('shared_with_user_id', EmployeeRecipientOptions::userIdForEmployeeId($state));
+                })
+                ->helperText('All employees are listed. If an employee has no linked login yet, the share still keeps the employee recipient record.')
                 ->visible(fn ($get) => $get('share_type') === 'staff')
-                ->dehydrated(fn ($get) => $get('share_type') === 'staff')
+                ->dehydrated(false)
                 ->rules(['required_if:share_type,staff']),
 
             TextInput::make('shared_with_email')

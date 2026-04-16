@@ -20,6 +20,7 @@ class FileShare extends Model
         'share_type',
         'access_level',
         'shared_with_user_id',
+        'shared_with_employee_id',
         'shared_with_email',
         'share_token',
         'password',
@@ -87,6 +88,11 @@ class FileShare extends Model
         return $this->belongsTo(User::class, 'shared_with_user_id');
     }
 
+    public function employeeRecipient(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'shared_with_employee_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -123,17 +129,18 @@ class FileShare extends Model
     {
         $type = $this->share_type;
         $hasUser = filled($this->shared_with_user_id);
+        $hasEmployee = filled($this->shared_with_employee_id);
         $hasEmail = filled($this->shared_with_email);
 
-        if ($type === 'staff' && ! $hasUser) {
+        if ($type === 'staff' && ! $hasEmployee) {
             throw ValidationException::withMessages([
-                'shared_with_user_id' => 'Staff shares must target an internal user.',
+                'shared_with_employee_id' => 'Employee shares must target an employee record.',
             ]);
         }
 
         if ($type === 'staff' && $hasEmail) {
             throw ValidationException::withMessages([
-                'shared_with_email' => 'Staff shares should not set an external email recipient.',
+                'shared_with_email' => 'Employee shares should not set an external email recipient.',
             ]);
         }
 
@@ -189,7 +196,15 @@ class FileShare extends Model
 
     public function canBeAccessedByStaff(?User $user): bool
     {
-        return $user !== null && (int) $this->shared_with_user_id === (int) $user->getKey();
+        if (! $user) {
+            return false;
+        }
+
+        if (filled($this->shared_with_employee_id) && $user->employee) {
+            return (int) $this->shared_with_employee_id === (int) $user->employee->getKey();
+        }
+
+        return (int) $this->shared_with_user_id === (int) $user->getKey();
     }
 
     public function canBeAccessedByClientEmail(?string $email): bool

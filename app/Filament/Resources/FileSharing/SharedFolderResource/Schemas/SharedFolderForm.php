@@ -21,7 +21,9 @@ class SharedFolderForm
                 ->label('Parent Folder')
                 ->options(SharedFolder::query()->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->placeholder('Root folder (optional)')
+                ->helperText('Leave this empty to create a top-level folder.'),
 
             TextInput::make('name')
                 ->required()

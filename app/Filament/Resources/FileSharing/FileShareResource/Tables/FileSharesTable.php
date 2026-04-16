@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FileSharing\FileShareResource\Tables;
 
+use App\Support\FileSharing\EmployeeRecipientOptions;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -25,6 +26,12 @@ class FileSharesTable
                     ->placeholder('File share'),
                 TextColumn::make('share_type')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'staff' => 'Employee',
+                        'client' => 'Client',
+                        'public' => 'Public',
+                        default => ucfirst($state),
+                    })
                     ->sortable(),
                 TextColumn::make('access_level')
                     ->badge()
@@ -32,8 +39,9 @@ class FileSharesTable
                 TextColumn::make('shared_with_email')
                     ->label('Recipient Email')
                     ->placeholder('-'),
-                TextColumn::make('recipient.name')
-                    ->label('Recipient User')
+                TextColumn::make('shared_with_employee_id')
+                    ->label('Recipient Employee')
+                    ->formatStateUsing(fn ($state, $record): string => EmployeeRecipientOptions::labelForEmployee($record->employeeRecipient) ?? EmployeeRecipientOptions::labelForUser($record->recipient) ?? '-')
                     ->placeholder('-'),
                 TextColumn::make('share_url')
                     ->label('Share URL')
@@ -54,7 +62,7 @@ class FileSharesTable
             ->filters([
                 SelectFilter::make('share_type')
                     ->options([
-                        'staff' => 'Staff',
+                        'staff' => 'Employee',
                         'client' => 'Client',
                         'public' => 'Public',
                     ]),

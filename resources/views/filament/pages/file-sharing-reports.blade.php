@@ -10,6 +10,8 @@
             'previewed' => ['label' => 'Previews', 'bar' => 'fs-seg-client'],
             'downloaded' => ['label' => 'Downloads', 'bar' => 'fs-seg-public'],
             'shared' => ['label' => 'Shares', 'bar' => 'fs-seg-staff'],
+            'unlocked' => ['label' => 'Unlocks', 'bar' => 'fs-seg-client'],
+            'access_denied' => ['label' => 'Denied', 'bar' => 'fs-seg-denied'],
             'revoked' => ['label' => 'Revokes', 'bar' => 'fs-seg-denied'],
             'deleted' => ['label' => 'Deletes', 'bar' => 'fs-seg-denied'],
         ];
@@ -440,7 +442,7 @@
                     <div class="fs-kicker">File Sharing Intelligence</div>
                     <div class="fs-headline">See what is being shared, opened, and denied.</div>
                     <div class="fs-copy">
-                        This dashboard highlights the current file-sharing footprint across staff, clients, and public links, with the biggest activity signals surfaced first.
+                        This dashboard highlights the current file-sharing footprint across employees, clients, and public links, with the biggest activity signals surfaced first.
                     </div>
                     <div class="fs-range-row">
                         <button class="fs-range-chip {{ $rangeDays === '7' ? 'active' : '' }}" wire:click="setRange('7')" type="button">7d</button>
@@ -479,7 +481,7 @@
         <section class="fs-band">
             <div class="fs-panel">
                 <div class="fs-panel-title">Share Type Mix</div>
-                <div class="fs-panel-sub">Current distribution of public, staff, and client shares.</div>
+                <div class="fs-panel-sub">Current distribution of public, employee, and client shares.</div>
 
                 <div class="fs-share-mix">
                     <div class="fs-mix-track">
@@ -496,7 +498,7 @@
                         </div>
                         <div class="fs-legend-row">
                             <span class="fs-dot fs-seg-staff"></span>
-                            <span>Staff Shares</span>
+                            <span>Employee Shares</span>
                             <strong>{{ number_format($summary['staffShares']) }}</strong>
                         </div>
                         <div class="fs-legend-row">
@@ -584,6 +586,54 @@
                     @empty
                         <div class="fs-row">
                             <div class="fs-row-sub">No uploads found.</div>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="fs-grid-two">
+            <div class="fs-panel">
+                <div class="fs-panel-title">Top Recipients</div>
+                <div class="fs-panel-sub">Who is receiving the most employee and client shares in the selected period.</div>
+                <div class="fs-list">
+                    @forelse ($topRecipients as $recipientShare)
+                        <div class="fs-row">
+                            <div class="fs-row-head">
+                                <div>
+                                    <div class="fs-row-title">{{ $this->recipientLabel($recipientShare) }}</div>
+                                    <div class="fs-row-sub">{{ $recipientShare->share_type === 'staff' ? 'Employee recipient' : 'Client recipient' }}</div>
+                                </div>
+                                <span class="fs-pill {{ $recipientShare->share_type === 'staff' ? 'fs-pill-sky' : 'fs-pill-teal' }}">
+                                    {{ $recipientShare->shares_count }} shares
+                                </span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="fs-row">
+                            <div class="fs-row-sub">No recipient activity found for this range.</div>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="fs-panel">
+                <div class="fs-panel-title">Top Shared Folders</div>
+                <div class="fs-panel-sub">Folders with the most share activity in the selected period.</div>
+                <div class="fs-list">
+                    @forelse ($topFolders as $folderRow)
+                        <div class="fs-row">
+                            <div class="fs-row-head">
+                                <div>
+                                    <div class="fs-row-title">{{ $folderRow->name }}</div>
+                                    <div class="fs-row-sub">{{ $folderRow->files_count }} files · {{ $folderRow->children_count }} subfolders</div>
+                                </div>
+                                <span class="fs-pill fs-pill-amber">{{ $folderRow->shares_count }} shares</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="fs-row">
+                            <div class="fs-row-sub">No folder shares found for this range.</div>
                         </div>
                     @endforelse
                 </div>
