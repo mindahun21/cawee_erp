@@ -18,7 +18,7 @@ class SharedFileForm
     {
         $maxMb = FileSharingSetting::maxFileSizeMb();
         $allowedExtensions = FileSharingSetting::allowedFileExtensions();
-        $acceptedTypes = collect($allowedExtensions)->map(fn (string $ext): string => '.'.$ext)->all();
+        $acceptedTypes = FileSharingSetting::acceptedUploadTypes();
 
         return $schema->components([
             Hidden::make('uploaded_by')

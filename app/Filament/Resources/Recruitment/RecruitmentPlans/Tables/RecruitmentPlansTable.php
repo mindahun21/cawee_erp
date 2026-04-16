@@ -17,6 +17,9 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use App\Filament\Helpers\ExportHelper;
 use Filament\Tables\Table;
 
 class RecruitmentPlansTable
@@ -83,7 +86,45 @@ class RecruitmentPlansTable
                         RecruitmentPlan::STATUS_REJECTED => 'Rejected',
                         RecruitmentPlan::STATUS_CLOSED => 'Closed',
                     ]),
+                SelectFilter::make('department_id')
+                    ->relationship('department', 'name')
+                    ->label('Department')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('job_position_id')
+                    ->relationship('jobPosition', 'title')
+                    ->label('Job Position')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('working_from')
+                    ->options([
+                        'Internship' => 'Internship',
+                        'Full-Time'  => 'Full-Time',
+                        'Part-Time'  => 'Part-Time',
+                        'Contract'   => 'Contract',
+                        'Temporary'  => 'Temporary',
+                    ]),
+                SelectFilter::make('created_by')
+                    ->label('Created By')
+                    ->options(function () {
+                        return \App\Models\User::pluck('name', 'id')->toArray();
+                    })
+                    ->searchable()
+                    ->preload(),
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('start_from')
+                            ->label('Start Date From'),
+                        DatePicker::make('start_until')
+                            ->label('Start Date Until'),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query
+                            ->when($data['start_from'], fn ($q, $date) => $q->whereDate('start_date', '>=', $date))
+                            ->when($data['start_until'], fn ($q, $date) => $q->whereDate('start_date', '<=', $date));
+                    }),
             ])
+            ->filtersFormColumns(2)
             ->recordActions([
                 Action::make('submit_for_approval')
                     ->label('Submit for Approval')
@@ -145,9 +186,16 @@ class RecruitmentPlansTable
                 DeleteAction::make()
                     ->visible(fn (RecruitmentPlan $record) => $record->status === RecruitmentPlan::STATUS_DRAFT),
             ])
-            ->toolbarActions([
+            ->bulkActions([
+                ExportHelper::makeBulkAction('export'),
+                DeleteBulkAction::make()
+                    ->visible(fn () => auth()->user()->can('Delete:RecruitmentPlan'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Plans')
+                    ->modalDescription('Are you sure you want to delete the selected plans? This will also delete all related campaigns, applications, and other associated data.')
+                    ->modalSubmitActionLabel('Yes, delete them')
+                    ->deselectRecordsAfterCompletion(),
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),

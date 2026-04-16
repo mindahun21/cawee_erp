@@ -15,7 +15,7 @@ class ManageFileShares extends ManageRecords
     {
         return [
             Action::make('myShares')
-                ->label('My Shares For Staff')
+                ->label('My Employee Shares')
                 ->icon('heroicon-o-folder-open')
                 ->outlined()
                 ->url(fn (): string => route('recipient-shares.index')),

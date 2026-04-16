@@ -152,6 +152,25 @@ The JSON MUST follow this exact structure:
     }
   ],
 
+  "tables": [
+    {
+      "title": "Table Title",
+      "description": "Brief description of what this table shows",
+      "columns": [
+        {
+          "label": "Column Header",
+          "key": "column_key"
+        }
+      ],
+      "rows": [
+        {
+          "column_key": "Cell value",
+          "another_key": "Another value"
+        }
+      ]
+    }
+  ],
+
   "insights": [
     "Observation sentence 1 based on the data.",
     "Observation sentence 2 based on the data."

@@ -6,9 +6,12 @@ use App\Contracts\Recruitment\Approvable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RecruitmentOffer extends Model implements Approvable
 {
+    use SoftDeletes;
+
     const STATUS_DRAFT     = 'draft';
     const STATUS_SUBMITTED = 'submitted';
     const STATUS_APPROVED  = 'approved';
