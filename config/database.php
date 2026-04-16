@@ -98,6 +98,20 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'vector' => [
+            'driver' => 'pgsql',
+            'host' => env('VECTOR_DB_HOST', '127.0.0.1'),
+            'port' => env('VECTOR_DB_PORT', '15432'),
+            'database' => env('VECTOR_DB_DATABASE', 'elisoft_vectors'),
+            'username' => env('VECTOR_DB_USERNAME', 'vector_user'),
+            'password' => env('VECTOR_DB_PASSWORD', 'vector_password'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
