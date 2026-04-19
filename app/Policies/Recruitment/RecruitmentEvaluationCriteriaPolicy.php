@@ -17,7 +17,7 @@ class RecruitmentEvaluationCriteriaPolicy
         return $authUser->can('ViewAny:RecruitmentEvaluationCriteria');
     }
 
-    public function view(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function view(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('View:RecruitmentEvaluationCriteria');
     }
@@ -27,22 +27,22 @@ class RecruitmentEvaluationCriteriaPolicy
         return $authUser->can('Create:RecruitmentEvaluationCriteria');
     }
 
-    public function update(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function update(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('Update:RecruitmentEvaluationCriteria');
     }
 
-    public function delete(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function delete(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('Delete:RecruitmentEvaluationCriteria');
     }
 
-    public function restore(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function restore(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('Restore:RecruitmentEvaluationCriteria');
     }
 
-    public function forceDelete(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function forceDelete(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('ForceDelete:RecruitmentEvaluationCriteria');
     }
@@ -57,7 +57,7 @@ class RecruitmentEvaluationCriteriaPolicy
         return $authUser->can('RestoreAny:RecruitmentEvaluationCriteria');
     }
 
-    public function replicate(AuthUser $authUser, RecruitmentEvaluationCriteria $evaluationCriteria): bool
+    public function replicate(AuthUser $authUser, RecruitmentEvaluationCriteria $recruitmentEvaluationCriteria): bool
     {
         return $authUser->can('Replicate:RecruitmentEvaluationCriteria');
     }
@@ -66,4 +66,5 @@ class RecruitmentEvaluationCriteriaPolicy
     {
         return $authUser->can('Reorder:RecruitmentEvaluationCriteria');
     }
+
 }

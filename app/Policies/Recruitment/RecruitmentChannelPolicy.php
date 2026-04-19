@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies\Recruitment;
 
-use App\Models\Recruitment\RecruitmentChannel;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\Recruitment\RecruitmentChannel;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RecruitmentChannelPolicy
@@ -66,4 +66,5 @@ class RecruitmentChannelPolicy
     {
         return $authUser->can('Reorder:RecruitmentChannel');
     }
+
 }
