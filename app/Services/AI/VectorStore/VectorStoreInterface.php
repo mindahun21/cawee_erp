@@ -41,4 +41,20 @@ interface VectorStoreInterface
      * Remove all stored documents (used during re-indexing).
      */
     public function truncate(): void;
+
+    /**
+     * Find existing embeddings by source file path.
+     *
+     * @param string $source The source filename.
+     * @return object|null Object with file_hash, file_size, file_modified_at or null if not found.
+     */
+    public function findBySource(string $source): ?object;
+
+    /**
+     * Delete all embeddings for a specific source file.
+     *
+     * @param string $source The source filename.
+     * @return void
+     */
+    public function deleteBySource(string $source): void;
 }

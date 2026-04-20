@@ -15,7 +15,7 @@ class EmbeddingService
     public function __construct()
     {
         $this->provider = config('services.embedding.provider', env('EMBEDDING_PROVIDER', 'gemini'));
-        $this->model = config('services.embedding.model', env('EMBEDDING_MODEL', 'text-embedding-004'));
+        $this->model = config('services.embedding.model', env('EMBEDDING_MODEL', 'gemini-embedding-001'));
         $this->dimensions = (int) config('services.embedding.dimensions', env('EMBEDDING_DIMENSIONS', 768));
         $this->apiKey = env('GEMINI_API_KEY', '');
     }
@@ -50,10 +50,14 @@ class EmbeddingService
 
     protected function embedWithGemini(string $text): array
     {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:embedContent?key={$this->apiKey}";
+        // Ensure model has 'models/' prefix for API
+        $modelWithPrefix = str_starts_with($this->model, 'models/') ? $this->model : "models/{$this->model}";
+        $modelName = str_replace('models/', '', $modelWithPrefix);
+        
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelName}:embedContent?key={$this->apiKey}";
 
         $response = Http::timeout(30)->post($url, [
-            'model' => "models/{$this->model}",
+            'model' => $modelWithPrefix,
             'content' => [
                 'parts' => [
                     ['text' => $text],
@@ -75,10 +79,14 @@ class EmbeddingService
 
     protected function embedBatchWithGemini(array $texts): array
     {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:batchEmbedContents?key={$this->apiKey}";
+        // Ensure model has 'models/' prefix for API
+        $modelWithPrefix = str_starts_with($this->model, 'models/') ? $this->model : "models/{$this->model}";
+        $modelName = str_replace('models/', '', $modelWithPrefix);
+        
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelName}:batchEmbedContents?key={$this->apiKey}";
 
         $requests = array_map(fn(string $text) => [
-            'model' => "models/{$this->model}",
+            'model' => $modelWithPrefix,
             'content' => [
                 'parts' => [['text' => $text]],
             ],

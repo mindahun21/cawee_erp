@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\AI;
+namespace App\Services\AI\Data;
 
 use App\Models\Recruitment\RecruitmentApplication;
 use App\Models\Recruitment\RecruitmentCampaign;
@@ -9,25 +9,53 @@ use App\Models\Recruitment\RecruitmentInterviewSchedule;
 use App\Models\Recruitment\RecruitmentOffer;
 use App\Models\Recruitment\RecruitmentPlan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 
-class RecruitmentDataPreloader
+class RecruitmentDataPreloader extends ModuleDataPreloader
 {
+    public function getModuleName(): string
+    {
+        return 'recruitment';
+    }
+
+    public function getRequiredPermission(): string
+    {
+        return 'View:RecruitmentDashboard';
+    }
+
+    protected function getStatusValues(): array
+    {
+        return [
+            'plans' => ['draft', 'submitted', 'approved', 'rejected', 'closed'],
+            'campaigns' => ['draft', 'submitted', 'rejected', 'active', 'paused', 'full', 'closed'],
+            'applications' => ['applied', 'under_review', 'shortlisted', 'interview_scheduled', 
+                'interviewed', 'selected', 'waitlisted', 'offer_pending', 'offer_accepted', 
+                'offer_declined', 'hired', 'rejected', 'withdrawn'],
+        ];
+    }
+
     /**
      * Build a structured text snapshot of live recruitment data
      * for injection into the AI system prompt.
      */
-    public function snapshot(): string
+    public function snapshot(array $filters = []): string
     {
         $lines = [];
         $lines[] = '=== LIVE RECRUITMENT DATA SNAPSHOT (as of ' . now()->toDateTimeString() . ') ===';
         $lines[] = '';
 
         // ── Plans ──────────────────────────────────────
-        $plansByStatus = RecruitmentPlan::query()
+        $plansQuery = RecruitmentPlan::query();
+        if (isset($filters['status'])) {
+            $plansQuery->where('status', $filters['status']);
+        }
+        
+        $plansByStatus = (clone $plansQuery)
             ->select('status', DB::raw('COUNT(*) as cnt'))
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
+            
         $lines[] = '## Plans';
         foreach ($plansByStatus as $status => $count) {
             $lines[] = "  {$status}: {$count}";
@@ -36,11 +64,17 @@ class RecruitmentDataPreloader
         $lines[] = '';
 
         // ── Campaigns ──────────────────────────────────
-        $campaignsByStatus = RecruitmentCampaign::query()
+        $campaignsQuery = RecruitmentCampaign::query();
+        if (isset($filters['status'])) {
+            $campaignsQuery->where('status', $filters['status']);
+        }
+        
+        $campaignsByStatus = (clone $campaignsQuery)
             ->select('status', DB::raw('COUNT(*) as cnt'))
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
+            
         $lines[] = '## Campaigns';
         foreach ($campaignsByStatus as $status => $count) {
             $lines[] = "  {$status}: {$count}";
@@ -49,15 +83,27 @@ class RecruitmentDataPreloader
         $lines[] = '';
 
         // Active campaigns detail
-        $activeCampaigns = RecruitmentCampaign::query()
+        $activeCampaignsQuery = RecruitmentCampaign::query()
             ->where('status', 'active')
             ->with('jobPosition')
-            ->withCount('applications')
+            ->withCount('applications');
+            
+        // Apply date filter if provided
+        if (isset($filters['date_range'])) {
+            $fromDate = $this->parseDateRange($filters['date_range']);
+            $activeCampaignsQuery->where('created_at', '>=', $fromDate);
+        }
+        
+        // Apply limit
+        $limit = isset($filters['limit']) ? min(100, max(1, (int)$filters['limit'])) : 10;
+        
+        $activeCampaigns = $activeCampaignsQuery
             ->orderByDesc('applications_count')
-            ->limit(10)
+            ->limit($limit)
             ->get();
+            
         if ($activeCampaigns->isNotEmpty()) {
-            $lines[] = '## Active Campaigns (top 10 by application count)';
+            $lines[] = "## Active Campaigns (top {$limit} by application count)";
             foreach ($activeCampaigns as $c) {
                 $posName = $c->jobPosition?->name ?? 'N/A';
                 $lines[] = "  - [{$c->campaign_code}] {$c->title} | Position: {$posName} | Vacancies: {$c->vacancies_needed} | Applications: {$c->applications_count} | Ends: " . ($c->end_date?->format('Y-m-d') ?? 'N/A');
@@ -66,11 +112,17 @@ class RecruitmentDataPreloader
         }
 
         // ── Applications ───────────────────────────────
-        $appsByStatus = RecruitmentApplication::query()
+        $appsQuery = RecruitmentApplication::query();
+        if (isset($filters['status'])) {
+            $appsQuery->where('status', $filters['status']);
+        }
+        
+        $appsByStatus = (clone $appsQuery)
             ->select('status', DB::raw('COUNT(*) as cnt'))
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
+            
         $lines[] = '## Applications';
         foreach ($appsByStatus as $status => $count) {
             $lines[] = "  {$status}: {$count}";
@@ -89,6 +141,7 @@ class RecruitmentDataPreloader
             ->orderBy('week_key')
             ->pluck('cnt', 'week_key')
             ->toArray();
+            
         if (!empty($weeklyApps)) {
             $lines[] = '## Application Trend (weekly, last 8 weeks)';
             foreach ($weeklyApps as $week => $count) {
@@ -103,6 +156,7 @@ class RecruitmentDataPreloader
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
+            
         $lines[] = '## Interview Schedules';
         foreach ($schedulesByStatus as $status => $count) {
             $lines[] = "  {$status}: {$count}";
@@ -115,6 +169,7 @@ class RecruitmentDataPreloader
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
+            
         $lines[] = '## Offers';
         foreach ($offersByStatus as $status => $count) {
             $lines[] = "  {$status}: {$count}";
@@ -139,6 +194,7 @@ class RecruitmentDataPreloader
             ->orderByDesc('demand')
             ->limit(10)
             ->get();
+            
         if ($topSkills->isNotEmpty()) {
             $lines[] = '## Top Skills in Demand (active campaigns)';
             foreach ($topSkills as $skill) {
@@ -154,12 +210,22 @@ class RecruitmentDataPreloader
             $shortlisted = ($appsByStatus['shortlisted'] ?? 0) + ($appsByStatus['interview_scheduled'] ?? 0) + ($appsByStatus['interviewed'] ?? 0) + ($appsByStatus['selected'] ?? 0) + ($appsByStatus['offer_pending'] ?? 0) + ($appsByStatus['offer_accepted'] ?? 0) + ($appsByStatus['hired'] ?? 0);
             $interviewed = ($appsByStatus['interviewed'] ?? 0) + ($appsByStatus['selected'] ?? 0) + ($appsByStatus['offer_pending'] ?? 0) + ($appsByStatus['offer_accepted'] ?? 0) + ($appsByStatus['hired'] ?? 0);
             $hired = $appsByStatus['hired'] ?? 0;
-            $lines[] = "  applied_to_shortlisted: " . round(($shortlisted / $totalApps) * 100, 1) . "%";
-            $lines[] = "  applied_to_interviewed: " . round(($interviewed / $totalApps) * 100, 1) . "%";
-            $lines[] = "  applied_to_hired: " . round(($hired / $totalApps) * 100, 1) . "%";
+            $lines[] = "  applied_to_shortlisted: " . $this->formatPercent(($shortlisted / $totalApps) * 100);
+            $lines[] = "  applied_to_interviewed: " . $this->formatPercent(($interviewed / $totalApps) * 100);
+            $lines[] = "  applied_to_hired: " . $this->formatPercent(($hired / $totalApps) * 100);
             $lines[] = '';
         }
 
         return implode("\n", $lines);
     }
+
+    protected function applySearchFilter(Builder $query, string $search): void
+    {
+        $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+              ->orWhere('campaign_code', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+        });
+    }
 }
+

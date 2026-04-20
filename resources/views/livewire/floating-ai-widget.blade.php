@@ -18,8 +18,8 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 px-4">
                     The full Conversational AI and Reporting engine is available in the Analytics Hub.
                 </p>
-                <x-filament::button tag="a" href="{{ \App\Filament\Pages\AiChatPage::getUrl() }}" color="primary">
-                    Open AI Chat
+                <x-filament::button tag="a" href="{{ \App\Filament\Pages\AiAnalyticsHub::getUrl() }}" color="primary">
+                    Open AI Analytics Hub
                 </x-filament::button>
             </div>
         </div>

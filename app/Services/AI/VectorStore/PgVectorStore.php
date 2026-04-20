@@ -53,6 +53,9 @@ class PgVectorStore implements VectorStoreInterface
             'source' => $source,
             'content' => $content,
             'embedding' => $vectorStr,
+            'file_hash' => $metadata['file_hash'] ?? null,
+            'file_size' => $metadata['file_size'] ?? null,
+            'file_modified_at' => $metadata['file_modified_at'] ?? null,
             'metadata' => json_encode($metadata),
             'created_at' => now(),
             'updated_at' => now(),
@@ -139,5 +142,36 @@ class PgVectorStore implements VectorStoreInterface
         ");
 
         Log::info("PgVectorStore: Built IVFFlat index with {$lists} lists over {$count} rows");
+    }
+
+    /**
+     * Find existing embeddings by source file path.
+     */
+    public function findBySource(string $source): ?object
+    {
+        $db = DB::connection($this->connection);
+        
+        $result = $db->table($this->table)
+            ->select('source', 'file_hash', 'file_size', 'file_modified_at')
+            ->where('source', $source)
+            ->first();
+
+        return $result;
+    }
+
+    /**
+     * Delete all embeddings for a specific source file.
+     */
+    public function deleteBySource(string $source): void
+    {
+        $db = DB::connection($this->connection);
+        
+        $deleted = $db->table($this->table)
+            ->where('source', $source)
+            ->delete();
+
+        if ($deleted > 0) {
+            Log::info("PgVectorStore: Deleted {$deleted} embeddings for source '{$source}'");
+        }
     }
 }

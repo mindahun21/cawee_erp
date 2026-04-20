@@ -75,6 +75,26 @@ class AiConversationService
         Redis::del($this->getKey($userId, $conversationId));
     }
 
+    public function deleteConversation(int $userId, string $conversationId): void
+    {
+        $this->clearHistory($userId, $conversationId);
+        Redis::srem("ai_conversations:{$userId}", $conversationId);
+        Redis::del("ai_conversation_meta:{$conversationId}");
+    }
+    
+    public function truncateAfter(int $userId, string $conversationId, int $messageIndex): void
+    {
+        $key = $this->getKey($userId, $conversationId);
+        $length = Redis::llen($key);
+        
+        if ($messageIndex >= 0 && $messageIndex < $length) {
+            // LTRIM keeps range (start, stop). We want 0 to messageIndex
+            // So trimming directly to messageIndex will remove messages after it
+            Redis::ltrim($key, 0, $messageIndex);
+            Redis::hset("ai_conversation_meta:{$conversationId}", 'updated_at', now()->timestamp);
+        }
+    }
+
     protected function getKey(int $userId, string $conversationId): string
     {
         return "{$this->prefix}{$userId}:{$conversationId}";
