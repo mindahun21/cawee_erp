@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('items', function (Blueprint $table) {
-            $table->foreignId('unit_id')->nullable()->constrained('units')->onDelete('set null');
-        });
-
         Schema::table('assets', function (Blueprint $table) {
-            $table->foreignId('unit_id')->nullable()->constrained('units')->onDelete('set null');
-            $table->dropColumn('is_fixed_asset');
+            if (!Schema::hasColumn('assets', 'unit_id')) {
+                $table->foreignId('unit_id')->nullable()->constrained('units')->onDelete('set null');
+            }
+            if (Schema::hasColumn('assets', 'is_fixed_asset')) {
+                $table->dropColumn('is_fixed_asset');
+            }
         });
     }
 
@@ -28,11 +28,6 @@ return new class extends Migration
     {
         Schema::table('assets', function (Blueprint $table) {
             $table->boolean('is_fixed_asset')->default(true);
-            $table->dropForeign(['unit_id']);
-            $table->dropColumn('unit_id');
-        });
-
-        Schema::table('items', function (Blueprint $table) {
             $table->dropForeign(['unit_id']);
             $table->dropColumn('unit_id');
         });

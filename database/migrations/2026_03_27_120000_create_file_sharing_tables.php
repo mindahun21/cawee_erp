@@ -48,7 +48,6 @@ return new class extends Migration
 
             $table->index(['folder_id', 'display_name']);
             $table->index(['visibility', 'uploaded_by']);
-            $table->index(['context_type', 'context_id']);
         });
 
         Schema::create('shared_file_versions', function (Blueprint $table): void {
@@ -104,7 +103,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['action', 'accessed_at']);
-            $table->index(['context_type', 'context_id']);
         });
     }
 

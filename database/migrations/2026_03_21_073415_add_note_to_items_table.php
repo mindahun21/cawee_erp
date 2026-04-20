@@ -11,10 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('items', function (Blueprint $table) {
-            $table->text('note')->nullable()->after('description');
-            $table->string('image')->nullable()->after('note');
-        });
+        // Columns 'note' and 'image' are now created in the original items table migration.
     }
 
     /**
@@ -22,8 +19,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('items', function (Blueprint $table) {
-            $table->dropColumn(['note', 'image']);
-        });
+        // Handled in table drop.
     }
 };

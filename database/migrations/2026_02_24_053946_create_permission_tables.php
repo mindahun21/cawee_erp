@@ -37,7 +37,7 @@ return new class extends Migration
          */
         if (! Schema::hasTable($tableNames['permissions'])) {
             Schema::create($tableNames['permissions'], static function (Blueprint $table) {
-                $table->uuid(); // permission id
+                $table->uuid('id')->primary(); // permission id
                 $table->string('name');
                 $table->string('guard_name');
                 $table->timestamps();
@@ -51,7 +51,7 @@ return new class extends Migration
          */
         if (! Schema::hasTable($tableNames['roles'])) {
             Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames) {
-                $table->uuid(); // role id
+                $table->uuid('id')->primary(); // role id
                 if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
                     $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                     $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
@@ -76,7 +76,7 @@ return new class extends Migration
                 $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
 
                 $table->foreign($pivotPermission)
-                    ->references('uuid') // permission id
+                    ->references('id') // permission id
                     ->on($tableNames['permissions'])
                     ->cascadeOnDelete();
                 if ($teams) {
@@ -101,7 +101,7 @@ return new class extends Migration
                 $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_roles_model_id_model_type_index');
 
                 $table->foreign($pivotRole)
-                    ->references('uuid') // role id
+                    ->references('id') // role id
                     ->on($tableNames['roles'])
                     ->cascadeOnDelete();
                 if ($teams) {
@@ -123,12 +123,12 @@ return new class extends Migration
                 $table->uuid($pivotRole);
 
                 $table->foreign($pivotPermission)
-                    ->references('uuid') // permission id
+                    ->references('id') // permission id
                     ->on($tableNames['permissions'])
                     ->cascadeOnDelete();
 
                 $table->foreign($pivotRole)
-                    ->references('uuid') // role id
+                    ->references('id') // role id
                     ->on($tableNames['roles'])
                     ->cascadeOnDelete();
 

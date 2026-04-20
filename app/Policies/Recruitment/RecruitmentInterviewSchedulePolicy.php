@@ -17,7 +17,7 @@ class RecruitmentInterviewSchedulePolicy
         return $authUser->can('ViewAny:RecruitmentInterviewSchedule');
     }
 
-    public function view(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function view(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('View:RecruitmentInterviewSchedule');
     }
@@ -27,22 +27,22 @@ class RecruitmentInterviewSchedulePolicy
         return $authUser->can('Create:RecruitmentInterviewSchedule');
     }
 
-    public function update(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function update(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('Update:RecruitmentInterviewSchedule');
     }
 
-    public function delete(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function delete(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('Delete:RecruitmentInterviewSchedule');
     }
 
-    public function restore(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function restore(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('Restore:RecruitmentInterviewSchedule');
     }
 
-    public function forceDelete(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function forceDelete(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('ForceDelete:RecruitmentInterviewSchedule');
     }
@@ -57,7 +57,7 @@ class RecruitmentInterviewSchedulePolicy
         return $authUser->can('RestoreAny:RecruitmentInterviewSchedule');
     }
 
-    public function replicate(AuthUser $authUser, RecruitmentInterviewSchedule $record): bool
+    public function replicate(AuthUser $authUser, RecruitmentInterviewSchedule $recruitmentInterviewSchedule): bool
     {
         return $authUser->can('Replicate:RecruitmentInterviewSchedule');
     }
@@ -66,4 +66,5 @@ class RecruitmentInterviewSchedulePolicy
     {
         return $authUser->can('Reorder:RecruitmentInterviewSchedule');
     }
+
 }

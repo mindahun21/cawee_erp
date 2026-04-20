@@ -80,7 +80,7 @@ class HrTimesheetSeeder extends Seeder
                     'phone_number' => '+251' . rand(100000000, 999999999),
                     'department_id' => $dept->id,
                     'job_position_id' => $pos->id,
-                    'employment_type' => 'Full-Time',
+                    'employment_type' => 'Permanent',
                     'date_of_employment' => now()->subYear(),
                     'basic_salary' => 25000,
                 ]));
