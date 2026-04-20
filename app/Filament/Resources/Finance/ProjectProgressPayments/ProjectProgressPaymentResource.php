@@ -62,7 +62,7 @@ class ProjectProgressPaymentResource extends Resource
                     ->options(fn () => Currency::orderBy('code')->pluck('code', 'id')),
                     
                 Select::make('bank_account_id')->label('Receiving Bank Account')->native(false)->nullable()
-                    ->options(fn () => BankAccount::orderBy('name')->pluck('name', 'id')),
+                    ->options(fn () => BankAccount::orderBy('bank_name')->pluck('bank_name', 'id')),
                 TextInput::make('cumulative_received')->label('Cumulative to Date')->numeric()->default(0),
             ]),
             Section::make('Notes')->schema([Textarea::make('description')->rows(2)->nullable()->columnSpanFull()])->collapsible(),
@@ -102,7 +102,7 @@ class ProjectProgressPaymentResource extends Resource
                 TextEntry::make('amount')->label('Amount Received')->numeric(decimalPlaces: 2)->fontFamily('mono')->weight('bold'),
                 TextEntry::make('currency.code')->label('Currency')->badge()->color('gray'),
                 TextEntry::make('invoice_reference')->label('Reference / Invoice #')->placeholder('—'),
-                TextEntry::make('bankAccount.name')->label('Receiving Bank Account')->placeholder('—'),
+                TextEntry::make('bankAccount.bank_name')->label('Receiving Bank Account')->placeholder('—'),
                 TextEntry::make('cumulative_received')->label('Cumulative Received to Date')->numeric(decimalPlaces: 2)->fontFamily('mono'),
                 TextEntry::make('status')->label('Status')->badge()
                     ->color(fn ($state) => match($state) { 'received' => 'success', 'partially_spent' => 'warning', 'fully_utilized' => 'info', default => 'gray' }),
