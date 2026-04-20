@@ -86,7 +86,7 @@ class PayrollSummaryResource extends Resource
                     ->formatStateUsing(fn ($state, $record) => $record->employee?->full_name ?? '—')
                     ->searchable(['first_name', 'last_name'])->sortable(),
                 TextColumn::make('payroll_month')->label('Month')
-                    ->formatStateUsing(fn ($s, $r) => \Carbon\Carbon::createFromDate($r->payroll_year, $s, 1)->format('M Y')),
+                    ->formatStateUsing(fn ($state, $record) => \Carbon\Carbon::createFromDate($record->payroll_year, $state, 1)->format('M Y')),
                 TextColumn::make('gross_pay')->label('Gross')->numeric(decimalPlaces: 2)->alignEnd()->fontFamily('mono'),
                 TextColumn::make('income_tax_withheld')->label('PAYE Tax')->numeric(decimalPlaces: 2)->alignEnd()->fontFamily('mono')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -124,9 +124,9 @@ class PayrollSummaryResource extends Resource
         return $schema->components([
             Section::make('Payroll Summary')->icon('heroicon-o-banknotes')->columns(4)->schema([
                 TextEntry::make('employee.first_name')->label('Employee')
-                    ->formatStateUsing(fn ($s, $r) => $r->employee?->full_name ?? '—'),
+                    ->formatStateUsing(fn ($state, $record) => $record->employee?->full_name ?? '—'),
                 TextEntry::make('payroll_month')->label('Period')
-                    ->formatStateUsing(fn ($s, $r) => \Carbon\Carbon::createFromDate($r->payroll_year, $s, 1)->format('F Y')),
+                    ->formatStateUsing(fn ($state, $record) => \Carbon\Carbon::createFromDate($record->payroll_year, $state, 1)->format('F Y')),
                 TextEntry::make('status')->label('Status')->badge()
                     ->color(fn ($s) => match($s) { 'draft' => 'gray', 'journal_posted' => 'success', default => 'gray' }),
                 TextEntry::make('costCenter.name')->label('Cost Center')->placeholder('—'),

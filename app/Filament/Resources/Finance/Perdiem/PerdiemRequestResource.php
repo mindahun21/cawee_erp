@@ -96,7 +96,7 @@ class PerdiemRequestResource extends Resource
             ->columns([
                 TextColumn::make('reference')->label('Ref #')->badge()->color('primary')->fontFamily('mono')->searchable()->sortable(),
                 TextColumn::make('employee.first_name')->label('Employee')
-                    ->formatStateUsing(fn ($s, $r) => $r->employee?->full_name ?? '—')->searchable(),
+                    ->formatStateUsing(fn ($state, $record) => $record->employee?->full_name ?? '—')->searchable(),
                 TextColumn::make('perdiemType.name')->label('Type')->badge()->color('gray'),
                 TextColumn::make('travel_destination')->label('Destination')->limit(25),
                 TextColumn::make('start_date')->label('Start')->date()->sortable(),
@@ -160,7 +160,7 @@ class PerdiemRequestResource extends Resource
             Section::make('Request')->icon('heroicon-o-map-pin')->columns(4)->schema([
                 TextEntry::make('reference')->label('Ref #')->badge()->color('primary')->fontFamily('mono'),
                 TextEntry::make('employee.first_name')->label('Employee')
-                    ->formatStateUsing(fn ($s, $r) => $r->employee?->full_name ?? '—'),
+                    ->formatStateUsing(fn ($state, $record) => $record->employee?->full_name ?? '—'),
                 TextEntry::make('perdiemType.name')->label('Type')->badge()->color('gray'),
                 TextEntry::make('status')->label('Status')->badge()
                     ->color(fn ($s) => match($s) {

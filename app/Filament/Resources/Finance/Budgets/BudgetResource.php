@@ -100,11 +100,11 @@ class BudgetResource extends Resource
                 TextColumn::make('budgetType.name')->label('Type')->badge()->color('gray'),
                 TextColumn::make('fiscal_year')->label('Year')->sortable(),
                 TextColumn::make('donor.first_name')->label('Donor')
-                    ->formatStateUsing(fn ($s, $r) => $r->donor?->full_name ?? '—'),
+                    ->formatStateUsing(fn ($state, $record) => $record->donor?->full_name ?? '—'),
                 TextColumn::make('project.project_name')->label('Project')->limit(20)->placeholder('—'),
                 TextColumn::make('total_budget_amount')->label('Budget')->numeric(decimalPlaces: 2)->alignEnd()->fontFamily('mono'),
                 TextColumn::make('actual_spent')->label('Actual Spent')->numeric(decimalPlaces: 2)->alignEnd()->fontFamily('mono')
-                    ->color(fn ($s, $r) => (float)$s > (float)$r->total_budget_amount ? 'danger' : 'success'),
+                    ->color(fn ($state, $record) => (float)$state > (float)$record->total_budget_amount ? 'danger' : 'success'),
                 TextColumn::make('status')->label('Status')->badge()
                     ->color(fn ($s) => match($s) {
                         'draft' => 'gray', 'approved' => 'warning', 'active' => 'success',
@@ -165,7 +165,7 @@ class BudgetResource extends Resource
             ]),
             Section::make('4-Dimension Coding')->icon('heroicon-o-tag')->columns(3)->schema([
                 TextEntry::make('donor.first_name')->label('Donor')
-                    ->formatStateUsing(fn ($s, $r) => $r->donor?->full_name ?? '—')->placeholder('—'),
+                    ->formatStateUsing(fn ($state, $record) => $record->donor?->full_name ?? '—')->placeholder('—'),
                 TextEntry::make('project.project_name')->label('Project')->placeholder('—'),
                 TextEntry::make('costCenter.name')->label('Cost Center')->placeholder('—'),
             ]),
@@ -174,14 +174,14 @@ class BudgetResource extends Resource
                 TextEntry::make('committed_amount')->label('Committed')->numeric(decimalPlaces: 2)->fontFamily('mono'),
                 TextEntry::make('encumbered_amount')->label('Encumbered')->numeric(decimalPlaces: 2)->fontFamily('mono'),
                 TextEntry::make('actual_spent')->label('Actual Spent')->numeric(decimalPlaces: 2)->fontFamily('mono')
-                    ->color(fn ($s, $r) => (float)$s > (float)$r->total_budget_amount ? 'danger' : 'success'),
+                    ->color(fn ($state, $record) => (float)$state > (float)$record->total_budget_amount ? 'danger' : 'success'),
                 TextEntry::make('id')->label('Remaining')
-                    ->state(fn (Budget $r) => number_format($r->remaining(), 2))
+                    ->state(fn ($record) => number_format($record->remaining(), 2))
                     ->fontFamily('mono')->weight('bold')
-                    ->color(fn ($s, $r) => $r->remaining() < 0 ? 'danger' : 'success'),
+                    ->color(fn ($record) => $record->remaining() < 0 ? 'danger' : 'success'),
                 TextEntry::make('id')->label('Utilization %')
-                    ->state(fn (Budget $r) => $r->utilizationPct() . '%')
-                    ->badge()->color(fn ($s, $r) => $r->utilizationPct() > 90 ? 'danger' : ($r->utilizationPct() > 70 ? 'warning' : 'success')),
+                    ->state(fn ($record) => $record->utilizationPct() . '%')
+                    ->badge()->color(fn ($record) => $record->utilizationPct() > 90 ? 'danger' : ($record->utilizationPct() > 70 ? 'warning' : 'success')),
             ]),
             Section::make('Budget Lines')->icon('heroicon-o-list-bullet')->schema([
                 RepeatableEntry::make('lines')->schema([
