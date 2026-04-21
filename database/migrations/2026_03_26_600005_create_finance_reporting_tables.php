@@ -79,7 +79,7 @@ return new class extends Migration
             $table->decimal('variance_amount', 18, 2)->default(0); // variance * unit_cost
             $table->text('notes')->nullable();
             $table->timestamps();
-            $table->index('inventory_taking_sheet_id');
+            $table->index('inventory_taking_sheet_id', 'idx_inv_sheet_items_sheet_id');
         });
     }
 
