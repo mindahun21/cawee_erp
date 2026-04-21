@@ -17,7 +17,8 @@ class PerdiemSettlementResource extends Resource
 {
     protected static ?string $model = PerdiemSettlement::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-refund';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance / Per Diem';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
+    protected static ?string $navigationParentItem = 'Per Diem';
     protected static ?string $navigationLabel = 'Settlements';
     protected static ?string $slug = 'finance/perdiem/settlements';
     protected static bool $shouldSkipAuthorization = true;

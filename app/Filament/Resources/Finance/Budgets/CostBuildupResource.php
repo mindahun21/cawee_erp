@@ -17,7 +17,8 @@ class CostBuildupResource extends Resource
 {
     protected static ?string $model = CostBuildup::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance / Budgets';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
+    protected static ?string $navigationParentItem = 'Budgets';
     protected static ?string $navigationLabel = 'Cost Buildups';
     protected static ?string $slug = 'finance/budgets/cost-buildups';
     protected static bool $shouldSkipAuthorization = true;

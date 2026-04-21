@@ -37,7 +37,15 @@ class LoanResource extends Resource
     protected static ?string $slug                          = 'finance/loans';
     protected static bool $shouldSkipAuthorization           = true;
 
-    public static function canViewAny(): bool  { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return static::canViewAny(); }
     public static function canDelete($r): bool { return static::canViewAny(); }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::before(function ($user, string $ability) {
+            return method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin() ? true : null;
+        });
         \App\Models\Donation::observe(\App\Observers\DonationObserver::class);
         \App\Models\Asset::observe(\App\Observers\AssetObserver::class);
         \App\Models\InventoryMovement::observe(\App\Observers\InventoryMovementObserver::class);

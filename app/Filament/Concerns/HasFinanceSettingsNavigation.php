@@ -9,6 +9,7 @@ use App\Filament\Resources\Finance\Settings\BudgetTypeResource;
 use App\Filament\Resources\Finance\Settings\CashierResource;
 use App\Filament\Resources\Finance\Settings\CostCenterResource;
 use App\Filament\Resources\Finance\Settings\FinanceSettingResource;
+use App\Filament\Resources\Finance\Perdiem\PerdiemTaxRuleResource;
 use App\Filament\Resources\Finance\Settings\PerdiemTypeResource;
 use App\Filament\Resources\Finance\Settings\TaxTypeResource;
 use App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource;
@@ -42,6 +43,11 @@ trait HasFinanceSettingsNavigation
                 ->icon('heroicon-o-map-pin')
                 ->url(PerdiemTypeResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(PerdiemTypeResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Per Diem Tax Rules')
+                ->icon('heroicon-o-receipt-percent')
+                ->url(PerdiemTaxRuleResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(PerdiemTaxRuleResource::getRouteBaseName() . '.*')),
 
             NavigationItem::make('Cost Centers')
                 ->icon('heroicon-o-building-office-2')
