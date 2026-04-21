@@ -38,12 +38,21 @@ class PerdiemRequestResource extends Resource
     protected static ?string $model                          = PerdiemRequest::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';
+    protected static ?string $navigationParentItem          = 'Per Diem';
     protected static ?string $navigationLabel               = 'Per Diem Requests';
     protected static ?int    $navigationSort                = 75;
     protected static ?string $slug                          = 'finance/perdiem/requests';
     protected static bool $shouldSkipAuthorization          = true;
 
-    public static function canViewAny(): bool  { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return $r->isDraft() && static::canViewAny(); }
     public static function canDelete($r): bool { return $r->isDraft() && static::canViewAny(); }

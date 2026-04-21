@@ -17,7 +17,8 @@ class PerdiemRequestExtensionResource extends Resource
 {
     protected static ?string $model = PerdiemRequestExtension::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance / Per Diem';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
+    protected static ?string $navigationParentItem = 'Per Diem';
     protected static ?string $navigationLabel = 'Request Extensions';
     protected static ?string $slug = 'finance/perdiem/extensions';
     protected static bool $shouldSkipAuthorization = true;

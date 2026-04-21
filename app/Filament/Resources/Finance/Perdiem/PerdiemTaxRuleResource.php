@@ -17,8 +17,10 @@ use Filament\Tables\Table;
 class PerdiemTaxRuleResource extends Resource
 {
     protected static ?string $model = PerdiemTaxRule::class;
+    protected static bool $shouldRegisterNavigation = false;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance / Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
+    protected static ?string $navigationParentItem = 'Settings';
     protected static ?string $navigationLabel = 'Per Diem Tax Rules';
     protected static ?string $slug = 'finance/settings/perdiem-tax-rules';
     protected static bool $shouldSkipAuthorization = true;

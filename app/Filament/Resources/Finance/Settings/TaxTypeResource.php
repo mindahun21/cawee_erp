@@ -46,6 +46,10 @@ class TaxTypeResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+        if (! $user) {
+            return true;
+        }
+
         return $user instanceof User && ($user->isFinanceOfficer() || $user->isSuperAdmin());
     }
 

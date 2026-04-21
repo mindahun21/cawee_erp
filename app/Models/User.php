@@ -45,7 +45,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->hasRole('super_admin');
+        return $this->hasAnyRole(['super_admin', 'Admin']);
     }
 
     public function isHrDirector(): bool
