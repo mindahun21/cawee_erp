@@ -97,6 +97,9 @@ class FinancialStatementResource extends Resource
                         $record->forceFill(['status' => 'finalized', 'approved_by' => auth()->id(), 'approved_at' => now()])->save();
                         Notification::make()->success()->title('Statement finalized.')->send();
                     }),
+
+                TblAction::make('export_pdf')->label('Export PDF')->icon('heroicon-o-arrow-down-tray')->color('primary')
+                    ->action(fn ($record, \App\Services\Finance\FinanceReportService $reportService) => $reportService->downloadPdf($record)),
             ])
             ->defaultSort('as_of_date', 'desc');
     }

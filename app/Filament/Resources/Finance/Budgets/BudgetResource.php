@@ -205,6 +205,20 @@ class BudgetResource extends Resource
                     TextEntry::make('actual')->label('Actual')->numeric(decimalPlaces: 2)->fontFamily('mono'),
                 ])->columns(9),
             ]),
+
+            Section::make('Audit Trail')->icon('heroicon-o-shield-check')
+                ->collapsible()->collapsed()
+                ->schema([
+                    \Filament\Infolists\Components\RepeatableEntry::make('auditLogs')->label('')
+                        ->schema([
+                            TextEntry::make('action')->label('Action')->badge()
+                                ->formatStateUsing(fn ($state) => \App\Models\Finance\FinanceAuditLog::actions()[$state] ?? ucfirst($state))
+                                ->color(fn ($state) => \App\Models\Finance\FinanceAuditLog::actionColor($state)),
+                            TextEntry::make('actor.name')->label('By')->placeholder('System'),
+                            TextEntry::make('created_at')->label('When')->since(),
+                            TextEntry::make('ip_address')->label('IP')->placeholder('—'),
+                        ])->columns(4),
+                ]),
         ]);
     }
 
