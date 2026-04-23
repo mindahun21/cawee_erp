@@ -18,7 +18,7 @@ class TopDonorsWidget extends BaseWidget
         return $table
             ->query(
                 Donation::query()
-                    ->selectRaw('donor_id, SUM(amount) as total_amount, COUNT(*) as donation_count')
+                    ->selectRaw('donor_id as id, SUM(amount) as total_amount, COUNT(*) as donation_count')
                     ->where('status', 'completed')
                     ->groupBy('donor_id')
                     ->orderByDesc('total_amount')

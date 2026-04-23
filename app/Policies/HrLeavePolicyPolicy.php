@@ -11,7 +11,7 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class HrLeavePolicyPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:HrLeavePolicy');
@@ -66,4 +66,5 @@ class HrLeavePolicyPolicy
     {
         return $authUser->can('Reorder:HrLeavePolicy');
     }
+
 }

@@ -34,6 +34,10 @@ class PledgeResource extends Resource
 {
     protected static ?string $model = Pledge::class;
 
+    protected static ?string $slug = 'pledges';
+
+    protected static ?string $navigationLabel = 'Pledges';
+
     protected static UnitEnum|string|null $navigationGroup = 'Donor Fundraising';
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-document-check';
