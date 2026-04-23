@@ -30,6 +30,7 @@
                                 <option value="trial-balance"        @selected(($report ?? '') === 'trial-balance')>Trial Balance</option>
                                 <option value="budget-vs-actual"     @selected(($report ?? '') === 'budget-vs-actual')>Budget vs. Actual</option>
                                 <option value="gl-ledger"            @selected(($report ?? '') === 'gl-ledger')>General Ledger</option>
+                                <option value="bank-reconciliation"  @selected(($report ?? '') === 'bank-reconciliation')>Bank Reconciliation</option>
                             </x-filament::input.select>
                         </x-filament::input.wrapper>
                     </div>
@@ -49,8 +50,8 @@
                         </x-filament::input.wrapper>
                     </div>
 
-                    {{-- Accounting Period (for Trial Balance / GL) --}}
-                    @if(in_array(($report ?? 'journal-entries'), ['trial-balance', 'gl-ledger', 'journal-entries']))
+                    {{-- Accounting Period (for Trial Balance / GL / Bank Reconciliation) --}}
+                    @if(in_array(($report ?? 'journal-entries'), ['trial-balance', 'gl-ledger', 'journal-entries', 'bank-reconciliation']))
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Accounting Period</label>
                         <x-filament::input.wrapper>
@@ -64,8 +65,8 @@
                     </div>
                     @endif
 
-                    {{-- Currency --}}
-                    @if(!in_array(($report ?? ''), ['trial-balance', 'budget-vs-actual']))
+                    {{-- Currency (hidden for trial-balance, budget-vs-actual, bank-reconciliation) --}}
+                    @if(!in_array(($report ?? ''), ['trial-balance', 'budget-vs-actual', 'bank-reconciliation']))
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Currency</label>
                         <x-filament::input.wrapper>

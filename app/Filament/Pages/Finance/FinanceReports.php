@@ -4,6 +4,8 @@ namespace App\Filament\Pages\Finance;
 
 use App\Models\Currency;
 use App\Models\Finance\AccountingPeriod;
+use App\Models\Finance\BankAccount;
+use App\Models\Finance\BankReconciliation;
 use App\Models\Finance\ChartOfAccount;
 use App\Models\Finance\JournalEntry;
 use App\Models\Finance\JournalEntryLine;
@@ -109,6 +111,11 @@ class FinanceReports extends Page implements HasTable
                 ->when($start && $end, fn (Builder $q) => $q->whereBetween('transaction_date', [$start, $end]))
                 ->when($periodId, fn (Builder $q) => $q->where('period_id', $periodId))
                 ->when($currency !== 'ALL', fn (Builder $q) => $q->whereHas('currency', fn($q2) => $q2->where('code', $currency))),
+
+            'bank-reconciliation' => BankReconciliation::query()
+                ->with(['bankAccount', 'period', 'preparedBy'])
+                ->when($start && $end, fn (Builder $q) => $q->whereBetween('statement_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) => $q->where('accounting_period_id', $periodId)),
 
             default => JournalEntry::query()->whereRaw('1 = 0'),
         };
@@ -229,6 +236,30 @@ class FinanceReports extends Page implements HasTable
                 TextColumn::make('period.name')->label('Period')->badge()->color('gray')->toggleable(),
             ],
 
+            'bank-reconciliation' => [
+                TextColumn::make('reference')->label('Reference')->badge()->color('primary')->fontFamily('mono')->searchable()->sortable()->copyable(),
+                TextColumn::make('bankAccount.account_name')->label('Bank Account')->searchable()->weight('semibold')
+                    ->description(fn (BankReconciliation $r): string => (string)($r->bankAccount?->bank_name . ' — ' . $r->bankAccount?->account_number)),
+                TextColumn::make('period.name')->label('Period')->badge()->color('gray')->sortable(),
+                TextColumn::make('statement_date')->label('Statement Date')->date('d M Y')->sortable(),
+                TextColumn::make('statement_balance')->label('Stmt Balance')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->color('info'),
+                TextColumn::make('gl_balance')->label('GL Balance')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->color('gray'),
+                TextColumn::make('outstanding_deposits')->label('+ Deposits In Transit')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->color('success')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('outstanding_cheques')->label('− Outstanding Cheques')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->color('warning')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('adjusted_bank_balance')->label('Adjusted Balance')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->weight('semibold')->toggleable(),
+                TextColumn::make('difference')->label('Difference')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn (BankReconciliation $r): string => abs((float)$r->difference) < 0.01 ? 'success' : 'danger')->sortable(),
+                TextColumn::make('status')->label('Status')->badge()
+                    ->formatStateUsing(fn ($s): string => BankReconciliation::statuses()[$s] ?? ucfirst((string)$s))
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'reconciled' => 'success', 'in_progress' => 'warning',
+                        'locked' => 'info', default => 'gray',
+                    }),
+                TextColumn::make('preparedBy.name')->label('Prepared By')->toggleable(isToggledHiddenByDefault: true),
+            ],
+
             default => [],
         };
     }
@@ -244,6 +275,7 @@ class FinanceReports extends Page implements HasTable
             'trial-balance'        => 'Trial Balance',
             'budget-vs-actual'     => 'Budget vs. Actual',
             'gl-ledger'            => 'General Ledger',
+            'bank-reconciliation'  => 'Bank Reconciliation Report',
             default                => 'Finance Report',
         };
     }
@@ -257,6 +289,7 @@ class FinanceReports extends Page implements HasTable
             'trial-balance'        => 'Posted GL balances by account for the selected accounting period.',
             'budget-vs-actual'     => 'Active budgets showing budget amount vs actual spend.',
             'gl-ledger'            => 'Raw General Ledger postings for the selected period.',
+            'bank-reconciliation'  => 'Bank statement reconciliations with GL balance comparisons.',
             default                => null,
         };
     }
@@ -269,6 +302,7 @@ class FinanceReports extends Page implements HasTable
             'payment-requisitions' => 'requisition_date',
             'gl-ledger'            => 'transaction_date',
             'budget-vs-actual'     => 'fiscal_year',
+            'bank-reconciliation'  => 'statement_date',
             default                => 'id',
         };
     }
@@ -356,6 +390,11 @@ class FinanceReports extends Page implements HasTable
                 ->icon('heroicon-o-archive-box')
                 ->url($url('gl-ledger'))
                 ->isActiveWhen(fn () => request()->query('report') === 'gl-ledger'),
+
+            NavigationItem::make('Bank Reconciliation')
+                ->icon('heroicon-o-scale')
+                ->url($url('bank-reconciliation'))
+                ->isActiveWhen(fn () => request()->query('report') === 'bank-reconciliation'),
         ];
     }
 
