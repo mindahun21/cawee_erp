@@ -234,6 +234,168 @@ class FinanceReports extends Page implements HasTable
                 )
                 ->orderByRaw('total_received DESC'),
 
+            // ── Project Financial Summary ─────────────────────────────────
+            'project-summary' => JournalEntryLine::query()
+                ->selectRaw("
+                    MIN(finance_journal_entry_lines.id)                            AS id,
+                    finance_journal_entry_lines.project_id                         AS project_id,
+                    hr_projects.project_name                                       AS project_name,
+                    hr_projects.project_code                                       AS project_code,
+                    COALESCE(SUM(finance_budgets.total_budget_amount), 0)          AS budget_allocated,
+                    SUM(CASE WHEN finance_account_types.classification = 'expense'
+                        THEN finance_journal_entry_lines.debit ELSE 0 END)         AS actual_spent,
+                    COALESCE(SUM(finance_budgets.total_budget_amount), 0)
+                      - SUM(CASE WHEN finance_account_types.classification = 'expense'
+                        THEN finance_journal_entry_lines.debit ELSE 0 END)         AS remaining,
+                    COUNT(DISTINCT finance_journal_entry_lines.journal_entry_id)   AS transaction_count
+                ")
+                ->join('finance_journal_entries',
+                    'finance_journal_entries.id', '=', 'finance_journal_entry_lines.journal_entry_id')
+                ->join('finance_chart_of_accounts',
+                    'finance_chart_of_accounts.id', '=', 'finance_journal_entry_lines.account_id')
+                ->join('finance_account_types',
+                    'finance_account_types.id', '=', 'finance_chart_of_accounts.account_type_id')
+                ->leftJoin('hr_projects',
+                    'hr_projects.id', '=', 'finance_journal_entry_lines.project_id')
+                ->leftJoin('finance_budgets',
+                    'finance_budgets.project_id', '=', 'finance_journal_entry_lines.project_id')
+                ->where('finance_journal_entries.status', 'posted')
+                ->whereNotNull('finance_journal_entry_lines.project_id')
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('finance_journal_entries.transaction_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('finance_journal_entries.accounting_period_id', $periodId))
+                ->groupBy(
+                    'finance_journal_entry_lines.project_id',
+                    'hr_projects.project_name',
+                    'hr_projects.project_code'
+                )
+                ->orderByRaw('actual_spent DESC'),
+
+            // ── Budget Utilization Detail ─────────────────────────────────
+            'budget-utilization' => \App\Models\Finance\Budget::query()
+                ->selectRaw("
+                    finance_budgets.id,
+                    finance_budgets.name                                           AS budget_name,
+                    finance_budgets.fiscal_year,
+                    finance_budgets.total_budget_amount,
+                    finance_budgets.actual_spent,
+                    finance_budgets.status,
+                    donors.organization_name                                       AS donor_name,
+                    hr_projects.project_name,
+                    ROUND(
+                      CASE WHEN finance_budgets.total_budget_amount > 0
+                        THEN (finance_budgets.actual_spent / finance_budgets.total_budget_amount) * 100
+                        ELSE 0
+                      END, 1)                                                      AS utilization_pct,
+                    finance_budgets.total_budget_amount - finance_budgets.actual_spent AS variance
+                ")
+                ->leftJoin('donors', 'donors.id', '=', 'finance_budgets.donor_id')
+                ->leftJoin('hr_projects', 'hr_projects.id', '=', 'finance_budgets.project_id')
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->where('finance_budgets.fiscal_year', date('Y', strtotime((string)$start))))
+                ->orderBy('finance_budgets.fiscal_year', 'desc')
+                ->orderByRaw('utilization_pct DESC'),
+
+            // ── Account Statement ─────────────────────────────────────────
+            'account-statement' => \App\Models\Finance\GeneralLedger::query()
+                ->with(['account', 'period', 'journalEntryLine.journalEntry'])
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('transaction_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('period_id', $periodId))
+                ->orderBy('transaction_date')
+                ->orderBy('id'),
+
+            // ── Cash Flow Statement ───────────────────────────────────────
+            'cash-flow' => JournalEntryLine::query()
+                ->selectRaw("
+                    MIN(finance_journal_entry_lines.id)                            AS id,
+                    finance_chart_of_accounts.code                                 AS account_code,
+                    finance_chart_of_accounts.name                                 AS account_name,
+                    finance_account_types.classification                           AS classification,
+                    CASE
+                        WHEN finance_chart_of_accounts.code LIKE 'D1%' THEN 'Operating'
+                        WHEN finance_chart_of_accounts.code LIKE 'D2%' THEN 'Investing'
+                        WHEN finance_chart_of_accounts.code LIKE 'D3%' THEN 'Financing'
+                        ELSE 'Operating'
+                    END                                                            AS flow_type,
+                    SUM(finance_journal_entry_lines.debit)                         AS total_outflow,
+                    SUM(finance_journal_entry_lines.credit)                        AS total_inflow,
+                    SUM(finance_journal_entry_lines.credit)
+                      - SUM(finance_journal_entry_lines.debit)                     AS net_flow
+                ")
+                ->join('finance_journal_entries',
+                    'finance_journal_entries.id', '=', 'finance_journal_entry_lines.journal_entry_id')
+                ->join('finance_chart_of_accounts',
+                    'finance_chart_of_accounts.id', '=', 'finance_journal_entry_lines.account_id')
+                ->join('finance_account_types',
+                    'finance_account_types.id', '=', 'finance_chart_of_accounts.account_type_id')
+                ->where('finance_journal_entries.status', 'posted')
+                ->whereIn('finance_account_types.classification', ['asset', 'income', 'expense'])
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('finance_journal_entries.transaction_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('finance_journal_entries.accounting_period_id', $periodId))
+                ->groupBy(
+                    'finance_chart_of_accounts.code',
+                    'finance_chart_of_accounts.name',
+                    'finance_account_types.classification'
+                )
+                ->orderByRaw("FIELD(CASE WHEN finance_chart_of_accounts.code LIKE 'D1%' THEN 'Operating'
+                    WHEN finance_chart_of_accounts.code LIKE 'D2%' THEN 'Investing'
+                    WHEN finance_chart_of_accounts.code LIKE 'D3%' THEN 'Financing'
+                    ELSE 'Operating' END, 'Operating','Investing','Financing')")
+                ->orderBy('finance_chart_of_accounts.code'),
+
+            // ── Aged Payables ─────────────────────────────────────────────
+            'aged-payables' => \App\Models\Finance\PaymentVoucher::query()
+                ->selectRaw("
+                    finance_payment_vouchers.id,
+                    finance_payment_vouchers.pv_number,
+                    finance_payment_vouchers.payment_date,
+                    finance_payment_vouchers.payee_name,
+                    finance_payment_vouchers.payee_tin,
+                    finance_payment_vouchers.gross_amount,
+                    finance_payment_vouchers.net_amount,
+                    finance_payment_vouchers.status,
+                    DATEDIFF(NOW(), finance_payment_vouchers.payment_date)         AS age_days,
+                    CASE
+                        WHEN DATEDIFF(NOW(), finance_payment_vouchers.payment_date) <= 30  THEN '0-30 days'
+                        WHEN DATEDIFF(NOW(), finance_payment_vouchers.payment_date) <= 60  THEN '31-60 days'
+                        WHEN DATEDIFF(NOW(), finance_payment_vouchers.payment_date) <= 90  THEN '61-90 days'
+                        ELSE '90+ days'
+                    END                                                            AS age_bucket
+                ")
+                ->whereIn('status', ['approved', 'pending_approval'])
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('payment_date', [$start, $end]))
+                ->orderByRaw('age_days DESC'),
+
+            // ── WHT / Tax Report ──────────────────────────────────────────
+            'wht-report' => \App\Models\Finance\PaymentVoucher::query()
+                ->selectRaw("
+                    MIN(finance_payment_vouchers.id)                               AS id,
+                    finance_payment_vouchers.payee_name,
+                    finance_payment_vouchers.payee_tin,
+                    finance_payment_vouchers.payee_type,
+                    COUNT(finance_payment_vouchers.id)                             AS payment_count,
+                    SUM(finance_payment_vouchers.gross_amount)                     AS total_gross,
+                    SUM(finance_payment_vouchers.withholding_tax_amount)           AS total_wht,
+                    SUM(finance_payment_vouchers.net_amount)                       AS total_net,
+                    MAX(finance_payment_vouchers.withholding_tax_rate) * 100       AS wht_rate_pct
+                ")
+                ->where('status', 'posted')
+                ->where('withholding_tax_amount', '>', 0)
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('payment_date', [$start, $end]))
+                ->groupBy(
+                    'finance_payment_vouchers.payee_name',
+                    'finance_payment_vouchers.payee_tin',
+                    'finance_payment_vouchers.payee_type'
+                )
+                ->orderByRaw('total_wht DESC'),
+
             default => JournalEntry::query()->whereRaw('1 = 0'),
         };
     }
@@ -496,6 +658,163 @@ class FinanceReports extends Page implements HasTable
                     ->alignCenter()->badge()->color('gray')->sortable(false),
             ],
 
+
+            'project-summary' => [
+                TextColumn::make('project_code')->label('Code')->fontFamily('mono')->badge()->color('primary')->sortable(false),
+                TextColumn::make('project_name')->label('Project')->searchable()->weight('semibold')->sortable(false),
+                TextColumn::make('budget_allocated')->label('Budget Allocated')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('info')->sortable(false),
+                TextColumn::make('actual_spent')->label('Actual Spent')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('danger')->weight('semibold')->sortable(false),
+                TextColumn::make('remaining')->label('Remaining')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (float)$state >= 0 ? 'success' : 'danger')
+                    ->sortable(false),
+                TextColumn::make('utilization_pct')->label('Utilization %')
+                    ->getStateUsing(fn ($record): string => $record && (float)$record->budget_allocated > 0
+                        ? round(((float)$record->actual_spent / (float)$record->budget_allocated) * 100, 1) . '%'
+                        : '—')
+                    ->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state, $record): string => !str_contains((string)$state, '%') ? 'gray' :
+                        ((float)$record->actual_spent / max(0.01, (float)$record->budget_allocated) > 0.9 ? 'danger' :
+                        ((float)$record->actual_spent / max(0.01, (float)$record->budget_allocated) > 0.7 ? 'warning' : 'success')))
+                    ->sortable(false),
+                TextColumn::make('transaction_count')->label('Transactions')->alignCenter()->badge()->color('gray')->sortable(false),
+            ],
+
+            'budget-utilization' => [
+                TextColumn::make('fiscal_year')->label('Year')->badge()->color('gray')->sortable(),
+                TextColumn::make('budget_name')->label('Budget')->searchable()->weight('semibold')->sortable(),
+                TextColumn::make('donor_name')->label('Donor')->limit(25)->toggleable()->sortable(false),
+                TextColumn::make('project_name')->label('Project')->limit(25)->toggleable()->sortable(false),
+                TextColumn::make('total_budget_amount')->label('Budget')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('info')->sortable(),
+                TextColumn::make('actual_spent')->label('Actual Spent')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('danger')->sortable(),
+                TextColumn::make('variance')->label('Variance')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (float)$state >= 0 ? 'success' : 'danger')
+                    ->sortable(false),
+                TextColumn::make('utilization_pct')->label('Utilization %')
+                    ->formatStateUsing(fn ($s): string => $s . '%')
+                    ->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (float)$state > 90 ? 'danger' : ((float)$state > 70 ? 'warning' : 'success'))
+                    ->sortable(false),
+                TextColumn::make('status')->label('Status')->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'active' => 'success', 'approved' => 'info',
+                        'closed' => 'gray', 'cancelled' => 'danger', default => 'gray',
+                    }),
+            ],
+
+            'account-statement' => [
+                TextColumn::make('transaction_date')->label('Date')->date('d M Y')->sortable(),
+                TextColumn::make('journalEntryLine.journalEntry.reference_number')
+                    ->label('JE Ref')->badge()->color('primary')->fontFamily('mono'),
+                TextColumn::make('account.code')->label('Account')->fontFamily('mono')->badge()->color('gray'),
+                TextColumn::make('account.name')->label('Account Name')->limit(30)->searchable(),
+                TextColumn::make('debit')->label('Debit (DR)')
+                    ->formatStateUsing(fn ($s): string => (float)$s > 0 ? number_format((float)$s, 2) : '—')
+                    ->fontFamily('mono')->color('danger')->alignEnd(),
+                TextColumn::make('credit')->label('Credit (CR)')
+                    ->formatStateUsing(fn ($s): string => (float)$s > 0 ? number_format((float)$s, 2) : '—')
+                    ->fontFamily('mono')->color('success')->alignEnd(),
+                TextColumn::make('running_balance')->label('Running Balance')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->weight('semibold'),
+                TextColumn::make('period.name')->label('Period')->badge()->color('gray')->toggleable(),
+            ],
+
+            'cash-flow' => [
+                TextColumn::make('flow_type')->label('Activity')
+                    ->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'Operating'  => 'primary',
+                        'Investing'  => 'info',
+                        'Financing'  => 'warning',
+                        default      => 'gray',
+                    })->sortable(false),
+                TextColumn::make('account_code')->label('Code')->fontFamily('mono')->badge()->color('gray')->sortable(false),
+                TextColumn::make('account_name')->label('Account')->searchable()->weight('semibold')->sortable(false),
+                TextColumn::make('total_inflow')->label('Cash Inflow (CR)')
+                    ->formatStateUsing(fn ($s): string => (float)$s > 0 ? number_format((float)$s, 2) : '—')
+                    ->fontFamily('mono')->alignEnd()->color('success')->sortable(false),
+                TextColumn::make('total_outflow')->label('Cash Outflow (DR)')
+                    ->formatStateUsing(fn ($s): string => (float)$s > 0 ? number_format((float)$s, 2) : '—')
+                    ->fontFamily('mono')->alignEnd()->color('danger')->sortable(false),
+                TextColumn::make('net_flow')->label('Net Cash Flow')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (float)$state >= 0 ? 'success' : 'danger')
+                    ->sortable(false),
+            ],
+
+            'aged-payables' => [
+                TextColumn::make('age_bucket')->label('Age Bucket')
+                    ->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        '0-30 days'  => 'success',
+                        '31-60 days' => 'warning',
+                        '61-90 days' => 'danger',
+                        '90+ days'   => 'danger',
+                        default      => 'gray',
+                    })->sortable(false),
+                TextColumn::make('pv_number')->label('PV #')->badge()->color('primary')->fontFamily('mono')->searchable(),
+                TextColumn::make('payment_date')->label('Date')->date('d M Y')->sortable(),
+                TextColumn::make('payee_name')->label('Payee')->searchable()->weight('semibold')->limit(30),
+                TextColumn::make('payee_tin')->label('TIN')->fontFamily('mono')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('age_days')->label('Days Outstanding')
+                    ->formatStateUsing(fn ($s): string => number_format((int)$s) . ' days')
+                    ->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (int)$state <= 30 ? 'success' : ((int)$state <= 60 ? 'warning' : 'danger'))
+                    ->sortable(),
+                TextColumn::make('gross_amount')->label('Gross')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->color('gray'),
+                TextColumn::make('net_amount')->label('Net Payable')->numeric(decimalPlaces: 2)->fontFamily('mono')->alignEnd()->weight('bold')->color('danger'),
+                TextColumn::make('status')->label('Status')->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'approved' => 'success', 'pending_approval' => 'warning', default => 'gray',
+                    }),
+            ],
+
+            'wht-report' => [
+                TextColumn::make('payee_name')->label('Payee / Vendor')->searchable()->weight('semibold')->sortable(false),
+                TextColumn::make('payee_tin')->label('TIN')->fontFamily('mono')->badge()->color('gray')->sortable(false),
+                TextColumn::make('payee_type')->label('Type')->badge()
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'supplier' => 'primary', 'employee' => 'info', default => 'gray',
+                    })->formatStateUsing(fn ($s): string => ucfirst((string)$s))->sortable(false),
+                TextColumn::make('payment_count')->label('Payments')->alignCenter()->badge()->color('gray')->sortable(false),
+                TextColumn::make('total_gross')->label('Gross Amount')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('gray')->sortable(false),
+                TextColumn::make('wht_rate_pct')->label('WHT Rate')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2) . '%')
+                    ->badge()->color('warning')->sortable(false),
+                TextColumn::make('total_wht')->label('WHT Withheld')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('danger')->weight('bold')->sortable(false),
+                TextColumn::make('total_net')->label('Net Paid')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('success')->sortable(false),
+            ],
+
             default => [],
         };
     }
@@ -515,6 +834,12 @@ class FinanceReports extends Page implements HasTable
             'income-statement'     => 'Income Statement (P&L)',
             'balance-sheet'        => 'Balance Sheet',
             'donor-fund-summary'   => 'Donor Fund Summary',
+            'project-summary'      => 'Project Financial Summary',
+            'budget-utilization'   => 'Budget Utilization Detail',
+            'account-statement'    => 'Account Statement',
+            'cash-flow'            => 'Cash Flow Statement',
+            'aged-payables'        => 'Aged Payables Report',
+            'wht-report'           => 'Withholding Tax (WHT) Report',
             default                => 'Finance Report',
         };
     }
@@ -532,6 +857,12 @@ class FinanceReports extends Page implements HasTable
             'income-statement'     => 'Revenue and expenditure by account from posted JEs — showing net surplus or deficit.',
             'balance-sheet'        => 'Assets, Liabilities and Equity balances from all posted journal entries to date.',
             'donor-fund-summary'   => 'Per-donor breakdown of grants received, total expenditure, and remaining fund balance.',
+            'project-summary'      => 'Budget vs actual spending per project with utilization percentage.',
+            'budget-utilization'   => 'Detailed budget lines with variance and utilization flags — identifies over/under-budget items.',
+            'account-statement'    => 'Full transaction history for GL accounts with running balance.',
+            'cash-flow'            => 'Cash inflows and outflows grouped by Operating, Investing and Financing activities.',
+            'aged-payables'        => 'Outstanding approved payables grouped into 0-30, 31-60, 61-90 and 90+ day buckets.',
+            'wht-report'           => 'Withholding tax summary per vendor — total gross, WHT withheld, and net paid for compliance reporting.',
             default                => null,
         };
     }
@@ -652,6 +983,36 @@ class FinanceReports extends Page implements HasTable
                 ->icon('heroicon-o-heart')
                 ->url($url('donor-fund-summary'))
                 ->isActiveWhen(fn () => request()->query('report') === 'donor-fund-summary'),
+
+            NavigationItem::make('Project Summary')
+                ->icon('heroicon-o-briefcase')
+                ->url($url('project-summary'))
+                ->isActiveWhen(fn () => request()->query('report') === 'project-summary'),
+
+            NavigationItem::make('Budget Utilization')
+                ->icon('heroicon-o-chart-bar')
+                ->url($url('budget-utilization'))
+                ->isActiveWhen(fn () => request()->query('report') === 'budget-utilization'),
+
+            NavigationItem::make('Account Statement')
+                ->icon('heroicon-o-document-text')
+                ->url($url('account-statement'))
+                ->isActiveWhen(fn () => request()->query('report') === 'account-statement'),
+
+            NavigationItem::make('Cash Flow')
+                ->icon('heroicon-o-banknotes')
+                ->url($url('cash-flow'))
+                ->isActiveWhen(fn () => request()->query('report') === 'cash-flow'),
+
+            NavigationItem::make('Aged Payables')
+                ->icon('heroicon-o-clock')
+                ->url($url('aged-payables'))
+                ->isActiveWhen(fn () => request()->query('report') === 'aged-payables'),
+
+            NavigationItem::make('WHT / Tax Report')
+                ->icon('heroicon-o-receipt-refund')
+                ->url($url('wht-report'))
+                ->isActiveWhen(fn () => request()->query('report') === 'wht-report'),
         ];
     }
 

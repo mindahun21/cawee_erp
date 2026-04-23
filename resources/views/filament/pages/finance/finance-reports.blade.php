@@ -23,22 +23,30 @@
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Report</label>
                         <x-filament::input.wrapper>
-                            <x-filament::input.select name="report" class="min-w-[240px]">
+                            <x-filament::input.select name="report" class="min-w-[260px]">
                                 <optgroup label="Transactional">
                                     <option value="journal-entries"      @selected(($report ?? 'journal-entries') === 'journal-entries')>Journal Entries</option>
                                     <option value="payment-vouchers"     @selected(($report ?? '') === 'payment-vouchers')>Payment Vouchers</option>
                                     <option value="payment-requisitions" @selected(($report ?? '') === 'payment-requisitions')>Payment Requisitions</option>
                                     <option value="gl-ledger"            @selected(($report ?? '') === 'gl-ledger')>General Ledger</option>
+                                    <option value="account-statement"    @selected(($report ?? '') === 'account-statement')>Account Statement</option>
                                     <option value="bank-reconciliation"  @selected(($report ?? '') === 'bank-reconciliation')>Bank Reconciliation</option>
                                 </optgroup>
                                 <optgroup label="Financial Statements">
                                     <option value="income-statement"     @selected(($report ?? '') === 'income-statement')>Income Statement (P&amp;L)</option>
                                     <option value="balance-sheet"        @selected(($report ?? '') === 'balance-sheet')>Balance Sheet</option>
                                     <option value="trial-balance"        @selected(($report ?? '') === 'trial-balance')>Trial Balance</option>
+                                    <option value="cash-flow"            @selected(($report ?? '') === 'cash-flow')>Cash Flow Statement</option>
                                 </optgroup>
                                 <optgroup label="Management">
                                     <option value="donor-fund-summary"   @selected(($report ?? '') === 'donor-fund-summary')>Donor Fund Summary</option>
+                                    <option value="project-summary"      @selected(($report ?? '') === 'project-summary')>Project Financial Summary</option>
                                     <option value="budget-vs-actual"     @selected(($report ?? '') === 'budget-vs-actual')>Budget vs. Actual</option>
+                                    <option value="budget-utilization"   @selected(($report ?? '') === 'budget-utilization')>Budget Utilization Detail</option>
+                                </optgroup>
+                                <optgroup label="Operational / Compliance">
+                                    <option value="aged-payables"        @selected(($report ?? '') === 'aged-payables')>Aged Payables</option>
+                                    <option value="wht-report"           @selected(($report ?? '') === 'wht-report')>WHT / Tax Report</option>
                                 </optgroup>
                             </x-filament::input.select>
                         </x-filament::input.wrapper>
