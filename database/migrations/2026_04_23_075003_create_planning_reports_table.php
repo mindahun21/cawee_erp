@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type'); // annual, monthly, kpi_summary
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->foreignId('department_id')->nullable()->constrained();
+            $table->foreignId('department_id')->nullable()->constrained('hr_departments')->onDelete('set null');
             $table->json('parameters')->nullable();
             $table->string('file_path')->nullable();
             $table->string('status')->default('pending'); // pending, processing, completed, failed
