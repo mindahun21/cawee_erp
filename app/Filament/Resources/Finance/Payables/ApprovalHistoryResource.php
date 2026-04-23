@@ -35,7 +35,15 @@ class ApprovalHistoryResource extends Resource
     protected static bool $shouldSkipAuthorization            = true;
 
     // Read-only — Finance staff can view, nobody can create/edit/delete
-    public static function canViewAny(): bool   { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canView($r): bool    { return static::canViewAny(); }
     public static function canCreate(): bool    { return false; }
     public static function canEdit($r): bool    { return false; }

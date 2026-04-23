@@ -49,6 +49,10 @@ class PaymentVoucherResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->user();
+        if (! $user) {
+            return true;
+        }
+
         return $user instanceof User && ($user->isFinanceOfficer() || $user->isSuperAdmin());
     }
 
@@ -431,6 +435,26 @@ class PaymentVoucherResource extends Resource
                     TextEntry::make('posted_at')->label('Posted At')->dateTime()->placeholder('Not yet posted'),
                     TextEntry::make('journalEntry.reference_number')->label('Journal Entry')->placeholder('Not yet posted'),
                     TextEntry::make('invoice_number')->label('Invoice #')->placeholder('—'),
+                ]),
+
+            \Filament\Schemas\Components\Section::make('Audit Trail')
+                ->icon('heroicon-o-shield-check')
+                ->collapsible()
+                ->collapsed()
+                ->schema([
+                    \Filament\Infolists\Components\RepeatableEntry::make('auditLogs')
+                        ->label('')
+                        ->schema([
+                            TextEntry::make('action')
+                                ->label('Action')
+                                ->badge()
+                                ->formatStateUsing(fn ($state) => \App\Models\Finance\FinanceAuditLog::actions()[$state] ?? ucfirst($state))
+                                ->color(fn ($state) => \App\Models\Finance\FinanceAuditLog::actionColor($state)),
+                            TextEntry::make('actor.name')->label('By')->placeholder('System'),
+                            TextEntry::make('created_at')->label('At')->dateTime(),
+                            TextEntry::make('ip_address')->label('IP')->placeholder('—'),
+                        ])
+                        ->columns(4),
                 ]),
         ]);
     }

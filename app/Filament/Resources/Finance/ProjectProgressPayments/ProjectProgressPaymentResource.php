@@ -40,7 +40,15 @@ class ProjectProgressPaymentResource extends Resource
     protected static ?string $slug                          = 'finance/project-progress-payments';
     protected static bool $shouldSkipAuthorization          = true;
 
-    public static function canViewAny(): bool  { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($record): bool   { return $record->status === 'received' && static::canViewAny(); }
     public static function canDelete($record): bool { return $record->status === 'received' && static::canViewAny(); }

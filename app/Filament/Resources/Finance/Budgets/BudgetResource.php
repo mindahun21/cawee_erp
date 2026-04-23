@@ -38,12 +38,21 @@ class BudgetResource extends Resource
     protected static ?string $model                          = Budget::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';
+    protected static ?string $navigationParentItem          = 'Budgets';
     protected static ?string $navigationLabel               = 'Budgets';
     protected static ?int    $navigationSort                = 80;
     protected static ?string $slug                          = 'finance/budgets';
     protected static bool $shouldSkipAuthorization          = true;
 
-    public static function canViewAny(): bool  { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return $r->isDraft() && static::canViewAny(); }
     public static function canDelete($r): bool { return $r->isDraft() && static::canViewAny(); }
@@ -196,6 +205,20 @@ class BudgetResource extends Resource
                     TextEntry::make('actual')->label('Actual')->numeric(decimalPlaces: 2)->fontFamily('mono'),
                 ])->columns(9),
             ]),
+
+            Section::make('Audit Trail')->icon('heroicon-o-shield-check')
+                ->collapsible()->collapsed()
+                ->schema([
+                    \Filament\Infolists\Components\RepeatableEntry::make('auditLogs')->label('')
+                        ->schema([
+                            TextEntry::make('action')->label('Action')->badge()
+                                ->formatStateUsing(fn ($state) => \App\Models\Finance\FinanceAuditLog::actions()[$state] ?? ucfirst($state))
+                                ->color(fn ($state) => \App\Models\Finance\FinanceAuditLog::actionColor($state)),
+                            TextEntry::make('actor.name')->label('By')->placeholder('System'),
+                            TextEntry::make('created_at')->label('When')->since(),
+                            TextEntry::make('ip_address')->label('IP')->placeholder('—'),
+                        ])->columns(4),
+                ]),
         ]);
     }
 

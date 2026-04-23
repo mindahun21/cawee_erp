@@ -16,7 +16,7 @@ class ManageAccountTypes extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('New Account Type'),
+            CreateAction::make(),
         ];
     }
 }

@@ -55,18 +55,6 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Finance')
                     ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Cash & Bank')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Petty Cash')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Budgets')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Per Diem')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Reports')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance / Settings')
-                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
 
@@ -149,7 +137,7 @@ class AdminPanelProvider extends PanelProvider
                     ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
 
                 // ── Finance Settings (Phase 1 + Phase 2 FSC) ───────────────────────
-                \Filament\Navigation\NavigationItem::make('Finance Settings')
+                \Filament\Navigation\NavigationItem::make('Settings')
                     ->group('Finance')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->sort(99)
@@ -165,6 +153,8 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
                         // Phase 2 — Financial Statement Categories
                         \App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource::getRouteBaseName() . '.*',
+                        // Per Diem Tax Rules (managed via Finance Settings sub-navigation)
+                        \App\Filament\Resources\Finance\Perdiem\PerdiemTaxRuleResource::getRouteBaseName() . '.*',
                     ])),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')

@@ -14,15 +14,13 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Actions\Action as InfolistAction;
+use Filament\Actions\Action as TblAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -31,7 +29,7 @@ class ReconciliationResource extends Resource
 {
     protected static ?string $model = BankReconciliation::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-scale';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance / Cash & Bank';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
     protected static ?string $navigationLabel = 'Bank Reconciliation';
     protected static ?int $navigationSort = 4;
     protected static ?string $slug = 'finance/bank/reconciliations';
@@ -113,7 +111,7 @@ class ReconciliationResource extends Resource
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make()->visible(fn ($record) => $record->status === 'in_progress'),
-                Action::make('mark_reconciled')->label('Mark Reconciled')->icon('heroicon-o-check-badge')->color('success')->button()
+                TblAction::make('mark_reconciled')->label('Mark Reconciled')->icon('heroicon-o-check-badge')->color('success')->button()
                     ->visible(fn ($record) => $record->status === 'in_progress' && abs((float)$record->difference) < 0.01)
                     ->requiresConfirmation()
                     ->action(function ($record) {

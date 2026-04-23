@@ -44,7 +44,15 @@ class PaymentRequisitionResource extends Resource
     protected static ?string $slug                            = 'finance/payables/payment-requisitions';
     protected static bool $shouldSkipAuthorization            = true;
 
-    public static function canViewAny(): bool  { $u = auth()->user(); return $u && ($u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin()); }
+    public static function canViewAny(): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return true;
+        }
+
+        return $u->isFinanceOfficer() || $u->isFinanceManager() || $u->isSuperAdmin();
+    }
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return static::canViewAny(); }
     public static function canDelete($r): bool { return static::canViewAny(); }
@@ -269,6 +277,20 @@ class PaymentRequisitionResource extends Resource
                             TextEntry::make('actioned_at')->label('At')->dateTime(),
                             TextEntry::make('comments')->label('Comments')->placeholder('—'),
                         ])->columns(5),
+                ]),
+
+            InfoSection::make('Audit Trail')->icon('heroicon-o-shield-check')
+                ->collapsible()->collapsed()
+                ->schema([
+                    RepeatableEntry::make('auditLogs')->label('')
+                        ->schema([
+                            TextEntry::make('action')->label('Action')->badge()
+                                ->formatStateUsing(fn ($state) => \App\Models\Finance\FinanceAuditLog::actions()[$state] ?? ucfirst($state))
+                                ->color(fn ($state) => \App\Models\Finance\FinanceAuditLog::actionColor($state)),
+                            TextEntry::make('actor.name')->label('By')->placeholder('System'),
+                            TextEntry::make('created_at')->label('When')->since(),
+                            TextEntry::make('ip_address')->label('IP')->placeholder('—'),
+                        ])->columns(4),
                 ]),
         ]);
     }
