@@ -15,11 +15,15 @@ class MeAlert extends Model
     protected $table = 'me_alerts';
 
     protected $fillable = [
+        'project_id',
+        'reporting_period_id',
         'indicator_id',
         'report_id',
         'severity',
+        'status',
         'message',
         'resolved_at',
+        'resolved_by',
     ];
 
     protected $casts = [
@@ -36,5 +40,20 @@ class MeAlert extends Model
     public function report(): BelongsTo
     {
         return $this->belongsTo(MeIndicatorReport::class, 'report_id');
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(MeProject::class, 'project_id');
+    }
+
+    public function reportingPeriod(): BelongsTo
+    {
+        return $this->belongsTo(MeReportingPeriod::class, 'reporting_period_id');
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'resolved_by');
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Supplier\SupplierAuthController;
 use App\Http\Controllers\Supplier\SupplierPortalController;
+use App\Http\Controllers\FileSharing\RecipientShareController;
 use App\Http\Middleware\SupplierAuthenticated;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::prefix('portal')->name('supplier.')->group(function () {
         Route::post('/open-tenders/{tender}/bid', [SupplierPortalController::class, 'bidStore'])->name('bids.store');
 
         Route::get('/my-bids', [SupplierPortalController::class, 'myBids'])->name('my-bids');
+        Route::get('/my-shares', [RecipientShareController::class, 'supplierIndex'])->name('shares.index');
+        Route::get('/my-shares/{token}/preview', [RecipientShareController::class, 'supplierPreview'])->name('shares.preview');
+        Route::get('/my-shares/{token}/download', [RecipientShareController::class, 'supplierDownload'])->name('shares.download');
 
         Route::get('/profile', [SupplierPortalController::class, 'profile'])->name('profile');
         Route::patch('/profile', [SupplierPortalController::class, 'profileUpdate'])->name('profile.update');

@@ -249,6 +249,7 @@
                 <a href="{{ route('supplier.dashboard') }}" class="{{ request()->routeIs('supplier.dashboard') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('supplier.tenders') }}" class="{{ request()->routeIs('supplier.tenders*') ? 'active' : '' }}">Apply</a>
                 <a href="{{ route('supplier.my-bids') }}" class="{{ request()->routeIs('supplier.my-bids') ? 'active' : '' }}">My Bids</a>
+                <a href="{{ route('supplier.shares.index') }}" class="{{ request()->routeIs('supplier.shares.*') ? 'active' : '' }}">Shared Documents</a>
                 <a href="{{ route('supplier.profile') }}" class="{{ request()->routeIs('supplier.profile*') ? 'active' : '' }}">Profile</a>
                 <form method="POST" action="{{ route('supplier.logout') }}" style="margin:0">
                     @csrf

@@ -6,6 +6,7 @@ use App\Filament\Resources\ME\ProjectResource\Pages\CreateProject;
 use App\Filament\Resources\ME\ProjectResource\Pages\EditProject;
 use App\Filament\Resources\ME\ProjectResource\Pages\ListProjects;
 use App\Filament\Resources\ME\ProjectResource\Pages\ViewProject;
+use App\Filament\Resources\ME\ProjectResource\RelationManagers\FeedbackRelationManager;
 use App\Filament\Resources\ME\Support\MeAuditTrail;
 use App\Models\ME\MeProject;
 use BackedEnum;
@@ -33,9 +34,15 @@ class ProjectResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';
 
-    protected static ?string $navigationLabel = 'Projects';
+    protected static ?string $navigationLabel = 'Projects (Legacy)';
 
     protected static ?int $navigationSort = 0;
+
+    /**
+     * Project management has been moved to the BRT module.
+     * This resource is kept for backward compatibility but hidden from navigation.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -119,14 +126,20 @@ class ProjectResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            FeedbackRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => ListProjects::route('/'),
+            'index'  => ListProjects::route('/'),
             'create' => CreateProject::route('/create'),
-            'view' => ViewProject::route('/{record}'),
-            'edit' => EditProject::route('/{record}/edit'),
+            'view'   => ViewProject::route('/{record}'),
+            'edit'   => EditProject::route('/{record}/edit'),
         ];
     }
 }
-

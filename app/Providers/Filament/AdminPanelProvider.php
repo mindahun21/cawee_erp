@@ -49,14 +49,24 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make('Human Resources')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Recruitment')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Procurement')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Finance')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
                     ->collapsible(),
 
                 \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
                     ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Beneficiary Registry & Project Tracking')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('Monitoring and Evaluation')
+                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
+                    ->collapsible(),
+                \Filament\Navigation\NavigationGroup::make('File Sharing')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('System Administration')
                     ->collapsible(),
@@ -103,6 +113,48 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Resources\Procurement\Settings\ContractTypeResource::getRouteBaseName() . '.*',
                         \App\Filament\Resources\Procurement\Settings\ApprovalWorkflowResource::getRouteBaseName() . '.*',
                         \App\Filament\Resources\Procurement\Budgets\ProcurementBudgetResource::getRouteBaseName() . '.*',
+                    ])),
+
+                \Filament\Navigation\NavigationItem::make('Settings')
+                    ->group('Recruitment')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(99)
+                    ->url(fn (): string => \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs([
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkillCategories\RecruitmentSkillCategoryResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentApprovalWorkflows\RecruitmentApprovalWorkflowResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\RecruitmentEvaluationCriteriaResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationFormTemplates\RecruitmentEvaluationFormTemplateResource::getRouteBaseName() . '.*',
+                    ]))
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill')),
+
+                \Filament\Navigation\NavigationItem::make('Portal')
+                    ->group('Recruitment')
+                    ->icon('heroicon-o-globe-alt')
+                    ->sort(98)
+                    ->url(fn (): string => route('candidate.home'), shouldOpenInNewTab: true)
+                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
+
+                // ── Finance Settings (Phase 1 + Phase 2 FSC) ───────────────────────
+                \Filament\Navigation\NavigationItem::make('Settings')
+                    ->group('Finance')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->sort(99)
+                    ->url(fn (): string => \App\Filament\Resources\Finance\Settings\AccountTypeResource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs([
+                        \App\Filament\Resources\Finance\Settings\AccountTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\BudgetTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\TaxTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\PerdiemTypeResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\CostCenterResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\CashierResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\AccountingPeriodResource::getRouteBaseName() . '.*',
+                        \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
+                        // Phase 2 — Financial Statement Categories
+                        \App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource::getRouteBaseName() . '.*',
+                        // Per Diem Tax Rules (managed via Finance Settings sub-navigation)
+                        \App\Filament\Resources\Finance\Perdiem\PerdiemTaxRuleResource::getRouteBaseName() . '.*',
                     ])),
             ])
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')

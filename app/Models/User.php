@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -18,13 +19,33 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function sharedFolders(): HasMany
+    {
+        return $this->hasMany(SharedFolder::class, 'owner_id');
+    }
+
+    public function sharedFiles(): HasMany
+    {
+        return $this->hasMany(SharedFile::class, 'uploaded_by');
+    }
+
+    public function fileSharesCreated(): HasMany
+    {
+        return $this->hasMany(FileShare::class, 'created_by');
+    }
+
+    public function fileAccessLogs(): HasMany
+    {
+        return $this->hasMany(FileAccessLog::class);
+    }
+
     // ── HR Role Helpers ────────────────────────────────────────────
     // These methods provide readable, semantic checks across the codebase.
     // Use these instead of hardcoding role name strings everywhere.
 
     public function isSuperAdmin(): bool
     {
-        return $this->hasRole('super_admin');
+        return $this->hasAnyRole(['super_admin', 'Admin']);
     }
 
     public function isHrDirector(): bool
@@ -97,6 +118,39 @@ class User extends Authenticatable
     public function isProcurementAuditor(): bool
     {
         return $this->hasAnyRole(['procurement_auditor', 'procurement_director', 'super_admin']);
+    }
+
+    // ── Finance Role Helpers ───────────────────────────────────────
+    // Mirror the HR / Procurement pattern; super_admin always has full access.
+
+    /** Finance Officer: create/edit vouchers, journals, petty cash */
+    public function isFinanceOfficer(): bool
+    {
+        return $this->hasAnyRole(['finance_officer', 'finance_manager', 'cfo', 'super_admin']);
+    }
+
+    /** Finance Manager: approve vouchers, manage budgets */
+    public function isFinanceManager(): bool
+    {
+        return $this->hasAnyRole(['finance_manager', 'cfo', 'super_admin']);
+    }
+
+    /** CFO: final approval, post-to-GL, all financial reports */
+    public function isCFO(): bool
+    {
+        return $this->hasAnyRole(['cfo', 'super_admin']);
+    }
+
+    /** Finance Auditor: read-only on all finance records and audit trail */
+    public function isFinanceAuditor(): bool
+    {
+        return $this->hasAnyRole(['finance_auditor', 'internal_auditor', 'external_auditor', 'cfo', 'super_admin']);
+    }
+
+    /** Cashier: petty cash payments and cash receipt vouchers only */
+    public function isCashier(): bool
+    {
+        return $this->hasAnyRole(['cashier', 'finance_officer', 'finance_manager', 'cfo', 'super_admin']);
     }
 
     /**

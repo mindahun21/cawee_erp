@@ -22,12 +22,18 @@ class MeIndicatorReport extends Model
 
     protected $fillable = [
         'indicator_id',
+        'reporting_period_id',
         'period_start',
         'period_end',
         'actual_value',
+        'actual_text',
         'scope_location',
         'scope_project',
+        'source',
+        'entered_by',
+        'entered_at',
         'notes',
+        'comment',
     ];
 
     protected $casts = [
@@ -60,6 +66,16 @@ class MeIndicatorReport extends Model
     public function indicator(): BelongsTo
     {
         return $this->belongsTo(MeIndicator::class, 'indicator_id');
+    }
+
+    public function reportingPeriod(): BelongsTo
+    {
+        return $this->belongsTo(MeReportingPeriod::class, 'reporting_period_id');
+    }
+
+    public function enteredBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'entered_by');
     }
 
     public function disaggregationValues(): HasMany
