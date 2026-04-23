@@ -95,7 +95,11 @@ return new class extends Migration
         Schema::create('plan_resource_allocations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
-            $table->morphs('resourceable'); // item, employee, budget link
+            // Explicit columns + short index name to stay within MySQL's 64-char limit.
+            // Auto-generated name would be 66 chars and fail on MySQL.
+            $table->string('resourceable_type');
+            $table->unsignedBigInteger('resourceable_id');
+            $table->index(['resourceable_type', 'resourceable_id'], 'pra_resourceable_index');
             $table->decimal('quantity', 15, 2)->default(1);
             $table->text('notes')->nullable();
             $table->timestamps();
