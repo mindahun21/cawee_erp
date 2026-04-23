@@ -10,7 +10,9 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Attachment;
 
-class DonationReceipt extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class DonationReceipt extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
