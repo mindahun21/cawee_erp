@@ -7,11 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Planning Module — Foundation Tables
+     *
+     * Hierarchical planning structure:
+     *   Annual Plan → Monthly Plan → Weekly Plan → Activity
+     *
+     * Linked to HR (hr_departments, hr_projects) and Finance (procurement_budgets)
+     * following the same integration pattern as the BRT and Finance modules.
      */
     public function up(): void
     {
-        // Plans Table
+        // ── Plans Table ─────────────────────────────────────────────────────
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -19,19 +25,41 @@ return new class extends Migration
             $table->text('objectives')->nullable();
             $table->text('outcomes')->nullable();
             $table->enum('type', ['annual', 'monthly', 'weekly', 'activity'])->default('annual');
-            $table->foreignId('parent_id')->nullable()->constrained('plans')->onDelete('cascade');
-            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
-            $table->foreignId('project_id')->nullable()->constrained('projects')->onDelete('set null');
-            $table->foreignId('budget_id')->nullable()->constrained('procurement_budgets')->onDelete('set null');
+            $table->string('status')->default('draft')->comment('draft, active, completed, cancelled');
+
+            // ── Hierarchy ─────────────────────────────────────────────────
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('plans')
+                ->onDelete('cascade');
+
+            // ── Cross-Module Links ─────────────────────────────────────────
+            $table->foreignId('department_id')
+                ->nullable()
+                ->constrained('hr_departments')
+                ->onDelete('set null');
+
+            $table->foreignId('project_id')
+                ->nullable()
+                ->constrained('hr_projects')
+                ->onDelete('set null');
+
+            $table->foreignId('budget_id')
+                ->nullable()
+                ->constrained('procurement_budgets')
+                ->onDelete('set null');
+
+            // ── Timeline & Progress ────────────────────────────────────────
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->json('attachments')->nullable();
             $table->integer('progress_percentage')->default(0);
+
+            $table->json('attachments')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
-        // Tasks Table
+        // ── Tasks Table ──────────────────────────────────────────────────────
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
@@ -47,7 +75,7 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // KPIs Table
+        // ── Planning KPIs Table ───────────────────────────────────────────────
         Schema::create('planning_kpis', function (Blueprint $table) {
             $table->id();
             $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
@@ -55,12 +83,15 @@ return new class extends Migration
             $table->decimal('target_value', 15, 2)->default(0);
             $table->decimal('actual_value', 15, 2)->default(0);
             $table->string('unit')->nullable();
-            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('department_id')
+                ->nullable()
+                ->constrained('hr_departments')
+                ->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });
 
-        // Resource Allocation Table (Coupling Strategy: Polymorphic)
+        // ── Resource Allocation Table (Polymorphic) ──────────────────────────
         Schema::create('plan_resource_allocations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
