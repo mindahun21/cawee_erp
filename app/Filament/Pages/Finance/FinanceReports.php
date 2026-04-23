@@ -3,7 +3,9 @@
 namespace App\Filament\Pages\Finance;
 
 use App\Models\Currency;
+use App\Models\Donor;
 use App\Models\Finance\AccountingPeriod;
+use App\Models\Finance\AccountType;
 use App\Models\Finance\BankAccount;
 use App\Models\Finance\BankReconciliation;
 use App\Models\Finance\ChartOfAccount;
@@ -14,6 +16,7 @@ use App\Models\Finance\PaymentRequisition;
 use App\Models\Finance\Budget;
 use App\Models\Finance\GeneralLedger;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Navigation\NavigationItem;
@@ -116,6 +119,120 @@ class FinanceReports extends Page implements HasTable
                 ->with(['bankAccount', 'period', 'preparedBy'])
                 ->when($start && $end, fn (Builder $q) => $q->whereBetween('statement_date', [$start, $end]))
                 ->when($periodId, fn (Builder $q) => $q->where('accounting_period_id', $periodId)),
+
+            // ── Income Statement ──────────────────────────────────────────
+            'income-statement' => JournalEntryLine::query()
+                ->selectRaw("
+                    MIN(finance_journal_entry_lines.id)                        AS id,
+                    finance_chart_of_accounts.id                               AS account_id,
+                    finance_chart_of_accounts.code                             AS account_code,
+                    finance_chart_of_accounts.name                             AS account_name,
+                    finance_account_types.classification                       AS classification,
+                    finance_account_types.name                                 AS type_name,
+                    SUM(finance_journal_entry_lines.debit)                     AS total_debit,
+                    SUM(finance_journal_entry_lines.credit)                    AS total_credit,
+                    SUM(finance_journal_entry_lines.credit)
+                      - SUM(finance_journal_entry_lines.debit)                 AS net_amount
+                ")
+                ->join('finance_journal_entries',
+                    'finance_journal_entries.id', '=', 'finance_journal_entry_lines.journal_entry_id')
+                ->join('finance_chart_of_accounts',
+                    'finance_chart_of_accounts.id', '=', 'finance_journal_entry_lines.account_id')
+                ->join('finance_account_types',
+                    'finance_account_types.id', '=', 'finance_chart_of_accounts.account_type_id')
+                ->where('finance_journal_entries.status', 'posted')
+                ->whereIn('finance_account_types.classification', ['income', 'expense'])
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('finance_journal_entries.transaction_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('finance_journal_entries.accounting_period_id', $periodId))
+                ->groupBy(
+                    'finance_chart_of_accounts.id',
+                    'finance_chart_of_accounts.code',
+                    'finance_chart_of_accounts.name',
+                    'finance_account_types.classification',
+                    'finance_account_types.name'
+                )
+                ->orderByRaw("FIELD(finance_account_types.classification, 'income', 'expense')")
+                ->orderBy('finance_chart_of_accounts.code'),
+
+            // ── Balance Sheet ─────────────────────────────────────────────
+            'balance-sheet' => JournalEntryLine::query()
+                ->selectRaw("
+                    MIN(finance_journal_entry_lines.id)                        AS id,
+                    finance_chart_of_accounts.id                               AS account_id,
+                    finance_chart_of_accounts.code                             AS account_code,
+                    finance_chart_of_accounts.name                             AS account_name,
+                    finance_account_types.classification                       AS classification,
+                    finance_account_types.name                                 AS type_name,
+                    finance_account_types.normal_balance                       AS normal_balance,
+                    SUM(finance_journal_entry_lines.debit)                     AS total_debit,
+                    SUM(finance_journal_entry_lines.credit)                    AS total_credit,
+                    CASE finance_account_types.normal_balance
+                        WHEN 'debit'  THEN SUM(finance_journal_entry_lines.debit) - SUM(finance_journal_entry_lines.credit)
+                        WHEN 'credit' THEN SUM(finance_journal_entry_lines.credit) - SUM(finance_journal_entry_lines.debit)
+                    END                                                        AS balance
+                ")
+                ->join('finance_journal_entries',
+                    'finance_journal_entries.id', '=', 'finance_journal_entry_lines.journal_entry_id')
+                ->join('finance_chart_of_accounts',
+                    'finance_chart_of_accounts.id', '=', 'finance_journal_entry_lines.account_id')
+                ->join('finance_account_types',
+                    'finance_account_types.id', '=', 'finance_chart_of_accounts.account_type_id')
+                ->where('finance_journal_entries.status', 'posted')
+                ->whereIn('finance_account_types.classification', ['asset', 'liability', 'equity'])
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('finance_journal_entries.accounting_period_id', $periodId))
+                ->groupBy(
+                    'finance_chart_of_accounts.id',
+                    'finance_chart_of_accounts.code',
+                    'finance_chart_of_accounts.name',
+                    'finance_account_types.classification',
+                    'finance_account_types.name',
+                    'finance_account_types.normal_balance'
+                )
+                ->orderByRaw("FIELD(finance_account_types.classification, 'asset', 'liability', 'equity')")
+                ->orderBy('finance_chart_of_accounts.code'),
+
+            // ── Donor Fund Summary ────────────────────────────────────────
+            'donor-fund-summary' => JournalEntryLine::query()
+                ->selectRaw("
+                    MIN(finance_journal_entry_lines.id)                        AS id,
+                    finance_journal_entry_lines.donor_id                       AS donor_id,
+                    donors.organization_name                                   AS donor_name,
+                    CONCAT(COALESCE(donors.first_name,''),' ',COALESCE(donors.last_name,'')) AS donor_person,
+                    donors.donor_type                                          AS donor_type,
+                    SUM(CASE WHEN finance_account_types.classification = 'income'
+                        THEN finance_journal_entry_lines.credit ELSE 0 END)   AS total_received,
+                    SUM(CASE WHEN finance_account_types.classification = 'expense'
+                        THEN finance_journal_entry_lines.debit  ELSE 0 END)   AS total_spent,
+                    SUM(CASE WHEN finance_account_types.classification = 'income'
+                        THEN finance_journal_entry_lines.credit ELSE 0 END)
+                    - SUM(CASE WHEN finance_account_types.classification = 'expense'
+                        THEN finance_journal_entry_lines.debit  ELSE 0 END)   AS remaining_balance,
+                    COUNT(DISTINCT finance_journal_entry_lines.journal_entry_id) AS transaction_count
+                ")
+                ->join('finance_journal_entries',
+                    'finance_journal_entries.id', '=', 'finance_journal_entry_lines.journal_entry_id')
+                ->join('finance_chart_of_accounts',
+                    'finance_chart_of_accounts.id', '=', 'finance_journal_entry_lines.account_id')
+                ->join('finance_account_types',
+                    'finance_account_types.id', '=', 'finance_chart_of_accounts.account_type_id')
+                ->leftJoin('donors', 'donors.id', '=', 'finance_journal_entry_lines.donor_id')
+                ->where('finance_journal_entries.status', 'posted')
+                ->whereNotNull('finance_journal_entry_lines.donor_id')
+                ->when($start && $end, fn (Builder $q) =>
+                    $q->whereBetween('finance_journal_entries.transaction_date', [$start, $end]))
+                ->when($periodId, fn (Builder $q) =>
+                    $q->where('finance_journal_entries.accounting_period_id', $periodId))
+                ->groupBy(
+                    'finance_journal_entry_lines.donor_id',
+                    'donors.organization_name',
+                    'donors.first_name',
+                    'donors.last_name',
+                    'donors.donor_type'
+                )
+                ->orderByRaw('total_received DESC'),
 
             default => JournalEntry::query()->whereRaw('1 = 0'),
         };
@@ -260,6 +377,125 @@ class FinanceReports extends Page implements HasTable
                 TextColumn::make('preparedBy.name')->label('Prepared By')->toggleable(isToggledHiddenByDefault: true),
             ],
 
+
+            'income-statement' => [
+                TextColumn::make('classification')
+                    ->label('Category')
+                    ->badge()
+                    ->formatStateUsing(fn ($s): string => match($s) {
+                        'income'  => 'Revenue / Income',
+                        'expense' => 'Expenditure',
+                        default   => ucfirst((string)$s),
+                    })
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => $s === 'income' ? 'success' : 'danger')
+                    ->sortable(false),
+                TextColumn::make('account_code')->label('Code')->fontFamily('mono')->badge()->color('gray')->sortable(false),
+                TextColumn::make('account_name')->label('Account Name')->searchable()->weight('semibold')->sortable(false),
+                TextColumn::make('type_name')->label('Type')->toggleable(isToggledHiddenByDefault: true)->sortable(false),
+                TextColumn::make('total_debit')
+                    ->label('Total Debit (DR)')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('danger')->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_credit')
+                    ->label('Total Credit (CR)')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('success')->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('net_amount')
+                    ->label('Net Amount')
+                    ->formatStateUsing(fn ($s): string => number_format(abs((float)$s), 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state, $record): string =>
+                        ($record?->classification === 'income')
+                            ? ((float)$state >= 0 ? 'success' : 'warning')
+                            : ((float)$state <= 0 ? 'danger' : 'warning')
+                    )->sortable(false),
+            ],
+
+            'balance-sheet' => [
+                TextColumn::make('classification')
+                    ->label('Section')
+                    ->badge()
+                    ->formatStateUsing(fn ($s): string => match($s) {
+                        'asset'     => '▲ Assets',
+                        'liability' => '▼ Liabilities',
+                        'equity'    => '◆ Equity / Net Assets',
+                        default     => ucfirst((string)$s),
+                    })
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'asset'     => 'success',
+                        'liability' => 'danger',
+                        'equity'    => 'info',
+                        default     => 'gray',
+                    })->sortable(false),
+                TextColumn::make('account_code')->label('Code')->fontFamily('mono')->badge()->color('gray')->sortable(false),
+                TextColumn::make('account_name')->label('Account Name')->searchable()->weight('semibold')->sortable(false),
+                TextColumn::make('total_debit')
+                    ->label('Total Debit')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('gray')->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_credit')
+                    ->label('Total Credit')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('gray')->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('balance')
+                    ->label('Balance')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state, $record): string => match($record?->classification) {
+                        'asset'     => 'success',
+                        'liability' => 'danger',
+                        'equity'    => 'info',
+                        default     => 'gray',
+                    })->sortable(false),
+            ],
+
+            'donor-fund-summary' => [
+                TextColumn::make('donor_name')
+                    ->label('Donor')
+                    ->searchable()
+                    ->weight('semibold')
+                    ->formatStateUsing(fn ($state, $record): string =>
+                        trim((string)(($record?->donor_name ?: trim((string)$record?->donor_person)) ?: '— Unknown —'))
+                    )->sortable(false),
+                TextColumn::make('donor_type')
+                    ->label('Type')
+                    ->badge()
+                    ->formatStateUsing(fn ($s): string => ucfirst((string)$s))
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($s): string => match($s) {
+                        'foundation' => 'info',
+                        'corporate'  => 'primary',
+                        'individual' => 'gray',
+                        default      => 'gray',
+                    })->sortable(false),
+                TextColumn::make('total_received')
+                    ->label('Grants Received')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('success')->weight('semibold')->sortable(false),
+                TextColumn::make('total_spent')
+                    ->label('Total Expenditure')
+                    ->formatStateUsing(fn ($s): string => number_format((float)$s, 2))
+                    ->fontFamily('mono')->alignEnd()->color('danger')->sortable(false),
+                TextColumn::make('remaining_balance')
+                    ->label('Remaining Balance')
+                    ->formatStateUsing(fn ($s): string => number_format(abs((float)$s), 2))
+                    ->fontFamily('mono')->alignEnd()->weight('bold')
+                    // @phpstan-ignore-next-line
+                    ->color(fn ($state): string => (float)$state >= 0 ? 'success' : 'danger')
+                    ->sortable(false),
+                TextColumn::make('transaction_count')
+                    ->label('Transactions')
+                    ->alignCenter()->badge()->color('gray')->sortable(false),
+            ],
+
             default => [],
         };
     }
@@ -276,6 +512,9 @@ class FinanceReports extends Page implements HasTable
             'budget-vs-actual'     => 'Budget vs. Actual',
             'gl-ledger'            => 'General Ledger',
             'bank-reconciliation'  => 'Bank Reconciliation Report',
+            'income-statement'     => 'Income Statement (P&L)',
+            'balance-sheet'        => 'Balance Sheet',
+            'donor-fund-summary'   => 'Donor Fund Summary',
             default                => 'Finance Report',
         };
     }
@@ -290,6 +529,9 @@ class FinanceReports extends Page implements HasTable
             'budget-vs-actual'     => 'Active budgets showing budget amount vs actual spend.',
             'gl-ledger'            => 'Raw General Ledger postings for the selected period.',
             'bank-reconciliation'  => 'Bank statement reconciliations with GL balance comparisons.',
+            'income-statement'     => 'Revenue and expenditure by account from posted JEs — showing net surplus or deficit.',
+            'balance-sheet'        => 'Assets, Liabilities and Equity balances from all posted journal entries to date.',
+            'donor-fund-summary'   => 'Per-donor breakdown of grants received, total expenditure, and remaining fund balance.',
             default                => null,
         };
     }
@@ -395,6 +637,21 @@ class FinanceReports extends Page implements HasTable
                 ->icon('heroicon-o-scale')
                 ->url($url('bank-reconciliation'))
                 ->isActiveWhen(fn () => request()->query('report') === 'bank-reconciliation'),
+
+            NavigationItem::make('Income Statement')
+                ->icon('heroicon-o-arrow-trending-up')
+                ->url($url('income-statement'))
+                ->isActiveWhen(fn () => request()->query('report') === 'income-statement'),
+
+            NavigationItem::make('Balance Sheet')
+                ->icon('heroicon-o-building-office-2')
+                ->url($url('balance-sheet'))
+                ->isActiveWhen(fn () => request()->query('report') === 'balance-sheet'),
+
+            NavigationItem::make('Donor Fund Summary')
+                ->icon('heroicon-o-heart')
+                ->url($url('donor-fund-summary'))
+                ->isActiveWhen(fn () => request()->query('report') === 'donor-fund-summary'),
         ];
     }
 

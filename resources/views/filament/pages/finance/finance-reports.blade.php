@@ -24,16 +24,26 @@
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Report</label>
                         <x-filament::input.wrapper>
                             <x-filament::input.select name="report" class="min-w-[240px]">
-                                <option value="journal-entries"      @selected(($report ?? 'journal-entries') === 'journal-entries')>Journal Entries</option>
-                                <option value="payment-vouchers"     @selected(($report ?? '') === 'payment-vouchers')>Payment Vouchers</option>
-                                <option value="payment-requisitions" @selected(($report ?? '') === 'payment-requisitions')>Payment Requisitions</option>
-                                <option value="trial-balance"        @selected(($report ?? '') === 'trial-balance')>Trial Balance</option>
-                                <option value="budget-vs-actual"     @selected(($report ?? '') === 'budget-vs-actual')>Budget vs. Actual</option>
-                                <option value="gl-ledger"            @selected(($report ?? '') === 'gl-ledger')>General Ledger</option>
-                                <option value="bank-reconciliation"  @selected(($report ?? '') === 'bank-reconciliation')>Bank Reconciliation</option>
+                                <optgroup label="Transactional">
+                                    <option value="journal-entries"      @selected(($report ?? 'journal-entries') === 'journal-entries')>Journal Entries</option>
+                                    <option value="payment-vouchers"     @selected(($report ?? '') === 'payment-vouchers')>Payment Vouchers</option>
+                                    <option value="payment-requisitions" @selected(($report ?? '') === 'payment-requisitions')>Payment Requisitions</option>
+                                    <option value="gl-ledger"            @selected(($report ?? '') === 'gl-ledger')>General Ledger</option>
+                                    <option value="bank-reconciliation"  @selected(($report ?? '') === 'bank-reconciliation')>Bank Reconciliation</option>
+                                </optgroup>
+                                <optgroup label="Financial Statements">
+                                    <option value="income-statement"     @selected(($report ?? '') === 'income-statement')>Income Statement (P&amp;L)</option>
+                                    <option value="balance-sheet"        @selected(($report ?? '') === 'balance-sheet')>Balance Sheet</option>
+                                    <option value="trial-balance"        @selected(($report ?? '') === 'trial-balance')>Trial Balance</option>
+                                </optgroup>
+                                <optgroup label="Management">
+                                    <option value="donor-fund-summary"   @selected(($report ?? '') === 'donor-fund-summary')>Donor Fund Summary</option>
+                                    <option value="budget-vs-actual"     @selected(($report ?? '') === 'budget-vs-actual')>Budget vs. Actual</option>
+                                </optgroup>
                             </x-filament::input.select>
                         </x-filament::input.wrapper>
                     </div>
+
 
                     {{-- Period --}}
                     <div>
