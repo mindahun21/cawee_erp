@@ -7,7 +7,6 @@
 # Redis, and pgvector — completely separate from your dev environment.
 # Runs all checks inside those containers, then tears everything down.
 #
-# Your dev environment (docker-compose-mdev.yml) is NEVER touched.
 #
 # Usage:  bash docker/local_deploy_test.sh
 #######################################################################
@@ -41,7 +40,6 @@ echo "========================================"
 echo "  Elisoft ERP — Deploy Readiness Test"
 echo "========================================"
 echo "  Fully isolated — uses docker-compose.yml"
-echo "  Your dev env is NOT touched."
 echo "========================================"
 
 # ── Create a temporary .env for the test environment ─────────────────
@@ -132,11 +130,48 @@ trap cleanup EXIT
 ########################################################################
 header "1. Docker Image Build & Services"
 
-echo "  ▶ Building image and starting containers..."
-if $COMPOSE up -d --build 2>&1 | tail -5; then
+echo "  ▶ Building image (this may take a few minutes on first run)..."
+echo "    Full log: /tmp/elisoft_deploy_build.log"
+echo ""
+
+# Run build in background, log to file
+DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain $COMPOSE up -d --build > /tmp/elisoft_deploy_build.log 2>&1 &
+BUILD_PID=$!
+
+# Rolling 10-line progress display
+PREV_LINES=0
+while kill -0 $BUILD_PID 2>/dev/null; do
+    # Move cursor up to overwrite previous output
+    if [ $PREV_LINES -gt 0 ]; then
+        printf "\033[${PREV_LINES}A"
+    fi
+    # Get last 10 lines, truncate long lines, print with clear
+    LAST_LINES=$(tail -n 10 /tmp/elisoft_deploy_build.log 2>/dev/null)
+    PREV_LINES=0
+    while IFS= read -r line; do
+        printf "\033[2K    %.100s\n" "$line"
+        PREV_LINES=$((PREV_LINES + 1))
+    done <<< "$LAST_LINES"
+    sleep 1
+done
+
+# Final refresh after build ends
+if [ $PREV_LINES -gt 0 ]; then
+    printf "\033[${PREV_LINES}A"
+fi
+LAST_LINES=$(tail -n 10 /tmp/elisoft_deploy_build.log 2>/dev/null)
+while IFS= read -r line; do
+    printf "\033[2K    %.100s\n" "$line"
+done <<< "$LAST_LINES"
+
+wait $BUILD_PID
+BUILD_EXIT=$?
+
+echo ""
+if [ $BUILD_EXIT -eq 0 ]; then
     pass "Docker image built and containers started"
 else
-    fail "Docker build/start FAILED — check Dockerfile"
+    fail "Docker build/start FAILED — check /tmp/elisoft_deploy_build.log"
     echo "  Cannot continue without containers. Exiting."
     exit 1
 fi

@@ -37,7 +37,7 @@ return new class extends Migration
          */
         if (! Schema::hasTable($tableNames['permissions'])) {
             Schema::create($tableNames['permissions'], static function (Blueprint $table) {
-                $table->uuid('id')->primary(); // permission id
+                $table->id(); // permission id
                 $table->string('name');
                 $table->string('guard_name');
                 $table->timestamps();
@@ -51,7 +51,7 @@ return new class extends Migration
          */
         if (! Schema::hasTable($tableNames['roles'])) {
             Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames) {
-                $table->uuid('id')->primary(); // role id
+                $table->id(); // role id
                 if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
                     $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                     $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
@@ -69,10 +69,10 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['model_has_permissions'])) {
             Schema::create($tableNames['model_has_permissions'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams) {
-                $table->uuid($pivotPermission);
+                $table->unsignedBigInteger($pivotPermission);
 
                 $table->string('model_type');
-                $table->uuid($columnNames['model_morph_key']);
+                $table->unsignedBigInteger($columnNames['model_morph_key']);
                 $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
 
                 $table->foreign($pivotPermission)
@@ -94,7 +94,7 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['model_has_roles'])) {
             Schema::create($tableNames['model_has_roles'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams) {
-                $table->uuid($pivotRole);
+                $table->unsignedBigInteger($pivotRole);
 
                 $table->string('model_type');
                 $table->unsignedBigInteger($columnNames['model_morph_key']);
@@ -119,8 +119,8 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['role_has_permissions'])) {
             Schema::create($tableNames['role_has_permissions'], static function (Blueprint $table) use ($tableNames, $pivotRole, $pivotPermission) {
-                $table->uuid($pivotPermission);
-                $table->uuid($pivotRole);
+                $table->unsignedBigInteger($pivotPermission);
+                $table->unsignedBigInteger($pivotRole);
 
                 $table->foreign($pivotPermission)
                     ->references('id') // permission id
