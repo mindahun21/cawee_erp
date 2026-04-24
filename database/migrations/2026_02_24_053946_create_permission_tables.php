@@ -32,12 +32,22 @@ return new class extends Migration
             return;
         }
 
+        $legacyPermissionsTable = Schema::hasTable($tableNames['permissions']) && ! Schema::hasColumn($tableNames['permissions'], 'id');
+        $legacyRolesTable = Schema::hasTable($tableNames['roles']) && ! Schema::hasColumn($tableNames['roles'], 'id');
+
+        throw_if(
+            $legacyPermissionsTable || $legacyRolesTable,
+            "Error: Spatie permission tables already exist but don't use integer 'id' primary keys. "
+            ."Drop the existing permission-related tables (roles/permissions/model_has_roles/model_has_permissions/role_has_permissions) "
+            ."or write a conversion migration, then re-run migrations."
+        );
+
         /**
          * See `docs/prerequisites.md` for suggested lengths on 'name' and 'guard_name' if "1071 Specified key was too long" errors are encountered.
          */
         if (! Schema::hasTable($tableNames['permissions'])) {
             Schema::create($tableNames['permissions'], static function (Blueprint $table) {
-                $table->uuid(); // permission id
+                $table->id(); // permission id
                 $table->string('name');
                 $table->string('guard_name');
                 $table->timestamps();
@@ -51,7 +61,7 @@ return new class extends Migration
          */
         if (! Schema::hasTable($tableNames['roles'])) {
             Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames) {
-                $table->uuid(); // role id
+                $table->id(); // role id
                 if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
                     $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                     $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
@@ -69,14 +79,14 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['model_has_permissions'])) {
             Schema::create($tableNames['model_has_permissions'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams) {
-                $table->uuid($pivotPermission);
+                $table->unsignedBigInteger($pivotPermission);
 
                 $table->string('model_type');
-                $table->uuid($columnNames['model_morph_key']);
+                $table->unsignedBigInteger($columnNames['model_morph_key']);
                 $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
 
                 $table->foreign($pivotPermission)
-                    ->references('uuid') // permission id
+                    ->references('id') // permission id
                     ->on($tableNames['permissions'])
                     ->cascadeOnDelete();
                 if ($teams) {
@@ -94,14 +104,14 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['model_has_roles'])) {
             Schema::create($tableNames['model_has_roles'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams) {
-                $table->uuid($pivotRole);
+                $table->unsignedBigInteger($pivotRole);
 
                 $table->string('model_type');
                 $table->unsignedBigInteger($columnNames['model_morph_key']);
                 $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_roles_model_id_model_type_index');
 
                 $table->foreign($pivotRole)
-                    ->references('uuid') // role id
+                    ->references('id') // role id
                     ->on($tableNames['roles'])
                     ->cascadeOnDelete();
                 if ($teams) {
@@ -119,16 +129,16 @@ return new class extends Migration
 
         if (! Schema::hasTable($tableNames['role_has_permissions'])) {
             Schema::create($tableNames['role_has_permissions'], static function (Blueprint $table) use ($tableNames, $pivotRole, $pivotPermission) {
-                $table->uuid($pivotPermission);
-                $table->uuid($pivotRole);
+                $table->unsignedBigInteger($pivotPermission);
+                $table->unsignedBigInteger($pivotRole);
 
                 $table->foreign($pivotPermission)
-                    ->references('uuid') // permission id
+                    ->references('id') // permission id
                     ->on($tableNames['permissions'])
                     ->cascadeOnDelete();
 
                 $table->foreign($pivotRole)
-                    ->references('uuid') // role id
+                    ->references('id') // role id
                     ->on($tableNames['roles'])
                     ->cascadeOnDelete();
 
