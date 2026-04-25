@@ -8,6 +8,30 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('finance_payroll_summaries')) {
+            $requiredColumns = [
+                'id',
+                'payroll_month',
+                'payroll_year',
+                'employee_id',
+                'status',
+            ];
+
+            $missingColumns = [];
+            foreach ($requiredColumns as $column) {
+                if (! Schema::hasColumn('finance_payroll_summaries', $column)) {
+                    $missingColumns[] = $column;
+                }
+            }
+
+            throw_if(
+                $missingColumns !== [],
+                "Error: 'finance_payroll_summaries' already exists but is missing expected columns: " . implode(', ', $missingColumns)
+            );
+
+            return;
+        }
+
         Schema::create('finance_payroll_summaries', function (Blueprint $table) {
             $table->id();
             $table->unsignedTinyInteger('payroll_month');  // 1-12

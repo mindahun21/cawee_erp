@@ -32,6 +32,16 @@ return new class extends Migration
             return;
         }
 
+        $legacyPermissionsTable = Schema::hasTable($tableNames['permissions']) && ! Schema::hasColumn($tableNames['permissions'], 'id');
+        $legacyRolesTable = Schema::hasTable($tableNames['roles']) && ! Schema::hasColumn($tableNames['roles'], 'id');
+
+        throw_if(
+            $legacyPermissionsTable || $legacyRolesTable,
+            "Error: Spatie permission tables already exist but don't use integer 'id' primary keys. "
+            ."Drop the existing permission-related tables (roles/permissions/model_has_roles/model_has_permissions/role_has_permissions) "
+            ."or write a conversion migration, then re-run migrations."
+        );
+
         /**
          * See `docs/prerequisites.md` for suggested lengths on 'name' and 'guard_name' if "1071 Specified key was too long" errors are encountered.
          */

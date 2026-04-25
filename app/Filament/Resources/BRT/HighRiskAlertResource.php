@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema as DbSchema;
 
 class HighRiskAlertResource extends Resource
 {
@@ -30,6 +31,10 @@ class HighRiskAlertResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
+        if (!DbSchema::hasTable('brt_progress_updates')) {
+            return null;
+        }
+
         return (string) static::getModel()::query()
             ->where('high_risk_flag', true)
             ->whereIn('alert_status', ['open', 'in_review', 'escalated'])
@@ -107,10 +112,6 @@ class HighRiskAlertResource extends Resource
                     ]),
             ])
             ->recordActions([
-                Action::make('view_update')
-                    ->label('View Update')
-                    ->icon('heroicon-s-eye')
-                    ->url(fn (BrtProgressUpdate $record): string => ProgressUpdateResource::getUrl('view', ['record' => $record])),
                 Action::make('mark_in_review')
                     ->label('Mark In Review')
                     ->icon('heroicon-s-arrow-path')

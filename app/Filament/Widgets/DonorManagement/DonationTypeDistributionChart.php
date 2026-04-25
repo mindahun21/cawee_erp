@@ -9,7 +9,9 @@ class DonationTypeDistributionChart extends ChartWidget
 {
     protected ?string $heading = 'Donations by Type';
     
-    protected int | string | array $columnSpan = 'full';
+    protected int | string | array $columnSpan = 'half';
+
+    protected ?string $maxHeight = '300px';
 
     protected function getData(): array
     {

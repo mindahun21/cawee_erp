@@ -63,6 +63,41 @@ class BankReconciliation extends Model
         return abs((float) $this->difference) < 0.01;
     }
 
+    /**
+     * Recompute outstanding_deposits, outstanding_cheques,
+     * adjusted_bank_balance and difference from the items relation,
+     * then persist the updated totals.
+     */
+    public function calculateTotals(): void
+    {
+        $items = $this->items()->get();
+
+        $deposits = $items
+            ->where('item_type', 'deposit')
+            ->where('is_cleared', false)
+            ->sum('amount');
+
+        $cheques = $items
+            ->whereIn('item_type', ['payment', 'bank_charge', 'interest', 'other'])
+            ->where('is_cleared', false)
+            ->sum('amount');
+
+        $adjustedBankBalance = (float) $this->statement_balance
+            + (float) $deposits
+            - (float) $cheques;
+
+        $difference = $adjustedBankBalance - (float) $this->gl_balance;
+
+        $this->forceFill([
+            'outstanding_deposits'  => $deposits,
+            'outstanding_cheques'   => $cheques,
+            'adjusted_bank_balance' => $adjustedBankBalance,
+            'difference'            => $difference,
+            'status'                => abs($difference) < 0.01 ? 'reconciled' : 'in_progress',
+        ])->save();
+    }
+
+
     // ── Relationships ─────────────────────────────────────────────────
 
     public function bankAccount(): BelongsTo

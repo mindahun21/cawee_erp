@@ -11,6 +11,8 @@ class DonationTrendsChart extends ChartWidget
     
     protected int | string | array $columnSpan = 'half';
 
+    protected ?string $maxHeight = '300px';
+
     protected function getData(): array
     {
         $service = app(DonationService::class);
