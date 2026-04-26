@@ -165,6 +165,26 @@ class Reconcile extends Page implements HasTable
                         ])->save();
                         Notification::make()->success()->title('Reconciliation completed.')->send();
                     }),
+
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('print_summary')
+                        ->label('Print Summary')
+                        ->icon('heroicon-o-document-text')
+                        ->color('gray')
+                        ->url(fn ($record) => route('finance.bank-reconciliation.summary', $record))
+                        ->openUrlInNewTab(),
+
+                    \Filament\Actions\Action::make('print_detail')
+                        ->label('Print Detail')
+                        ->icon('heroicon-o-document-magnifying-glass')
+                        ->color('gray')
+                        ->url(fn ($record) => route('finance.bank-reconciliation.detail', $record))
+                        ->openUrlInNewTab(),
+                ])
+                ->label('Print')
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->button(),
             ])
             ->defaultSort('statement_date', 'desc')
             ->striped()

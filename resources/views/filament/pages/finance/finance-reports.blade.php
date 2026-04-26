@@ -123,7 +123,7 @@
                 </div>
 
                 <div class="p-4 sm:p-6">
-                    <form method="GET" class="flex flex-wrap items-end gap-4">
+                    <form method="GET" action="{{ route('filament.admin.pages.finance.reports') }}" class="flex flex-wrap items-end gap-4">
                         {{-- Preserve report param --}}
                         <input type="hidden" name="report" value="{{ $activeReport }}">
 
