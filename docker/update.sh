@@ -25,6 +25,7 @@ docker compose exec app php artisan down --retry=30 || true
 echo ""
 echo "▶ Step 2/7: Rebuilding containers..."
 docker compose up -d --build
+docker compose restart web # Restarts Nginx so it can find the new app container IP
 
 # Fix permissions for www-data
 docker compose exec app chown -R www-data:www-data storage bootstrap/cache
@@ -41,7 +42,7 @@ docker compose exec app composer install \
 
 # ── 4. Rebuild frontend assets ──────────────────────────────────────
 echo ""
-echo "▶ Step 3/7: Rebuilding frontend assets..."
+echo "▶ Step 4/7: Rebuilding frontend assets..."
 docker compose exec app npm ci
 docker compose exec app npm run build
 docker compose exec app npm prune --omit=dev 2>/dev/null || true
