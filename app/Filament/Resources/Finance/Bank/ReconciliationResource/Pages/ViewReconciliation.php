@@ -8,7 +8,14 @@ class ViewReconciliation extends ViewRecord {
     protected static string $resource = ReconciliationResource::class;
     protected function getHeaderActions(): array {
         return [
+            Action::make('back_to_reconcile')
+                ->label('← Back to Reconcile')
+                ->color('gray')
+                ->url(route('filament.admin.pages.finance.reconcile'))
+                ->outlined(),
+
             EditAction::make()->visible(fn () => $this->record->status === 'in_progress'),
+
             Action::make('mark_reconciled')->label('Mark Reconciled')->icon('heroicon-o-check-badge')->color('success')
                 ->visible(fn () => $this->record->status === 'in_progress' && abs((float)$this->record->difference) < 0.01)
                 ->requiresConfirmation()
