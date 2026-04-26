@@ -26,9 +26,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class GoodsReceiptResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = GoodsReceipt::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
     protected static string|\UnitEnum|null $navigationGroup = 'Procurement';

@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Procurement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Procurement\ProcurementBudget;
 use Filament\Widgets\ChartWidget;
 
 class ProcurementBudgetUtilizationChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Budget Utilization by Line';
     protected static ?int $sort = 2;
     protected ?string $maxHeight = '320px';

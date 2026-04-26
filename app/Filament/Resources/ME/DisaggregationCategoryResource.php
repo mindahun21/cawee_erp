@@ -20,9 +20,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class DisaggregationCategoryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeDisaggregationCategory::class;
     
     protected static ?string $modelLabel = 'Disaggregation Category';

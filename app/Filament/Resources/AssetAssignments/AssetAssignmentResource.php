@@ -14,9 +14,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class AssetAssignmentResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = AssetAssignment::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-plus';

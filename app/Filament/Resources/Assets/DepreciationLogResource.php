@@ -16,9 +16,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use App\Traits\BelongsToModule;
 
 class DepreciationLogResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Asset::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';

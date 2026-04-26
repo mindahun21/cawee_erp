@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Exports\GeneralReportExport;
 use App\Models\Currency;
 use App\Models\Procurement\Invoice;
@@ -25,6 +27,8 @@ use UnitEnum;
 
 class ProcurementReports extends Page implements HasTable
 {
+    use BelongsToModulePage;
+
     use InteractsWithTable;
 
     protected string $view = 'filament.pages.procurement-reports';

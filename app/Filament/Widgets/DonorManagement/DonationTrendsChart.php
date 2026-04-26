@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\DonationService;
 use Filament\Widgets\ChartWidget;
 
 class DonationTrendsChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Monthly Donation Trends';
     
     protected int | string | array $columnSpan = 'half';

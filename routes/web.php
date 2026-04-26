@@ -10,7 +10,7 @@ Route::middleware('auth')->get('/admin/recruitment/print', [RecruitmentPrintCont
 
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/admin');
 });
 
 Route::get('/shared-files/{token}', [FileShareController::class, 'show'])

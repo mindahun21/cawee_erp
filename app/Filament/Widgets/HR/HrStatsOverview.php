@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\HR;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Employee;
 use Illuminate\Support\Facades\Cache;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -9,6 +11,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class HrStatsOverview extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 1;
 
     protected string $view = 'filament-widgets::stats-overview-widget';

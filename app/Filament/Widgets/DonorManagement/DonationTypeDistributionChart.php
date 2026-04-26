@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\DonationService;
 use Filament\Widgets\ChartWidget;
 
 class DonationTypeDistributionChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Donations by Type';
     
     protected int | string | array $columnSpan = 'half';

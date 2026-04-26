@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Procurement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Procurement\Contract;
 use App\Models\Procurement\Invoice;
 use App\Models\Procurement\Payment;
@@ -15,6 +17,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class ProcurementStatsOverview extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 1;
     protected int|string|array $columnSpan = 'full';
 

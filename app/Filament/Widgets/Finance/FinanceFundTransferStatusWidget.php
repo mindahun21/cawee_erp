@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\FundTransfer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class FinanceFundTransferStatusWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 7;
     protected int|string|array $columnSpan = 1;
     protected static ?string $heading = 'Outstanding HO → Field Fund Transfers';

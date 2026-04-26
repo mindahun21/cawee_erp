@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Donation;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LatestDonationsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = 'Latest Contributions';
     protected string $view = 'filament.widgets.latest-donations-widget';
 

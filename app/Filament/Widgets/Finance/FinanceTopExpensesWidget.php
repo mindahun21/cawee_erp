@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\GeneralLedger;
 use App\Models\Finance\ChartOfAccount;
 use Filament\Widgets\ChartWidget;
@@ -10,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceTopExpensesWidget extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Top Expense Categories (This Month)';
     protected static ?int $sort = 6;
     protected ?string $maxHeight = '320px';

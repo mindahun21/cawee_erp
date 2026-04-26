@@ -12,9 +12,11 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class VehicleFuelLogResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleFuelLog::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-fire';

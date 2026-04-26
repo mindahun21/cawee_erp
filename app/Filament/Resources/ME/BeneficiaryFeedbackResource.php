@@ -34,9 +34,11 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BelongsToModule;
 
 class BeneficiaryFeedbackResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeBeneficiaryFeedback::class;
 
     protected static ?string $modelLabel = 'Beneficiary Feedback';

@@ -21,9 +21,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class CostCenterResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = CostCenter::class;
 
     protected static bool $shouldRegisterNavigation = false;

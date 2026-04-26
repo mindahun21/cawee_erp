@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\GeneralLedger;
 use App\Models\Finance\AccountingPeriod;
 use App\Models\Finance\Budget;
@@ -11,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceBurnRateChartWidget extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Burn Rate — Actual vs. Budget (Last 6 Months)';
     protected static ?int $sort = 3;
     protected ?string $maxHeight = '320px';

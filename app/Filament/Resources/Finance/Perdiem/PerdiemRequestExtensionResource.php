@@ -12,9 +12,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class PerdiemRequestExtensionResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = PerdiemRequestExtension::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static string|\UnitEnum|null $navigationGroup = 'Finance';

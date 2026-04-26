@@ -30,9 +30,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 use App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource\Pages;
+use App\Traits\BelongsToModule;
 
 class LeaveRequestResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = HrLeaveRequest::class;
 
     protected static bool $shouldRegisterNavigation = false;

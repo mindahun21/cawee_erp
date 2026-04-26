@@ -32,9 +32,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class BudgetResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = Budget::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

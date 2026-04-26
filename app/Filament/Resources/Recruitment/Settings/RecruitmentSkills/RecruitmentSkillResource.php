@@ -13,9 +13,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class RecruitmentSkillResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = RecruitmentSkill::class;
 
     protected static bool $shouldRegisterNavigation = false;

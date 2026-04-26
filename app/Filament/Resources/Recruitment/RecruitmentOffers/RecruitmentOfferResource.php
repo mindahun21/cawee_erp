@@ -22,9 +22,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BelongsToModule;
 
 class RecruitmentOfferResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = RecruitmentOffer::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Recruitment';

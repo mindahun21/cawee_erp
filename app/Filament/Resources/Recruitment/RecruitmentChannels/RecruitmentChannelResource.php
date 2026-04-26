@@ -19,9 +19,11 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use App\Traits\BelongsToModule;
 
 class RecruitmentChannelResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = RecruitmentChannel::class;
 
     protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-globe-alt';

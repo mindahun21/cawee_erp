@@ -14,9 +14,11 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class VehicleMaintenanceResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleMaintenance::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';

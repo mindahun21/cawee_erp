@@ -17,9 +17,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class LocationResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Location::class;
 
     protected static bool $shouldRegisterNavigation = true;

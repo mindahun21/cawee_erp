@@ -9,6 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 /**
  * Leave Balance Report Resource
@@ -18,6 +19,7 @@ use Filament\Tables\Table;
  */
 class LeaveBalanceReportResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Employee::class;
 
     protected static bool $shouldRegisterNavigation = false;

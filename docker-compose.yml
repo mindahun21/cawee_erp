@@ -18,18 +18,27 @@ services:
   web:
     image: nginx:alpine
     restart: unless-stopped
-    ports:
-      - "8000:80"
     volumes:
       - ./:/var/www
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.elisoft.rule=Host(`erp-elisoft.elisoftsolution.com`)"
+
+      - "traefik.http.routers.elisoft.entrypoints=websecure"
+      - "traefik.http.routers.elisoft.tls.certresolver=letsencrypt"
+      - "traefik.http.services.elisoft.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-public"
     networks:
       - elisoft-network
+      - traefik-public
 
   queue:
-    image: elisofterp-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     working_dir: /var/www
     command: php artisan queue:work --tries=1 --timeout=0
@@ -42,7 +51,9 @@ services:
       - elisoft-network
 
   cron:
-    image: elisofterp-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     working_dir: /var/www
     command: php artisan schedule:work
@@ -59,9 +70,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: elisoft_erp
-      MYSQL_USER: elisoft_user
-      MYSQL_PASSWORD: user_password
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
     volumes:
       - db-data:/var/lib/mysql
     networks:
@@ -79,9 +90,9 @@ services:
     image: ankane/pgvector:latest
     restart: unless-stopped
     environment:
-      POSTGRES_DB: elisoft_vectors
-      POSTGRES_USER: vector_user
-      POSTGRES_PASSWORD: vector_password
+      POSTGRES_DB: ${VECTOR_DB_DATABASE:-elisoft_vectors}
+      POSTGRES_USER: ${VECTOR_DB_USERNAME:-vector_user}
+      POSTGRES_PASSWORD: ${VECTOR_DB_PASSWORD:-vector_password}
     volumes:
       - vector-db-data:/var/lib/postgresql/data
     networks:
@@ -90,6 +101,8 @@ services:
 networks:
   elisoft-network:
     driver: bridge
+  traefik-public:
+    external: true
 
 volumes:
   db-data:

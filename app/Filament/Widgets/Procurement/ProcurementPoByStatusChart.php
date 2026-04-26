@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Procurement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Procurement\PurchaseOrder;
 use Filament\Widgets\ChartWidget;
 
 class ProcurementPoByStatusChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Purchase Orders by Status';
     protected static ?int $sort = 3;
     protected ?string $maxHeight = '320px';

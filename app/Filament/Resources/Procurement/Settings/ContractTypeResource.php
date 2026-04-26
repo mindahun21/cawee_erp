@@ -17,9 +17,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ContractTypeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = ProcurementContractType::class;
 
     protected static bool $shouldRegisterNavigation = false;

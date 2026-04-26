@@ -20,9 +20,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class TaxTypeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = TaxType::class;
 
     protected static bool $shouldRegisterNavigation = false;

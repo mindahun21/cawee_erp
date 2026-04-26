@@ -36,9 +36,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use App\Traits\BelongsToModule;
 
 class ChartOfAccountResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = ChartOfAccount::class;
 
     // ── Navigation ────────────────────────────────────────────────────

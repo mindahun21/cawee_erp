@@ -26,9 +26,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ProgressUpdateResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = BrtProgressUpdate::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Beneficiary Registry & Project Tracking';

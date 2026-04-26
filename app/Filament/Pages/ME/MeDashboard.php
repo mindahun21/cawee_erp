@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages\ME;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Filament\Widgets\ME\MeLocationMapPlaceholderWidget;
 use App\Filament\Widgets\ME\MePerformanceTrendChartWidget;
 use App\Filament\Widgets\ME\MeProgressByFrameworkChartWidget;
@@ -15,6 +17,8 @@ use UnitEnum;
 
 class MeDashboard extends Page
 {
+    use BelongsToModulePage;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
     protected static string|UnitEnum|null $navigationGroup = 'Monitoring and Evaluation';

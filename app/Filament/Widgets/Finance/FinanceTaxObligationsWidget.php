@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\DeclaredTax;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class FinanceTaxObligationsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 8;
     protected int|string|array $columnSpan = 1;
     protected static ?string $heading = 'Tax Obligations & Upcoming Declarations';

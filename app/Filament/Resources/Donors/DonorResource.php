@@ -39,9 +39,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use UnitEnum;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 
+use App\Traits\BelongsToModule;
 
 class DonorResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Donor::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';

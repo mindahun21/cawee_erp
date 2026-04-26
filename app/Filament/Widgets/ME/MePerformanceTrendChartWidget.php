@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\ME;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Filament\Widgets\ME\Concerns\InteractsWithMeFilters;
 use App\Services\ME\DashboardService;
 use Filament\Widgets\ChartWidget;
@@ -9,6 +11,8 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class MePerformanceTrendChartWidget extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     use InteractsWithMeFilters;
     use InteractsWithPageFilters;
 

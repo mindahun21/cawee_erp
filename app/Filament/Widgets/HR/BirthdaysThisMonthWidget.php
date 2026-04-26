@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\HR;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Employee;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class BirthdaysThisMonthWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = '🎂 Birthdays This Month';
 
     protected static ?int $sort = 6;

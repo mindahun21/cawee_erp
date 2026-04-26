@@ -32,9 +32,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class BankAccountResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = BankAccount::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;

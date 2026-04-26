@@ -13,9 +13,11 @@ use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class VehicleFuelLogResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleFuelLog::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Vehicle Management';

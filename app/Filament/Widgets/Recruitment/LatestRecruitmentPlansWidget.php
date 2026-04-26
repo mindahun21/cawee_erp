@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Traits\BelongsToModuleWidget;
+
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -9,6 +11,8 @@ use App\Models\Recruitment\RecruitmentPlan;
 
 class LatestRecruitmentPlansWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
     

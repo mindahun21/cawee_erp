@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\ChartWidget;
 
 class RetentionChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Donor Retention Rate (%)';
     
     protected string $color = 'success';

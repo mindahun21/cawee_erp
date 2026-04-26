@@ -16,9 +16,11 @@ use Filament\Tables\Table;
 use Filament\Actions\EditAction;
 use BackedEnum;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class LeavePolicyResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = HrLeavePolicy::class;
 
     protected static bool $shouldRegisterNavigation = false;

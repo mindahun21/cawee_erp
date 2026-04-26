@@ -13,9 +13,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class PerdiemTaxRuleResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = PerdiemTaxRule::class;
     protected static bool $shouldRegisterNavigation = false;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';

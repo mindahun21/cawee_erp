@@ -26,9 +26,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class LoanResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = Loan::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

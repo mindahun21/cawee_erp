@@ -16,9 +16,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class VehicleAssignmentResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleAssignment::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Vehicle Management';

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Asset;
 use App\Models\Warehouse;
 use Filament\Widgets\ChartWidget;
@@ -9,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class StockByWarehouseChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Stock Distribution by Warehouse';
 
     protected ?string $maxHeight = '300px';

@@ -26,9 +26,11 @@ use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class VehicleMaintenanceRecordResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleMaintenanceRecord::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Vehicle Management';

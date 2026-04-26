@@ -19,9 +19,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class CampaignEventResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = CampaignEvent::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';

@@ -18,9 +18,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class VehicleResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Vehicle::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';

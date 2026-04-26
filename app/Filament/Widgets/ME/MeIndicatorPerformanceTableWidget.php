@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\ME;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Filament\Widgets\ME\Concerns\InteractsWithMeFilters;
 use App\Models\ME\MeIndicator;
 use App\Services\ME\DashboardService;
@@ -13,6 +15,8 @@ use Illuminate\Support\Collection;
 
 class MeIndicatorPerformanceTableWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     use InteractsWithMeFilters;
     use InteractsWithPageFilters;
 

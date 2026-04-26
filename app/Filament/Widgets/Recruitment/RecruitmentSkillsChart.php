@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Recruitment\RecruitmentSkillCategory;
 use Filament\Widgets\ChartWidget;
 
 class RecruitmentSkillsChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Plans by Status';
 
     protected function getData(): array

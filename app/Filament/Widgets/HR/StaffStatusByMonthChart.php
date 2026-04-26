@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\HR;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Employee;
 use Filament\Widgets\ChartWidget;
 
 class StaffStatusByMonthChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Staff Changes by Month (This Year)';
 
     protected static ?int $sort = 5;

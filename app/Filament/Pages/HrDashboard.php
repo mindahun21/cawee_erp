@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Filament\Widgets\HR\BirthdaysThisMonthWidget;
 use App\Filament\Widgets\HR\HrStatsOverview;
 use App\Filament\Widgets\HR\StaffByAgeGroupChart;
@@ -17,6 +19,8 @@ use UnitEnum;
 
 class HrDashboard extends Page
 {
+    use BelongsToModulePage;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static string|UnitEnum|null $navigationGroup = 'Human Resources';

@@ -24,6 +24,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 /**
  * HR Settings Resource
@@ -37,6 +38,7 @@ use Filament\Tables\Table;
  */
 class DepartmentResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Department::class;
 
     protected static bool $shouldRegisterNavigation = false;

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\PaymentRequisition;
 use App\Models\Finance\PaymentVoucher;
 use App\Models\Finance\PettyCashReplenishment;
@@ -14,6 +16,8 @@ use Illuminate\Support\Facades\Cache;
 
 class FinancePendingApprovalsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 2;
     protected int|string|array $columnSpan = 'full';
 

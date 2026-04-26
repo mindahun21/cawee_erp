@@ -2,12 +2,16 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\Budget;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\Cache;
 
 class FinanceBudgetUtilizationWidget extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Budget Utilization (Active Budgets)';
     protected static ?int $sort = 4;
     protected ?string $maxHeight = '320px';

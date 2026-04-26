@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages\Finance;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Models\Currency;
 use App\Models\Donor;
 use App\Models\Finance\AccountingPeriod;
@@ -33,6 +35,8 @@ use UnitEnum;
 
 class FinanceReports extends Page implements HasTable
 {
+    use BelongsToModulePage;
+
     use InteractsWithTable;
 
     protected string $view = 'filament.pages.finance.finance-reports';
@@ -46,6 +50,10 @@ class FinanceReports extends Page implements HasTable
 
     public static function canAccess(): bool
     {
+        if (! \App\Support\ModuleManager::isPageEnabled(static::class)) {
+            return false;
+        }
+
         $user = auth()->user();
         return $user instanceof User && ($user->isFinanceOfficer() || $user->isFinanceManager() || $user->isSuperAdmin());
     }

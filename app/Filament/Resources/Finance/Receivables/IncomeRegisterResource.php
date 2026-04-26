@@ -30,9 +30,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class IncomeRegisterResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = IncomeRegister::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-tray';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

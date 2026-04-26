@@ -16,9 +16,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ItemResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Item::class;
 
     protected static UnitEnum|string|null $navigationGroup = 'Inventory and Asset';

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Models\FileAccessLog;
 use App\Models\FileShare;
 use App\Models\SharedFile;
@@ -16,6 +18,8 @@ use UnitEnum;
 
 class FileSharingReports extends Page
 {
+    use BelongsToModulePage;
+
     protected string $view = 'filament.pages.file-sharing-reports';
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';

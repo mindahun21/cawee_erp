@@ -2,10 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use Filament\Widgets\ChartWidget;
 
 class AssetStatusChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Asset Status Distribution';
 
     protected ?string $maxHeight = '300px';

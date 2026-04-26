@@ -29,9 +29,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class InventoryTakingSheetResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = InventoryTakingSheet::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

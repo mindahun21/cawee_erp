@@ -2,10 +2,14 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Traits\BelongsToModuleWidget;
+
 use Filament\Widgets\ChartWidget;
 
 class RecruitmentPlansChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Vacancies by Department';
 
     protected function getData(): array

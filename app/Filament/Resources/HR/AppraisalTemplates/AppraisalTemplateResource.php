@@ -21,9 +21,11 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class AppraisalTemplateResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = AppraisalTemplate::class;
 
     protected static bool $shouldRegisterNavigation = false;

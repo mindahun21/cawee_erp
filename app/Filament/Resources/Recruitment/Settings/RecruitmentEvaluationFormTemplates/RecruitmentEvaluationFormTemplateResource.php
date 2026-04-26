@@ -15,9 +15,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class RecruitmentEvaluationFormTemplateResource extends Resource
 {
+    use BelongsToModule;
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $model = RecruitmentEvaluationFormTemplate::class;

@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Campaign;
 use Filament\Widgets\ChartWidget;
 
 class CampaignPerformanceChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Active Campaign Progress (%)';
     
     protected int | string | array $columnSpan = 'half';

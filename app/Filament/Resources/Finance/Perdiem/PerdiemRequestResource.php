@@ -32,9 +32,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class PerdiemRequestResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = PerdiemRequest::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

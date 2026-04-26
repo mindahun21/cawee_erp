@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Traits\BelongsToModuleWidget;
+
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class RecruitmentStatsWidget extends StatsOverviewWidget
 {
+    use BelongsToModuleWidget;
+
     protected function getStats(): array
     {
         $nonClosedPlans = \App\Models\Recruitment\RecruitmentPlan::where('status', '!=', 'Closed');

@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\ChartWidget;
 
 class MonthlyTrendChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Monthly Donation Trend';
     
     protected ?string $maxHeight = '300px';

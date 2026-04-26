@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\DonationService;
 use App\Models\Donor;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -9,6 +11,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DonorStatsOverview extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected function getStats(): array
     {
         $service = app(DonationService::class);

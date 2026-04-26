@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\ItemWarehouse;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LowStockWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = 'Low Stock Alerts';
 
     protected int | string | array $columnSpan = 'full';

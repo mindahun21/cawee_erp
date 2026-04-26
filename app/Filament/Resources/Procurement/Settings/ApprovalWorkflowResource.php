@@ -20,9 +20,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ApprovalWorkflowResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = ProcurementApprovalWorkflow::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckBadge;

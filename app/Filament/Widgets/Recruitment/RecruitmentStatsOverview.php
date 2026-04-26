@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Recruitment;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Recruitment\RecruitmentCandidate;
 use App\Models\Recruitment\RecruitmentApplication;
 use App\Models\Recruitment\RecruitmentCampaign;
@@ -10,6 +12,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class RecruitmentStatsOverview extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     /**
      * @var int|null
      */

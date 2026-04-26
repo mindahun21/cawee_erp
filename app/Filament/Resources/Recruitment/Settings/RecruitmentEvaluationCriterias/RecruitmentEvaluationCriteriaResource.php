@@ -15,9 +15,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BelongsToModule;
 
 class RecruitmentEvaluationCriteriaResource extends Resource
 {
+    use BelongsToModule;
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $model = RecruitmentEvaluationCriteria::class;

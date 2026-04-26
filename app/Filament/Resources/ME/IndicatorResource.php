@@ -27,9 +27,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Traits\BelongsToModule;
 
 class IndicatorResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeIndicator::class;
     
     protected static ?string $modelLabel = 'Indicator';

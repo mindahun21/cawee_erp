@@ -12,9 +12,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class PerdiemSettlementResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = PerdiemSettlement::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-refund';
     protected static string|\UnitEnum|null $navigationGroup = 'Finance';

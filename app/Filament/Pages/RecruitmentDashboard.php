@@ -2,12 +2,16 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use Filament\Pages\Dashboard;
 use BackedEnum;
 use UnitEnum;
 
 class RecruitmentDashboard extends Dashboard
 {
+    use BelongsToModulePage;
+
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $title = 'Dashboard';

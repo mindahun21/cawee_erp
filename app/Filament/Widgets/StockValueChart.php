@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use Filament\Widgets\ChartWidget;
@@ -9,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class StockValueChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Stock Value by Category';
 
     protected ?string $maxHeight = '300px';

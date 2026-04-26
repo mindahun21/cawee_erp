@@ -23,9 +23,11 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ReferralResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeReferral::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Beneficiary Registry & Project Tracking';

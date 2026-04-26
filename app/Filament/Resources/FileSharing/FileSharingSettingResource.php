@@ -21,9 +21,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class FileSharingSettingResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = FileSharingSetting::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;

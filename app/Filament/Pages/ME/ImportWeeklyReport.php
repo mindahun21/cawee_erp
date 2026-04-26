@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages\ME;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Services\ME\WeeklyReportImportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms\Components\FileUpload;
@@ -17,6 +19,8 @@ use Throwable;
 
 class ImportWeeklyReport extends Page implements HasForms
 {
+    use BelongsToModulePage;
+
     protected \Filament\Support\Enums\Width | string | null $maxContentWidth = \Filament\Support\Enums\Width::Full;
     use InteractsWithForms;
 

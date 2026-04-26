@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages\Finance;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Filament\Widgets\Finance\FinanceBudgetUtilizationWidget;
 use App\Filament\Widgets\Finance\FinanceBurnRateChartWidget;
 use App\Filament\Widgets\Finance\FinanceCashPositionWidget;
@@ -17,6 +19,8 @@ use UnitEnum;
 
 class FinanceDashboard extends Page
 {
+    use BelongsToModulePage;
+
     // No custom $view — Filament renders header + footer widgets automatically
     // via x-filament-panels::page. A custom blade that ALSO calls getHeaderWidgets()
     // causes every widget to appear twice. Removing it fixes the duplication.
@@ -30,6 +34,10 @@ class FinanceDashboard extends Page
 
     public static function canAccess(): bool
     {
+        if (! \App\Support\ModuleManager::isPageEnabled(static::class)) {
+            return false;
+        }
+
         $user = auth()->user();
         return $user instanceof User && ($user->isFinanceOfficer() || $user->isFinanceManager() || $user->isSuperAdmin());
     }

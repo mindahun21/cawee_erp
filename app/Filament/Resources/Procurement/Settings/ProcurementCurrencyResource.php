@@ -22,9 +22,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use App\Traits\BelongsToModule;
 
 class ProcurementCurrencyResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Currency::class;
 
     // ── Navigation ────────────────────────────────────────────────────

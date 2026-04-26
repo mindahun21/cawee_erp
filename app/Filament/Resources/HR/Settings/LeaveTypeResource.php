@@ -18,9 +18,11 @@ use UnitEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use App\Traits\BelongsToModule;
 
 class LeaveTypeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = HrLeaveType::class;
 
     protected static bool $shouldRegisterNavigation = false;

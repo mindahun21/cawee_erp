@@ -23,9 +23,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use App\Traits\BelongsToModule;
 
 class GeneralLedgerResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = GeneralLedger::class;
 
     // ── Navigation ────────────────────────────────────────────────────

@@ -18,9 +18,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Traits\BelongsToModule;
 
 class RecruitmentSkillCategoryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = RecruitmentSkillCategory::class;
 
     protected static bool $shouldRegisterNavigation = false;

@@ -41,9 +41,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use App\Traits\BelongsToModule;
 
 class FundTransferResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = FundTransfer::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;

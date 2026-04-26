@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\ChartWidget;
 
 class RevenueForecastChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Revenue Forecast (Next 12 Months)';
     
     protected string $color = 'info';

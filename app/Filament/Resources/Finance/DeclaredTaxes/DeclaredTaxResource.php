@@ -25,9 +25,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class DeclaredTaxResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = DeclaredTax::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

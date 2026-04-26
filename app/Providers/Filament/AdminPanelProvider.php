@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Support\ModuleManager;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -46,117 +47,8 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-user-circle')
                     ->url(fn (): string => \App\Filament\Pages\MyProfile::getUrl()),
             ])
-            ->navigationGroups([
-                \Filament\Navigation\NavigationGroup::make('Human Resources')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Recruitment')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Procurement')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Finance')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Donor Fundraising')
-                    ->collapsible(),
-
-                \Filament\Navigation\NavigationGroup::make('Donor Fundraising / Settings')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Beneficiary Registry & Project Tracking')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Monitoring and Evaluation')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Inventory and Asset')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('File Sharing')
-                    ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('System Administration')
-                    ->collapsible(),
-            ])
-            ->navigationItems([
-                \Filament\Navigation\NavigationItem::make('Leave Requests')
-                    ->group('Human Resources')
-                    ->icon('heroicon-o-calendar-days')
-                    ->sort(90)
-                    ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource::getUrl())
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
-
-                \Filament\Navigation\NavigationItem::make('Leave Balance Report')
-                    ->group('Human Resources')
-                    ->icon('heroicon-o-chart-bar')
-                    ->sort(91)
-                    ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveBalanceReportResource::getUrl())
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest')),
-
-
-                \Filament\Navigation\NavigationItem::make('Timesheet Management')
-                    ->group('Human Resources')
-                    ->icon('heroicon-o-clock')
-                    ->sort(91)
-                    ->url(fn (): string => \App\Filament\Resources\HR\Timesheets\TimesheetResource::getUrl())
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:HrTimesheet')),
-                \Filament\Navigation\NavigationItem::make('HR Settings')
-                    ->group('Human Resources')
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->sort(93)
-                    ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:Department')),
-                \Filament\Navigation\NavigationItem::make('Settings')
-                    ->group('Procurement')
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->sort(99)
-                    ->url(fn (): string => \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getUrl())
-                    ->isActiveWhen(fn () => request()->routeIs([
-                        \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\ProcurementCategoryResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\ProcurementMethodResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\ProcurementUnitResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\BidSecurityResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\ContractTypeResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Settings\ApprovalWorkflowResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Procurement\Budgets\ProcurementBudgetResource::getRouteBaseName() . '.*',
-                    ])),
-
-                \Filament\Navigation\NavigationItem::make('Settings')
-                    ->group('Recruitment')
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->sort(99)
-                    ->url(fn (): string => \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getUrl())
-                    ->isActiveWhen(fn () => request()->routeIs([
-                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Recruitment\Settings\RecruitmentSkillCategories\RecruitmentSkillCategoryResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Recruitment\Settings\RecruitmentApprovalWorkflows\RecruitmentApprovalWorkflowResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\RecruitmentEvaluationCriteriaResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationFormTemplates\RecruitmentEvaluationFormTemplateResource::getRouteBaseName() . '.*',
-                    ]))
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill')),
-
-                \Filament\Navigation\NavigationItem::make('Portal')
-                    ->group('Recruitment')
-                    ->icon('heroicon-o-globe-alt')
-                    ->sort(98)
-                    ->url(fn (): string => route('candidate.home'), shouldOpenInNewTab: true)
-                    ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign')),
-
-                // ── Finance Settings (Phase 1 + Phase 2 FSC) ───────────────────────
-                \Filament\Navigation\NavigationItem::make('Settings')
-                    ->group('Finance')
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->sort(99)
-                    ->url(fn (): string => \App\Filament\Resources\Finance\Settings\AccountTypeResource::getUrl())
-                    ->isActiveWhen(fn () => request()->routeIs([
-                        \App\Filament\Resources\Finance\Settings\AccountTypeResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\BudgetTypeResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\TaxTypeResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\PerdiemTypeResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\CostCenterResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\CashierResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\AccountingPeriodResource::getRouteBaseName() . '.*',
-                        \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
-                        // Phase 2 — Financial Statement Categories
-                        \App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource::getRouteBaseName() . '.*',
-                        // Per Diem Tax Rules (managed via Finance Settings sub-navigation)
-                        \App\Filament\Resources\Finance\Perdiem\PerdiemTaxRuleResource::getRouteBaseName() . '.*',
-                    ])),
-            ])
+            ->navigationGroups($this->buildNavigationGroups())
+            ->navigationItems($this->buildNavigationItems())
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -189,5 +81,150 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::BODY_END,
                 fn (): string => \Illuminate\Support\Facades\Blade::render('@livewire(\App\Livewire\FloatingAiWidget::class)')
             );
+    }
+
+    /**
+     * Build navigation groups filtered by the active module set.
+     *
+     * @return \Filament\Navigation\NavigationGroup[]
+     */
+    protected function buildNavigationGroups(): array
+    {
+        $activeGroups = ModuleManager::getActiveNavigationGroups();
+
+        $allGroups = [
+            'AI Intelligence',
+            'Human Resources',
+            'Recruitment',
+            'Procurement',
+            'Finance',
+            'Donor Fundraising',
+            'Donor Fundraising / Settings',
+            'Beneficiary Registry & Project Tracking',
+            'Monitoring and Evaluation',
+            'Inventory and Asset',
+            'File Sharing',
+            'System Administration',
+            'Settings',
+            'Filament Shield',
+        ];
+
+        return collect($allGroups)
+            ->filter(fn (string $group) => in_array($group, $activeGroups, true))
+            ->map(fn (string $group) => \Filament\Navigation\NavigationGroup::make($group)->collapsible())
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Build navigation items filtered by the active module set.
+     *
+     * Each item declares which module it belongs to; items whose module
+     * is disabled are excluded entirely.
+     *
+     * @return \Filament\Navigation\NavigationItem[]
+     */
+    protected function buildNavigationItems(): array
+    {
+        $items = [];
+
+        // ── Human Resources ─────────────────────────────────────────────
+        if (ModuleManager::isEnabled('hr')) {
+            $items[] = \Filament\Navigation\NavigationItem::make('Leave Requests')
+                ->group('Human Resources')
+                ->icon('heroicon-o-calendar-days')
+                ->sort(90)
+                ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveRequestResource::getUrl())
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest'));
+
+            $items[] = \Filament\Navigation\NavigationItem::make('Leave Balance Report')
+                ->group('Human Resources')
+                ->icon('heroicon-o-chart-bar')
+                ->sort(91)
+                ->url(fn (): string => \App\Filament\Resources\HR\LeaveRequests\LeaveBalanceReportResource::getUrl())
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:LeaveRequest'));
+
+            $items[] = \Filament\Navigation\NavigationItem::make('Timesheet Management')
+                ->group('Human Resources')
+                ->icon('heroicon-o-clock')
+                ->sort(91)
+                ->url(fn (): string => \App\Filament\Resources\HR\Timesheets\TimesheetResource::getUrl())
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:HrTimesheet'));
+
+            $items[] = \Filament\Navigation\NavigationItem::make('HR Settings')
+                ->group('Human Resources')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->sort(93)
+                ->url(fn (): string => \App\Filament\Resources\HR\Settings\DepartmentResource::getUrl())
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:Department'));
+        }
+
+        // ── Procurement ─────────────────────────────────────────────────
+        if (ModuleManager::isEnabled('procurement')) {
+            $items[] = \Filament\Navigation\NavigationItem::make('Settings')
+                ->group('Procurement')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->sort(99)
+                ->url(fn (): string => \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs([
+                    \App\Filament\Resources\Procurement\Settings\ProcurementCurrencyResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\ProcurementCategoryResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\ProcurementMethodResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\ProcurementUnitResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\BidSecurityResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\ContractTypeResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Settings\ApprovalWorkflowResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Procurement\Budgets\ProcurementBudgetResource::getRouteBaseName() . '.*',
+                ]));
+        }
+
+        // ── Recruitment ─────────────────────────────────────────────────
+        if (ModuleManager::isEnabled('recruitment')) {
+            $items[] = \Filament\Navigation\NavigationItem::make('Settings')
+                ->group('Recruitment')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->sort(99)
+                ->url(fn (): string => \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs([
+                    \App\Filament\Resources\Recruitment\Settings\RecruitmentSkills\RecruitmentSkillResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Recruitment\Settings\RecruitmentSkillCategories\RecruitmentSkillCategoryResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Recruitment\Settings\RecruitmentApprovalWorkflows\RecruitmentApprovalWorkflowResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationCriterias\RecruitmentEvaluationCriteriaResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Recruitment\Settings\RecruitmentEvaluationFormTemplates\RecruitmentEvaluationFormTemplateResource::getRouteBaseName() . '.*',
+                ]))
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentSkill'));
+
+            $items[] = \Filament\Navigation\NavigationItem::make('Portal')
+                ->group('Recruitment')
+                ->icon('heroicon-o-globe-alt')
+                ->sort(98)
+                ->url(fn (): string => route('candidate.home'), shouldOpenInNewTab: true)
+                ->visible(fn () => auth()->user()->hasRole('super_admin') || auth()->user()->can('ViewAny:RecruitmentCampaign'));
+        }
+
+        // ── Finance Settings (Phase 1 + Phase 2 FSC) ────────────────────
+        if (ModuleManager::isEnabled('finance')) {
+            $items[] = \Filament\Navigation\NavigationItem::make('Settings')
+                ->group('Finance')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->sort(99)
+                ->url(fn (): string => \App\Filament\Resources\Finance\Settings\AccountTypeResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs([
+                    \App\Filament\Resources\Finance\Settings\AccountTypeResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\BudgetTypeResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\TaxTypeResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\PerdiemTypeResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\CostCenterResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\CashierResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\AccountingPeriodResource::getRouteBaseName() . '.*',
+                    \App\Filament\Resources\Finance\Settings\FinanceSettingResource::getRouteBaseName() . '.*',
+                    // Phase 2 — Financial Statement Categories
+                    \App\Filament\Resources\Finance\Settings\FinancialStatementCategoryResource::getRouteBaseName() . '.*',
+                    // Per Diem Tax Rules (managed via Finance Settings sub-navigation)
+                    \App\Filament\Resources\Finance\Perdiem\PerdiemTaxRuleResource::getRouteBaseName() . '.*',
+                ]));
+        }
+
+        return $items;
     }
 }

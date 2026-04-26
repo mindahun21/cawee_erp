@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\ME;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Filament\Widgets\ME\Concerns\InteractsWithMeFilters;
 use App\Services\ME\DashboardService;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -10,6 +12,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class MeKpiStatsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     use InteractsWithMeFilters;
     use InteractsWithPageFilters;
 

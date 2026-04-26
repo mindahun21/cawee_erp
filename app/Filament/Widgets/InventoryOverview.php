@@ -2,12 +2,16 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use Illuminate\Support\Facades\Cache;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class InventoryOverview extends StatsOverviewWidget
 {
+    use BelongsToModuleWidget;
+
     protected function getStats(): array
     {
         $metrics = Cache::remember('dashboard:inventory-overview', now()->addMinutes(5), fn (): array => [

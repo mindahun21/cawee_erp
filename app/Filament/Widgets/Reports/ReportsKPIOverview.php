@@ -2,12 +2,16 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class ReportsKPIOverview extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected function getStats(): array
     {
         $service = app(ReportService::class);

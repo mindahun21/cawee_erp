@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Exports\GeneralReportExport;
 use App\Models\Currency;
 use App\Models\Donation;
@@ -29,6 +31,8 @@ use Illuminate\Support\Carbon;
 
 class DonorReports extends Page implements HasTable, HasForms
 {
+    use BelongsToModulePage;
+
     use InteractsWithTable;
     use InteractsWithForms;
 

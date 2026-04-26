@@ -10,9 +10,11 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Traits\BelongsToModule;
 
 class DonationTypeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = DonationType::class;
 
     protected static ?string $slug = 'donation-types';

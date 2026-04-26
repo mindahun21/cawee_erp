@@ -29,9 +29,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ReportResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeIndicatorReport::class;
     
     protected static ?string $modelLabel = 'Report';

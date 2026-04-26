@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Filament\Widgets\InventoryOverview;
 use App\Filament\Widgets\StockByWarehouseChart;
 use App\Filament\Widgets\StockValueChart;
@@ -22,6 +24,8 @@ use BackedEnum;
 
 class InventoryDashboard extends Page
 {
+    use BelongsToModulePage;
+
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static UnitEnum|string|null $navigationGroup = 'Inventory and Asset';

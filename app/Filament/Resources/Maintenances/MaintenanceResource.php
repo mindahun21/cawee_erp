@@ -13,9 +13,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class MaintenanceResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Maintenance::class;
 
     protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-wrench-screwdriver';

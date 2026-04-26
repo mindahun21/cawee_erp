@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Filament\Widgets\Procurement\ProcurementBudgetUtilizationChart;
 use App\Filament\Widgets\Procurement\ProcurementPoByStatusChart;
 use App\Filament\Widgets\Procurement\ProcurementRecentRequisitionsWidget;
@@ -23,6 +25,8 @@ use UnitEnum;
 
 class ProcurementDashboard extends Page
 {
+    use BelongsToModulePage;
+
     protected string $view = 'filament.pages.procurement-dashboard';
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';

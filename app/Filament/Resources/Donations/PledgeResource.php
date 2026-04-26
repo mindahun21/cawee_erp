@@ -29,9 +29,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use UnitEnum;
 use BackedEnum;
+use App\Traits\BelongsToModule;
 
 class PledgeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Pledge::class;
 
     protected static ?string $slug = 'pledges';

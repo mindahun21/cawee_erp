@@ -18,9 +18,11 @@ use Filament\Tables\Table;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use App\Traits\BelongsToModule;
 
 class DonorCategoryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = DonorCategory::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';

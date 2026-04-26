@@ -14,9 +14,11 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class EducationLevelResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = EducationLevel::class;
 
     protected static bool $shouldRegisterNavigation = false;

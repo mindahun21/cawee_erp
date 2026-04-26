@@ -23,9 +23,11 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class SurveyResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeSurvey::class;
     
     protected static ?string $modelLabel = 'Survey';

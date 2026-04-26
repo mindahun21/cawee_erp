@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Services\AI\RecruitmentIntelligenceService;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -10,6 +12,8 @@ use UnitEnum;
 
 class RecruitmentAiReport extends Page
 {
+    use BelongsToModulePage;
+
     protected string $view = 'filament.pages.recruitment-ai-report';
 
     protected static string|UnitEnum|null $navigationGroup = 'Recruitment';

@@ -25,9 +25,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class AlertsResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeAlert::class;
     
     protected static ?string $modelLabel = 'Alert';

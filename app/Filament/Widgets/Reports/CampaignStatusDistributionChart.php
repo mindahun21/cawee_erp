@@ -2,12 +2,16 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
 
 class CampaignStatusDistributionChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Campaign Status Distribution';
     
     protected ?string $maxHeight = '250px';

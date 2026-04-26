@@ -12,9 +12,11 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class SharedFileResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = SharedFile::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;

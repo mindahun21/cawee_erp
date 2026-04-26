@@ -16,9 +16,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BelongsToModule;
 
 class RecruitmentInterviewScheduleResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = RecruitmentInterviewSchedule::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Recruitment';

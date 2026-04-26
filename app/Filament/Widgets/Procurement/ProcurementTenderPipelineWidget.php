@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\Procurement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Procurement\Tender;
 use Filament\Widgets\ChartWidget;
 
 class ProcurementTenderPipelineWidget extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Tender Pipeline';
     protected static ?int $sort = 4;
     protected ?string $maxHeight = '280px';

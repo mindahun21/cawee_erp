@@ -16,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 /**
  * ApprovalHistoryResource
@@ -26,6 +27,7 @@ use UnitEnum;
  */
 class ApprovalHistoryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                           = ApprovalHistory::class;
     protected static string|BackedEnum|null $navigationIcon  = 'heroicon-o-clipboard-document-check';
     protected static string|UnitEnum|null $navigationGroup   = 'Finance';

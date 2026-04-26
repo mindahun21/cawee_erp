@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Finance;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Finance\PettyCashFund;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
@@ -10,6 +12,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class FinancePettyCashStatusWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?int $sort = 5;
     protected int|string|array $columnSpan = 1;
     protected static ?string $heading = 'Petty Cash Fund Status';

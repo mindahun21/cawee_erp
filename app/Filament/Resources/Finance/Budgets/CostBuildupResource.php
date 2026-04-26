@@ -12,9 +12,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class CostBuildupResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = CostBuildup::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static string|\UnitEnum|null $navigationGroup = 'Finance';

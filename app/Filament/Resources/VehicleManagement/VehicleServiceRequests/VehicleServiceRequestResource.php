@@ -25,9 +25,11 @@ use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
+use App\Traits\BelongsToModule;
 
 class VehicleServiceRequestResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = VehicleServiceRequest::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Vehicle Management';

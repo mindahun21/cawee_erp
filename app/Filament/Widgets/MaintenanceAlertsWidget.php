@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Maintenance;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class MaintenanceAlertsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = 'Critical Maintenance Alerts';
 
     protected int | string | array $columnSpan = 'full';

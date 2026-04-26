@@ -21,9 +21,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class OfficeRentAgreementResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = OfficeRentAgreement::class;
 
     protected static ?string $cluster = \App\Filament\Clusters\CarRentManagement::class;

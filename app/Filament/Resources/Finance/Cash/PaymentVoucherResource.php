@@ -34,9 +34,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use App\Traits\BelongsToModule;
 
 class PaymentVoucherResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = PaymentVoucher::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowUpTray;

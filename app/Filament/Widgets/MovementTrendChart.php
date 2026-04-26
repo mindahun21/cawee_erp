@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\InventoryMovement;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
@@ -9,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class MovementTrendChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Inventory Movement Trends (Last 30 Days)';
 
     protected ?string $maxHeight = '300px';

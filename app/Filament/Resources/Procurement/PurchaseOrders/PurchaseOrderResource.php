@@ -31,9 +31,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class PurchaseOrderResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = PurchaseOrder::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;

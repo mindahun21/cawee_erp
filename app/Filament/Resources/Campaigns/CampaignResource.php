@@ -30,9 +30,11 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class CampaignResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Campaign::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';

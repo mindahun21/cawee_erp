@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\HR;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Employee;
 use Filament\Widgets\ChartWidget;
 
 class StaffByDepartmentChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Staff Ratio by Department';
 
     protected static ?int $sort = 2;

@@ -22,9 +22,11 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class BeneficiaryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = MeBeneficiary::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Monitoring and Evaluation';

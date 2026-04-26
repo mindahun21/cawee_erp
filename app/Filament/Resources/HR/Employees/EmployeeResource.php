@@ -40,9 +40,11 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\BelongsToModule;
 
 class EmployeeResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Employee::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Traits\BelongsToModulePage;
+
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Donor;
@@ -12,6 +14,8 @@ use UnitEnum;
 
 class DonorFundraisingDashboard extends Page
 {
+    use BelongsToModulePage;
+
     protected static ?string $slug = 'donor-fundraising-dashboard';
 
     protected static string $routePath = 'donor-fundraising-dashboard';

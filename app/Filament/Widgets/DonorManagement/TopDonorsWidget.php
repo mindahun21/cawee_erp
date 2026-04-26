@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\DonorManagement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Donation;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -10,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class TopDonorsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = 'Top Donors (All Time)';
 
     protected int | string | array $columnSpan = 'half';

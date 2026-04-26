@@ -21,9 +21,11 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use App\Traits\BelongsToModule;
 
 class CurrencyResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Currency::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;

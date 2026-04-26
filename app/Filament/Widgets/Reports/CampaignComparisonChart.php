@@ -2,12 +2,16 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Services\ReportService;
 use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
 
 class CampaignComparisonChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Campaign Performance Comparison';
     
     protected ?string $maxHeight = '300px';

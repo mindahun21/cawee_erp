@@ -6,9 +6,11 @@ use App\Models\Employee;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
+use App\Traits\BelongsToModule;
 
 class HrReportResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Employee::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;

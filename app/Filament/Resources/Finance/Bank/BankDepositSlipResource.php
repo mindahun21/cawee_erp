@@ -25,9 +25,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class BankDepositSlipResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = BankDepositSlip::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxArrowDown;

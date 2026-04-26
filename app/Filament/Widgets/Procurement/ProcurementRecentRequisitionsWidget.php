@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets\Procurement;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Procurement\Requisition;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,6 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class ProcurementRecentRequisitionsWidget extends BaseWidget
 {
+    use BelongsToModuleWidget;
+
     protected static ?string $heading = 'Recent Requisitions';
     protected static ?int $sort = 5;
     protected int|string|array $columnSpan = 'full';

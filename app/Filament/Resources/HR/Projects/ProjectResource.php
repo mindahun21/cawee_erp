@@ -15,9 +15,11 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class ProjectResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Project::class;
 
     protected static bool $shouldRegisterNavigation = false;

@@ -43,9 +43,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use App\Traits\BelongsToModule;
 
 class JournalEntryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = JournalEntry::class;
 
     // ── Navigation ────────────────────────────────────────────────────

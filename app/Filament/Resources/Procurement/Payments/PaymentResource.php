@@ -29,9 +29,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class PaymentResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Payment::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
     protected static string|\UnitEnum|null $navigationGroup = 'Procurement';

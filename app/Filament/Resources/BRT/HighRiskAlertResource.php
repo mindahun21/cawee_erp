@@ -16,9 +16,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema as DbSchema;
+use App\Traits\BelongsToModule;
 
 class HighRiskAlertResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = BrtProgressUpdate::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Beneficiary Registry & Project Tracking';

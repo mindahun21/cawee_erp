@@ -19,9 +19,11 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class TimesheetResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = HrTimesheet::class;
 
     protected static bool $shouldRegisterNavigation = false;

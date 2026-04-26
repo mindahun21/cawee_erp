@@ -12,6 +12,7 @@ use Livewire\WithFileUploads;
 
 class AiAnalyticsHub extends Page
 {
+    use \App\Traits\BelongsToModulePage;
     use WithFileUploads;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected string $view = 'filament.pages.ai-analytics-hub';

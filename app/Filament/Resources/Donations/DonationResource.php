@@ -31,9 +31,11 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Traits\BelongsToModule;
 
 class DonationResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = Donation::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Donor Fundraising';

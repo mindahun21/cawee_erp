@@ -2,11 +2,15 @@
 
 namespace App\Filament\Widgets\HR;
 
+use App\Traits\BelongsToModuleWidget;
+
 use App\Models\Employee;
 use Filament\Widgets\ChartWidget;
 
 class StaffByAgeGroupChart extends ChartWidget
 {
+    use BelongsToModuleWidget;
+
     protected ?string $heading = 'Staff Ratio by Age Group';
 
     protected static ?int $sort = 4;

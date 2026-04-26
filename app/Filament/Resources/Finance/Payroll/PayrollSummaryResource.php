@@ -25,9 +25,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
+use App\Traits\BelongsToModule;
 
 class PayrollSummaryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model                          = PayrollSummary::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
     protected static string|UnitEnum|null $navigationGroup  = 'Finance';

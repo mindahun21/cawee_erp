@@ -15,9 +15,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BelongsToModule;
 
 class InventoryResource extends Resource
 {
+    use BelongsToModule;
     protected static ?string $model = ItemWarehouse::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-archive-box';
