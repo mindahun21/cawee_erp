@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, string $ability) {
             return method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin() ? true : null;
         });
+        // \Illuminate\Support\Facades\URL::forceScheme('https');
+
         \App\Models\Donation::observe(\App\Observers\DonationObserver::class);
         \App\Models\Asset::observe(\App\Observers\AssetObserver::class);
         \App\Models\InventoryMovement::observe(\App\Observers\InventoryMovementObserver::class);

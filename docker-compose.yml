@@ -27,8 +27,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.elisoft.rule=Host(`erp-elisoft.elisoftsolution.com`)"
 
-      - "traefik.http.routers.elisoft.entrypoints=websecure"
-      - "traefik.http.routers.elisoft.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.elisoft.entrypoints=web"
+      # - "traefik.http.routers.elisoft.tls.certresolver=letsencrypt"
       - "traefik.http.services.elisoft.loadbalancer.server.port=80"
       - "traefik.docker.network=traefik-public"
     networks:
