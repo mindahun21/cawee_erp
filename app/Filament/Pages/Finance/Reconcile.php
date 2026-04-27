@@ -205,7 +205,18 @@ class Reconcile extends Page implements HasTable
             ->orderByDesc('statement_date')
             ->value('adjusted_bank_balance');
 
-        $this->beginning_balance = $last !== null ? (float) $last : 0.00;
+        if ($last !== null) {
+            $this->beginning_balance = (float) $last;
+            return;
+        }
+
+        $account = BankAccount::query()->find((int) $value);
+        if ($account) {
+            $this->beginning_balance = (float) ($account->current_balance ?? $account->opening_balance ?? 0);
+            return;
+        }
+
+        $this->beginning_balance = 0.00;
     }
 
     // ── Start Reconciling action ───────────────────────────────────────
@@ -248,9 +259,15 @@ class Reconcile extends Page implements HasTable
         $reference = sprintf('BR-%d-%04d', $year, $seq);
 
         // Match to an accounting period
-        $period = AccountingPeriod::where('start_date', '<=', $this->ending_date)
-            ->where('end_date', '>=', $this->ending_date)
-            ->first();
+        $periodId = $this->resolveAccountingPeriodId($this->ending_date);
+        if (!$periodId) {
+            Notification::make()
+                ->danger()
+                ->title('No accounting period found')
+                ->body('Create or open an accounting period that covers the selected statement date, then try again.')
+                ->send();
+            return;
+        }
 
         $beginningBalance = (float) ($this->beginning_balance ?? 0);
         $endingBalance    = (float) ($this->ending_balance ?? 0);
@@ -258,7 +275,7 @@ class Reconcile extends Page implements HasTable
         $reconciliation = BankReconciliation::create([
             'reference'             => $reference,
             'bank_account_id'       => $this->bank_account_id,
-            'accounting_period_id'  => $period?->id,
+            'accounting_period_id'  => $periodId,
             'statement_date'        => $this->ending_date,
             'statement_balance'     => $endingBalance,
             'gl_balance'            => $beginningBalance,
@@ -302,5 +319,37 @@ class Reconcile extends Page implements HasTable
             : null;
 
         return compact('bankAccounts', 'lastReconciliation', 'inProgressReconciliation');
+    }
+
+    protected function resolveAccountingPeriodId(string $statementDate): ?int
+    {
+        // Primary lookup: period that contains statement date.
+        $directMatch = AccountingPeriod::query()
+            ->whereDate('start_date', '<=', $statementDate)
+            ->whereDate('end_date', '>=', $statementDate)
+            ->value('id');
+
+        if ($directMatch) {
+            return (int) $directMatch;
+        }
+
+        // Fallback 1: nearest earlier period, useful when historical statements
+        // are entered but exact period ranges were not fully maintained.
+        $nearestPast = AccountingPeriod::query()
+            ->whereDate('end_date', '<=', $statementDate)
+            ->orderByDesc('end_date')
+            ->value('id');
+
+        if ($nearestPast) {
+            return (int) $nearestPast;
+        }
+
+        // Fallback 2: earliest future period as a last-resort mapping.
+        $nearestFuture = AccountingPeriod::query()
+            ->whereDate('start_date', '>=', $statementDate)
+            ->orderBy('start_date')
+            ->value('id');
+
+        return $nearestFuture ? (int) $nearestFuture : null;
     }
 }
