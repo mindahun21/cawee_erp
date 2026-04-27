@@ -229,7 +229,7 @@ class JournalEntryResource extends Resource
 
                             // Cost Centre — spans 3
                             Select::make('cost_center_id')
-                                ->label('Cost Centre')
+                                ->label('cost_category')
                                 ->options(CostCenter::activeOptions())
                                 ->searchable()
                                 ->nullable()
@@ -238,7 +238,7 @@ class JournalEntryResource extends Resource
 
                             // Donor — spans 3
                             Select::make('donor_id')
-                                ->label('Donor')
+                                ->label('Source of Fund')
                                 ->options(fn () => Donor::orderBy('organization_name')
                                     ->get()
                                     ->mapWithKeys(fn ($d) => [
@@ -272,6 +272,13 @@ class JournalEntryResource extends Resource
                                 ->columnSpan(3)
                                 ->extraInputAttributes(['class' => 'font-mono'])
                                 ->helperText('Links to a budget line item.'),
+
+                            TextInput::make('vendor_name')
+                                ->label('Vendor')
+                                ->maxLength(255)
+                                ->nullable()
+                                ->columnSpan(3)
+                                ->placeholder('Enter supplier / vendor name'),
 
                             // Narration — spans 6
                             TextInput::make('narration')
@@ -470,7 +477,19 @@ class JournalEntryResource extends Resource
 
                 TextColumn::make('vendor')
                     ->label('Vendor')
-                    ->getStateUsing(fn (JournalEntry $record): string => static::resolveVendorName($record)),
+                    ->getStateUsing(function (JournalEntry $record): string {
+                        $lineVendors = $record->lines
+                            ->pluck('vendor_name')
+                            ->filter()
+                            ->unique()
+                            ->implode(', ');
+
+                        if ($lineVendors !== '') {
+                            return $lineVendors;
+                        }
+
+                        return static::resolveVendorName($record);
+                    }),
 
                 TextColumn::make('status')
                     ->label('Status')

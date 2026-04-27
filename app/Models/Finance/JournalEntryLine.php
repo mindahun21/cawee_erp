@@ -20,6 +20,7 @@ class JournalEntryLine extends Model
         'donor_id',
         'project_id',
         'activity_code',
+        'vendor_name',
         'narration',
     ];
 

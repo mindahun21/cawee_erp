@@ -66,9 +66,12 @@ class Donor extends Model
     public function getFullNameAttribute(): string
     {
         if ($this->donor_type === 'individual') {
-            return "{$this->first_name} {$this->last_name}";
+            $fullName = trim((string) $this->first_name . ' ' . (string) $this->last_name);
+            if ($fullName !== '') {
+                return $fullName;
+            }
         }
 
-        return $this->organization_name ?? $this->email;
+        return (string) ($this->organization_name ?? $this->email ?? 'Unknown Donor');
     }
 }
