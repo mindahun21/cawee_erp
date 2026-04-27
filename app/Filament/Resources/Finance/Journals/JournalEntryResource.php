@@ -42,6 +42,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class JournalEntryResource extends Resource
@@ -384,7 +385,33 @@ class JournalEntryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'lines.account:id,code',
+                'lines.costCenter:id,name',
+                'lines.donor:id,organization_name,first_name,last_name',
+            ]))
             ->columns([
+                TextColumn::make('transaction_date')
+                    ->label('Journal Date')
+                    ->date('d M Y')
+                    ->sortable(),
+
+                TextColumn::make('account_id')
+                    ->label('Account Id')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('account.code')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono')
+                    ->searchable(false),
+
+                TextColumn::make('description')
+                    ->label('Description')
+                    ->searchable()
+                    ->limit(45)
+                    ->tooltip(fn ($state) => $state),
 
                 TextColumn::make('reference_number')
                     ->label('Reference')
@@ -396,38 +423,54 @@ class JournalEntryResource extends Resource
                     ->copyable()
                     ->copyMessage('Reference copied!'),
 
-                TextColumn::make('transaction_date')
-                    ->label('Date')
-                    ->date('d M Y')
-                    ->sortable(),
+                TextColumn::make('total_debit')
+                    ->label('Debit')
+                    ->getStateUsing(fn (JournalEntry $record) => $record->lines->sum('debit'))
+                    ->numeric(decimalPlaces: 2)
+                    ->alignEnd()
+                    ->fontFamily('mono')
+                    ->color('success'),
 
-                TextColumn::make('period.name')
-                    ->label('Period')
-                    ->badge()
-                    ->color('gray')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_credit')
+                    ->label('Credit')
+                    ->getStateUsing(fn (JournalEntry $record) => $record->lines->sum('credit'))
+                    ->numeric(decimalPlaces: 2)
+                    ->alignEnd()
+                    ->fontFamily('mono')
+                    ->color('danger'),
 
-                TextColumn::make('description')
-                    ->label('Description')
-                    ->searchable()
-                    ->limit(45)
-                    ->tooltip(fn ($state) => $state),
+                TextColumn::make('budget_code')
+                    ->label('Budget Code')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('activity_code')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono'),
 
-                TextColumn::make('source')
-                    ->label('Source')
-                    ->formatStateUsing(fn ($state) => JournalEntry::sources()[$state] ?? $state)
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'manual'          => 'gray',
-                        'payroll'         => 'info',
-                        'bank'            => 'primary',
-                        'petty_cash'      => 'warning',
-                        'procurement'     => 'success',
-                        'perdiem'         => 'amber',
-                        'opening_balance' => 'violet',
-                        default           => 'gray',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('cost_category')
+                    ->label('cost_category')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('costCenter.name')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    ),
+
+                TextColumn::make('source_of_fund')
+                    ->label('Source of Fund')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->map(fn ($line) => $line->donor?->full_name ?? $line->donor?->organization_name)
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->wrap(),
+
+                TextColumn::make('vendor')
+                    ->label('Vendor')
+                    ->getStateUsing(fn (JournalEntry $record): string => static::resolveVendorName($record)),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -441,18 +484,6 @@ class JournalEntryResource extends Resource
                         'reversed'         => 'danger',
                         default            => 'gray',
                     }),
-
-                // Total Debit (computed from lines)
-                TextColumn::make('total_debit')
-                    ->label('Total DR')
-                    ->getStateUsing(fn (JournalEntry $record) =>
-                        $record->lines()->sum('debit')
-                    )
-                    ->formatStateUsing(fn ($state) => number_format((float) $state, 2))
-                    ->alignEnd()
-                    ->fontFamily('mono')
-                    ->color('success')
-                    ->toggleable(),
 
                 TextColumn::make('currency.code')
                     ->label('CCY')
@@ -663,6 +694,35 @@ class JournalEntryResource extends Resource
             ->paginated([25, 50, 100])
             ->deferLoading()
             ->poll('120s');
+    }
+
+    protected static function resolveVendorName(JournalEntry $record): string
+    {
+        $sourceType = $record->source_type;
+        $sourceId = $record->source_id;
+
+        if (! $sourceType || ! $sourceId || ! class_exists($sourceType)) {
+            return '—';
+        }
+
+        $sourceRecord = $sourceType::query()->find($sourceId);
+        if (! $sourceRecord) {
+            return '—';
+        }
+
+        foreach (['payee_name', 'vendor_name', 'supplier_name', 'name'] as $field) {
+            $value = data_get($sourceRecord, $field);
+            if (filled($value)) {
+                return (string) $value;
+            }
+        }
+
+        $supplierName = data_get($sourceRecord, 'supplier.name');
+        if (filled($supplierName)) {
+            return (string) $supplierName;
+        }
+
+        return '—';
     }
 
     // ── Infolist (View Page) ──────────────────────────────────────────
