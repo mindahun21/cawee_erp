@@ -13,7 +13,7 @@ return [
     | Available modules:
     |   hr, recruitment, procurement, finance, donor_fundraising, brt,
     |   monitoring_evaluation, inventory, vehicle_management, file_sharing,
-    |   car_rent, ai_intelligence
+    |   car_rent, ai_intelligence, planning
     |
     */
 
@@ -168,6 +168,15 @@ return [
             'pages' => [
                 \App\Filament\Pages\InventoryDashboard::class,
             ],
+            'widget_namespaces' => [
+                'App\\Filament\\Widgets\\InventoryOverview',
+                'App\\Filament\\Widgets\\LowStockWidget',
+                'App\\Filament\\Widgets\\AssetStatusChart',
+                'App\\Filament\\Widgets\\MaintenanceAlertsWidget',
+                'App\\Filament\\Widgets\\MovementTrendChart',
+                'App\\Filament\\Widgets\\StockByWarehouseChart',
+                'App\\Filament\\Widgets\\StockValueChart',
+            ],
         ],
 
         'vehicle_management' => [
@@ -213,6 +222,13 @@ return [
             ],
             'pages' => [
                 \App\Filament\Pages\AiAnalyticsHub::class,
+            ],
+        ],
+
+        'planning' => [
+            'label' => 'Planning & Reporting',
+            'clusters' => [
+                \App\Filament\Clusters\Planning::class,
             ],
         ],
 
