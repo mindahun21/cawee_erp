@@ -4,6 +4,7 @@ namespace App\Models\Finance;
 
 use App\Models\Donor;
 use App\Models\Project;
+use App\Models\Procurement\Supplier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,6 +20,7 @@ class JournalEntryLine extends Model
         'cost_center_id',
         'donor_id',
         'project_id',
+        'supplier_id',
         'activity_code',
         'vendor_name',
         'narration',
@@ -99,6 +101,11 @@ class JournalEntryLine extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     // Dimension 4 is activity_code (plain string — no FK, intentional)

@@ -14,6 +14,7 @@ use App\Models\Finance\CostCenter;
 use App\Models\Finance\FinanceAuditLog;
 use App\Models\Finance\JournalEntry;
 use App\Models\Project;
+use App\Models\Procurement\Supplier;
 use App\Models\User;
 use App\Services\Finance\GeneralLedgerService;
 use App\Services\Finance\JournalEntryService;
@@ -264,6 +265,18 @@ class JournalEntryResource extends Resource
                                 ->native(false)
                                 ->columnSpan(3),
 
+                            Select::make('supplier_id')
+                                ->label('Vendor')
+                                ->options(fn () => Supplier::query()
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->toArray()
+                                )
+                                ->searchable()
+                                ->nullable()
+                                ->native(false)
+                                ->columnSpan(3),
+
                             // Activity Code — spans 3
                             TextInput::make('activity_code')
                                 ->label('Activity Code')
@@ -274,11 +287,11 @@ class JournalEntryResource extends Resource
                                 ->helperText('Links to a budget line item.'),
 
                             TextInput::make('vendor_name')
-                                ->label('Vendor')
+                                ->label('Vendor (manual fallback)')
                                 ->maxLength(255)
                                 ->nullable()
                                 ->columnSpan(3)
-                                ->placeholder('Enter supplier / vendor name'),
+                                ->placeholder('Use only if supplier is not in the list'),
 
                             // Narration — spans 6
                             TextInput::make('narration')
@@ -396,6 +409,7 @@ class JournalEntryResource extends Resource
                 'lines.account:id,code',
                 'lines.costCenter:id,name',
                 'lines.donor:id,organization_name,first_name,last_name',
+                'lines.supplier:id,name',
             ]))
             ->columns([
                 TextColumn::make('transaction_date')
@@ -478,6 +492,16 @@ class JournalEntryResource extends Resource
                 TextColumn::make('vendor')
                     ->label('Vendor')
                     ->getStateUsing(function (JournalEntry $record): string {
+                        $supplierNames = $record->lines
+                            ->pluck('supplier.name')
+                            ->filter()
+                            ->unique()
+                            ->implode(', ');
+
+                        if ($supplierNames !== '') {
+                            return $supplierNames;
+                        }
+
                         $lineVendors = $record->lines
                             ->pluck('vendor_name')
                             ->filter()
