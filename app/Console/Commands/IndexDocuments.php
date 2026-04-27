@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\AI\Chat\DocumentIndexer;
+use App\Support\ModuleManager;
+use App\Support\VectorDatabaseDetector;
 
 class IndexDocuments extends Command
 {
@@ -14,6 +16,38 @@ class IndexDocuments extends Command
 
     public function handle(DocumentIndexer $indexer): int
     {
+        // Check if AI Intelligence module is enabled
+        if (!ModuleManager::isEnabled('ai_intelligence')) {
+            $this->error('AI Intelligence module is disabled.');
+            $this->newLine();
+            $this->info('To enable AI features:');
+            $this->line('  1. Add "ai_intelligence" to ENABLED_MODULES in .env');
+            $this->line('     Example: ENABLED_MODULES=hr,finance,inventory,ai_intelligence');
+            $this->line('  2. Ensure PostgreSQL with pgvector extension is available');
+            $this->line('  3. Configure VECTOR_DB_* credentials in .env');
+            $this->line('  4. Run: php artisan migrate');
+            $this->line('  5. Run: php artisan ai:index-documents');
+            $this->newLine();
+            $this->comment('For cPanel deployments without PostgreSQL, AI features cannot be enabled.');
+            return self::FAILURE;
+        }
+        
+        // Check if vector database is available
+        if (!VectorDatabaseDetector::isAvailable()) {
+            $this->error('Vector database is not available.');
+            $this->newLine();
+            $this->info('To fix this:');
+            $this->line('  1. Ensure PostgreSQL with pgvector extension is running');
+            $this->line('  2. Check VECTOR_DB_* credentials in .env:');
+            $this->line('     VECTOR_DB_HOST=' . config('database.connections.vector.host'));
+            $this->line('     VECTOR_DB_PORT=' . config('database.connections.vector.port'));
+            $this->line('     VECTOR_DB_DATABASE=' . config('database.connections.vector.database'));
+            $this->line('  3. Test connection: php artisan ai:check');
+            $this->newLine();
+            $this->comment('For cPanel deployments, PostgreSQL/pgvector is typically not available.');
+            return self::FAILURE;
+        }
+
         $path = $this->option('path');
         $fresh = $this->option('fresh');
 
@@ -57,7 +91,7 @@ class IndexDocuments extends Command
             $this->error('Indexing failed: ' . $e->getMessage());
             $this->newLine();
             $this->warn('Check that:');
-            $this->line('  1. pgvector Docker container is running (docker compose up pgvector)');
+            $this->line('  1. Vector database is running and accessible');
             $this->line('  2. GEMINI_API_KEY is set in .env');
             $this->line('  3. Documents exist in storage/' . $path);
             return self::FAILURE;

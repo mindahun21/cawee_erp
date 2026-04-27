@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use App\Services\AI\Core\AiRouterService;
+use App\Support\VectorDatabaseDetector;
 use BackedEnum;
 use UnitEnum;
 use Illuminate\Support\Str;
@@ -32,6 +33,36 @@ class AiAnalyticsHub extends Page
     public array $reports = [];
     public array $plans = [];
     public bool $isSidebarOpen = true;
+
+    /**
+     * Override canAccess to check both module status AND vector database availability.
+     * 
+     * This ensures the AI Analytics Hub is only accessible when:
+     * 1. The ai_intelligence module is enabled
+     * 2. The vector database (PostgreSQL with pgvector) is available
+     */
+    public static function canAccess(): bool
+    {
+        // Check if AI module is enabled AND vector database is available
+        if (!VectorDatabaseDetector::isAiReady()) {
+            return false;
+        }
+        
+        // Call parent to check additional permissions
+        if (method_exists(parent::class, 'canAccess')) {
+            return parent::canAccess();
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Hide navigation item when AI is not fully operational.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
 
     public function toggleSidebar()
     {
