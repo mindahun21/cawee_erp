@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Donors;
 
 use App\Filament\Resources\Donors\Pages\ManageDonors;
 use App\Filament\Resources\Donors\Pages\ViewDonor;
+use App\Filament\Resources\Donors\DonorResource\RelationManagers\DonationsRelationManager;
 use App\Filament\Resources\Donors\DonorResource\RelationManagers\InteractionsRelationManager;
 use App\Filament\Resources\Donors\DonorResource\RelationManagers\PledgesRelationManager;
 use App\Models\Donor;
@@ -281,6 +282,7 @@ class DonorResource extends Resource
     public static function getRelations(): array
     {
         return [
+            DonationsRelationManager::class,
             InteractionsRelationManager::class,
             PledgesRelationManager::class,
         ];
