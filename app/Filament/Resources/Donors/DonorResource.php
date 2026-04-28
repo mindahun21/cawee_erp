@@ -93,7 +93,7 @@ class DonorResource extends Resource
                                         'prospect' => 'Prospect',
                                     ])
                                     ->required()
-                                    ->default('active'),
+                                    ->default('lead'),
                                 TextInput::make('first_name')
                                     ->label('First Name')
                                     ->placeholder('John')
@@ -138,7 +138,11 @@ class DonorResource extends Resource
                                     ->multiple()
                                     ->relationship('categories', 'name')
                                     ->preload()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->required(fn ($get) => $get('status') !== 'lead')
+                                    ->validationMessages([
+                                        'required' => 'Please select at least one category for donor segmentation (FDD 4.3).',
+                                    ]),
                             ]),
                         ]),
 
