@@ -177,7 +177,7 @@ class DonorResource extends Resource
                                         ->inline(false)
                                         ->onIcon('heroicon-m-check')
                                         ->offIcon('heroicon-m-x-mark')
-                                        ->color('success'),
+                                        ->onColor('success'),
                                 ]),
                             Section::make('Donor Interests')
                                 ->description('Identify specific campaign types for targeted outreach.')
