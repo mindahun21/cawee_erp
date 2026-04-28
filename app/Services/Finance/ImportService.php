@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\Finance\AccountingPeriod;
 use App\Models\Finance\AccountType;
 use App\Models\Finance\BankAccount;
+use App\Models\Finance\BudgetCode;
 use App\Models\Finance\ChartOfAccount;
 use App\Models\Finance\JournalEntry;
 use App\Models\Finance\JournalEntryLine;
@@ -506,6 +507,78 @@ class ImportService
                 }
 
                 array_push($errors, ...$lineErrors);
+                $imported++;
+            }
+
+            DB::commit();
+        } catch (Throwable $e) {
+            DB::rollBack();
+            $errors[] = 'Fatal: ' . $e->getMessage();
+        }
+
+        return compact('imported', 'skipped', 'errors');
+    }
+
+    // ── Budget Codes Import ────────────────────────────────────────────────
+
+    /**
+     * Import columns expected:
+     *   code | description | cost_category
+     *
+     * Returns ['imported' => N, 'skipped' => N, 'errors' => [string]]
+     */
+    public function importBudgetCodes(string $filePath): array
+    {
+        $imported = 0;
+        $skipped  = 0;
+        $errors   = [];
+
+        try {
+            $headers = $this->loadHeaders($filePath);
+            $rows    = $this->loadRows($filePath);
+
+            $colCode        = array_search('code', $headers);
+            $colDescription = array_search('description', $headers);
+            $colCategory    = array_search('cost_category', $headers);
+
+            if ($colCode === false) {
+                return [
+                    'imported' => 0,
+                    'skipped' => 0,
+                    'errors' => ['Missing required "code" column in import file.'],
+                ];
+            }
+
+            DB::beginTransaction();
+
+            foreach ($rows as $row) {
+                /** @var array<int, mixed> $row */
+                $code = strtoupper(trim((string) ($row[$colCode] ?? '')));
+                $description = trim((string) ($row[$colDescription] ?? ''));
+                $costCategory = trim((string) ($row[$colCategory] ?? ''));
+
+                if ($code === '') {
+                    $skipped++;
+                    continue;
+                }
+
+                $existing = BudgetCode::query()->where('code', $code)->first();
+                if ($existing) {
+                    $existing->fill([
+                        'description' => $description !== '' ? $description : $existing->description,
+                        'cost_category' => $costCategory !== '' ? $costCategory : $existing->cost_category,
+                        'is_active' => true,
+                    ])->save();
+                    $skipped++;
+                    continue;
+                }
+
+                BudgetCode::query()->create([
+                    'code' => $code,
+                    'description' => $description !== '' ? $description : null,
+                    'cost_category' => $costCategory !== '' ? $costCategory : null,
+                    'is_active' => true,
+                ]);
                 $imported++;
             }
 
