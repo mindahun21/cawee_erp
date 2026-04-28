@@ -37,6 +37,9 @@ class ReconciliationResource extends Resource
     protected static ?string $slug = 'finance/bank/reconciliations';
     protected static bool $shouldSkipAuthorization = true;
 
+    // Hidden from sidebar — accessed via Finance → Reconcile wizard
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canViewAny(): bool { return true; }
 
     public static function form(Schema $schema): Schema

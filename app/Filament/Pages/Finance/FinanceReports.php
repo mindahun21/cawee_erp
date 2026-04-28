@@ -67,16 +67,45 @@ class FinanceReports extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $report = request()->query('report') ?? '';
+
+        $actions = [];
+        if ($report === 'bank-reconciliation') {
+            $actions = [
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('print_summary')
+                        ->label('Print Summary')
+                        ->icon('heroicon-o-document-text')
+                        ->color('gray')
+                        ->url(fn (BankReconciliation $record) => route('finance.bank-reconciliation.summary', $record))
+                        ->openUrlInNewTab(),
+
+                    \Filament\Actions\Action::make('print_detail')
+                        ->label('Print Detail')
+                        ->icon('heroicon-o-document-magnifying-glass')
+                        ->color('gray')
+                        ->url(fn (BankReconciliation $record) => route('finance.bank-reconciliation.detail', $record))
+                        ->openUrlInNewTab(),
+                ])
+                ->label('Print')
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->button(),
+            ];
+        }
+
         return $table
             ->heading($this->getReportHeading())
             ->description($this->getReportDescription())
             ->columns($this->getReportColumns())
+            ->recordActions($actions)
             ->defaultSort($this->getDefaultSortColumn(), 'desc');
     }
 
     protected function getTableQuery(): Builder
     {
-        $report = request()->query('report', 'journal-entries');
+        // On the index page (no report selected) return an empty result set
+        $report = request()->query('report') ?? '';
         [$start, $end] = $this->resolveDateRange(request()->query('period', 'this_month'));
         $periodId = request()->query('period_id');
         $currency = request()->query('currency', 'ALL');
@@ -1028,10 +1057,12 @@ class FinanceReports extends Page implements HasTable
 
     protected function getViewData(): array
     {
-        $period   = request()->query('period', 'this_month');
-        $currency = request()->query('currency', 'ALL');
-        $report   = request()->query('report', 'journal-entries');
-        $periodId = request()->query('period_id');
+        $period            = request()->query('period', 'this_month');
+        $currency          = request()->query('currency', 'ALL');
+        $report            = request()->query('report');   // null on index page
+        $periodId          = request()->query('period_id');
+        $dateFilterType    = request()->query('date_filter_type', 'period');
+        $accountingMethod  = request()->query('accounting_method', 'accrual');
 
         [$start, $end, $periodLabel] = $this->resolveDateRange($period);
 
@@ -1044,7 +1075,8 @@ class FinanceReports extends Page implements HasTable
 
         return compact(
             'period', 'currency', 'report', 'periodId',
-            'periodLabel', 'currencyOptions', 'accountingPeriods'
+            'periodLabel', 'currencyOptions', 'accountingPeriods',
+            'dateFilterType', 'accountingMethod'
         );
     }
 

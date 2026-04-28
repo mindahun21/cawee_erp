@@ -38,3 +38,12 @@ Route::middleware('auth')->get('/file-sharing/folders/{folder}/download', Shared
     ->name('file-sharing.folders.download');
 Route::middleware('auth')->get('/file-sharing/folders/download-all', [SharedFolderArchiveController::class, 'downloadAll'])
     ->name('file-sharing.folders.download-all');
+
+// Finance Bank Reconciliation Reports
+use App\Http\Controllers\Finance\BankReconciliationPrintController;
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/finance/bank-reconciliation/{record}/print-summary', [BankReconciliationPrintController::class, 'summary'])
+        ->name('finance.bank-reconciliation.summary');
+    Route::get('/admin/finance/bank-reconciliation/{record}/print-detail', [BankReconciliationPrintController::class, 'detail'])
+        ->name('finance.bank-reconciliation.detail');
+});

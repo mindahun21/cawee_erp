@@ -208,6 +208,27 @@ class BankReconciliationReport extends Page implements HasTable
                     ->label('Status')
                     ->options(BankReconciliation::statuses()),
             ])
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('print_summary')
+                        ->label('Print Summary')
+                        ->icon('heroicon-o-document-text')
+                        ->color('gray')
+                        ->url(fn (BankReconciliation $record) => route('finance.bank-reconciliation.summary', $record))
+                        ->openUrlInNewTab(),
+
+                    \Filament\Actions\Action::make('print_detail')
+                        ->label('Print Detail')
+                        ->icon('heroicon-o-document-magnifying-glass')
+                        ->color('gray')
+                        ->url(fn (BankReconciliation $record) => route('finance.bank-reconciliation.detail', $record))
+                        ->openUrlInNewTab(),
+                ])
+                ->label('Options')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray')
+                ->button(),
+            ])
             ->defaultSort('statement_date', 'desc')
             ->striped()
             ->paginated(true)

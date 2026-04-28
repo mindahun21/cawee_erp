@@ -14,6 +14,7 @@ use App\Models\Finance\CostCenter;
 use App\Models\Finance\FinanceAuditLog;
 use App\Models\Finance\JournalEntry;
 use App\Models\Project;
+use App\Models\Procurement\Supplier;
 use App\Models\User;
 use App\Services\Finance\GeneralLedgerService;
 use App\Services\Finance\JournalEntryService;
@@ -42,6 +43,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use App\Traits\BelongsToModule;
 
@@ -230,7 +232,7 @@ class JournalEntryResource extends Resource
 
                             // Cost Centre — spans 3
                             Select::make('cost_center_id')
-                                ->label('Cost Centre')
+                                ->label('cost_category')
                                 ->options(CostCenter::activeOptions())
                                 ->searchable()
                                 ->nullable()
@@ -239,7 +241,7 @@ class JournalEntryResource extends Resource
 
                             // Donor — spans 3
                             Select::make('donor_id')
-                                ->label('Donor')
+                                ->label('Source of Fund')
                                 ->options(fn () => Donor::orderBy('organization_name')
                                     ->get()
                                     ->mapWithKeys(fn ($d) => [
@@ -265,6 +267,18 @@ class JournalEntryResource extends Resource
                                 ->native(false)
                                 ->columnSpan(3),
 
+                            Select::make('supplier_id')
+                                ->label('Vendor')
+                                ->options(fn () => Supplier::query()
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->toArray()
+                                )
+                                ->searchable()
+                                ->nullable()
+                                ->native(false)
+                                ->columnSpan(3),
+
                             // Activity Code — spans 3
                             TextInput::make('activity_code')
                                 ->label('Activity Code')
@@ -273,6 +287,13 @@ class JournalEntryResource extends Resource
                                 ->columnSpan(3)
                                 ->extraInputAttributes(['class' => 'font-mono'])
                                 ->helperText('Links to a budget line item.'),
+
+                            TextInput::make('vendor_name')
+                                ->label('Vendor (manual fallback)')
+                                ->maxLength(255)
+                                ->nullable()
+                                ->columnSpan(3)
+                                ->placeholder('Use only if supplier is not in the list'),
 
                             // Narration — spans 6
                             TextInput::make('narration')
@@ -386,7 +407,34 @@ class JournalEntryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'lines.account:id,code',
+                'lines.costCenter:id,name',
+                'lines.donor:id,organization_name,first_name,last_name',
+                'lines.supplier:id,name',
+            ]))
             ->columns([
+                TextColumn::make('transaction_date')
+                    ->label('Journal Date')
+                    ->date('d M Y')
+                    ->sortable(),
+
+                TextColumn::make('account_id')
+                    ->label('Account Id')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('account.code')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono')
+                    ->searchable(false),
+
+                TextColumn::make('description')
+                    ->label('Description')
+                    ->searchable()
+                    ->limit(45)
+                    ->tooltip(fn ($state) => $state),
 
                 TextColumn::make('reference_number')
                     ->label('Reference')
@@ -398,38 +446,76 @@ class JournalEntryResource extends Resource
                     ->copyable()
                     ->copyMessage('Reference copied!'),
 
-                TextColumn::make('transaction_date')
-                    ->label('Date')
-                    ->date('d M Y')
-                    ->sortable(),
+                TextColumn::make('total_debit')
+                    ->label('Debit')
+                    ->getStateUsing(fn (JournalEntry $record) => $record->lines->sum('debit'))
+                    ->numeric(decimalPlaces: 2)
+                    ->alignEnd()
+                    ->fontFamily('mono')
+                    ->color('success'),
 
-                TextColumn::make('period.name')
-                    ->label('Period')
-                    ->badge()
-                    ->color('gray')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_credit')
+                    ->label('Credit')
+                    ->getStateUsing(fn (JournalEntry $record) => $record->lines->sum('credit'))
+                    ->numeric(decimalPlaces: 2)
+                    ->alignEnd()
+                    ->fontFamily('mono')
+                    ->color('danger'),
 
-                TextColumn::make('description')
-                    ->label('Description')
-                    ->searchable()
-                    ->limit(45)
-                    ->tooltip(fn ($state) => $state),
+                TextColumn::make('budget_code')
+                    ->label('Budget Code')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('activity_code')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono'),
 
-                TextColumn::make('source')
-                    ->label('Source')
-                    ->formatStateUsing(fn ($state) => JournalEntry::sources()[$state] ?? $state)
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'manual'          => 'gray',
-                        'payroll'         => 'info',
-                        'bank'            => 'primary',
-                        'petty_cash'      => 'warning',
-                        'procurement'     => 'success',
-                        'perdiem'         => 'amber',
-                        'opening_balance' => 'violet',
-                        default           => 'gray',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('cost_category')
+                    ->label('cost_category')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->pluck('costCenter.name')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    ),
+
+                TextColumn::make('source_of_fund')
+                    ->label('Source of Fund')
+                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
+                        ->map(fn ($line) => $line->donor?->full_name ?? $line->donor?->organization_name)
+                        ->filter()
+                        ->unique()
+                        ->implode(', ') ?: '—'
+                    )
+                    ->wrap(),
+
+                TextColumn::make('vendor')
+                    ->label('Vendor')
+                    ->getStateUsing(function (JournalEntry $record): string {
+                        $supplierNames = $record->lines
+                            ->pluck('supplier.name')
+                            ->filter()
+                            ->unique()
+                            ->implode(', ');
+
+                        if ($supplierNames !== '') {
+                            return $supplierNames;
+                        }
+
+                        $lineVendors = $record->lines
+                            ->pluck('vendor_name')
+                            ->filter()
+                            ->unique()
+                            ->implode(', ');
+
+                        if ($lineVendors !== '') {
+                            return $lineVendors;
+                        }
+
+                        return static::resolveVendorName($record);
+                    }),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -443,18 +529,6 @@ class JournalEntryResource extends Resource
                         'reversed'         => 'danger',
                         default            => 'gray',
                     }),
-
-                // Total Debit (computed from lines)
-                TextColumn::make('total_debit')
-                    ->label('Total DR')
-                    ->getStateUsing(fn (JournalEntry $record) =>
-                        $record->lines()->sum('debit')
-                    )
-                    ->formatStateUsing(fn ($state) => number_format((float) $state, 2))
-                    ->alignEnd()
-                    ->fontFamily('mono')
-                    ->color('success')
-                    ->toggleable(),
 
                 TextColumn::make('currency.code')
                     ->label('CCY')
@@ -665,6 +739,35 @@ class JournalEntryResource extends Resource
             ->paginated([25, 50, 100])
             ->deferLoading()
             ->poll('120s');
+    }
+
+    protected static function resolveVendorName(JournalEntry $record): string
+    {
+        $sourceType = $record->source_type;
+        $sourceId = $record->source_id;
+
+        if (! $sourceType || ! $sourceId || ! class_exists($sourceType)) {
+            return '—';
+        }
+
+        $sourceRecord = $sourceType::query()->find($sourceId);
+        if (! $sourceRecord) {
+            return '—';
+        }
+
+        foreach (['payee_name', 'vendor_name', 'supplier_name', 'name'] as $field) {
+            $value = data_get($sourceRecord, $field);
+            if (filled($value)) {
+                return (string) $value;
+            }
+        }
+
+        $supplierName = data_get($sourceRecord, 'supplier.name');
+        if (filled($supplierName)) {
+            return (string) $supplierName;
+        }
+
+        return '—';
     }
 
     // ── Infolist (View Page) ──────────────────────────────────────────
