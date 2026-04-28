@@ -20,10 +20,12 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Tabs;
@@ -145,6 +147,52 @@ class DonorResource extends Resource
                                         'required' => 'Please select at least one category for donor segmentation (FDD 4.3).',
                                     ]),
                             ]),
+                        ]),
+
+                    Tab::make('Preferences & Interests')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->schema([
+                            Section::make('Communication Preferences')
+                                ->description('Manage how this donor prefers to be contacted.')
+                                ->columns(2)
+                                ->schema([
+                                    CheckboxList::make('communication_preferences')
+                                        ->label('Preferred Channels')
+                                        ->options([
+                                            'email' => 'Email',
+                                            'sms' => 'SMS',
+                                            'phone' => 'Phone Call',
+                                            'mail' => 'Postal Mail',
+                                        ])
+                                        ->descriptions([
+                                            'email' => 'Official receipts and newsletters',
+                                            'sms' => 'Urgent alerts and event reminders',
+                                        ])
+                                        ->columns(2)
+                                        ->default(['email']),
+                                    Toggle::make('marketing_opt_in')
+                                        ->label('Marketing Consent')
+                                        ->helperText('Donor has agreed to receive promotional outreach and campaign updates.')
+                                        ->default(true)
+                                        ->inline(false)
+                                        ->onIcon('heroicon-m-check')
+                                        ->offIcon('heroicon-m-x-mark')
+                                        ->color('success'),
+                                ]),
+                            Section::make('Donor Interests')
+                                ->description('Identify specific campaign types for targeted outreach.')
+                                ->schema([
+                                    CheckboxList::make('interests')
+                                        ->label('Campaign Interests')
+                                        ->options([
+                                            'emergency' => 'Emergency Relief',
+                                            'education' => 'Education & Scholarship',
+                                            'health' => 'Healthcare & Medical',
+                                            'environment' => 'Environmental Protection',
+                                            'advocacy' => 'Policy & Advocacy',
+                                        ])
+                                        ->columns(3),
+                                ]),
                         ]),
 
                     Tab::make('Notes')
