@@ -240,6 +240,14 @@ class DonorResource extends Resource
                 TextColumn::make('phone')
                     ->searchable()
                     ->icon('heroicon-m-phone'),
+                TextColumn::make('categories.name')
+                    ->label('Categories')
+                    ->badge()
+                    ->toggleable(),
+                TextColumn::make('address')
+                    ->label('Street Address')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('city')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -256,12 +264,24 @@ class DonorResource extends Resource
                         default => 'gray',
                     })
                     ->searchable(),
+                TextColumn::make('interactions_count')
+                    ->label('Interactions')
+                    ->counts('interactions')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_donated')
                     ->money('ETB')
                     ->sortable(),
                 TextColumn::make('last_donation_date')
                     ->date()
                     ->sortable(),
+                TextColumn::make('notes')
+                    ->label('Notes')
+                    ->icon('heroicon-m-document-text')
+                    ->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
