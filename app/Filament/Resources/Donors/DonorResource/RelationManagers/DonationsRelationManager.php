@@ -65,6 +65,11 @@ class DonationsRelationManager extends RelationManager
                             ])
                             ->required()
                             ->native(false),
+                        TextInput::make('transaction_id')
+                            ->label('Transaction ID')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('e.g. Bank Ref, Receipt #'),
                         Select::make('campaign_id')
                             ->relationship('campaign', 'title')
                             ->searchable()

@@ -70,6 +70,21 @@ class DonationResource extends Resource
                                 DatePicker::make('donation_date')
                                     ->required()
                                     ->default(now()),
+                                Select::make('payment_method')
+                                    ->options([
+                                        'cash' => 'Cash',
+                                        'bank_transfer' => 'Bank Transfer',
+                                        'check' => 'Check',
+                                        'online' => 'Online Payment',
+                                        'other' => 'Other',
+                                    ])
+                                    ->required()
+                                    ->native(false),
+                                TextInput::make('transaction_id')
+                                    ->label('Transaction ID')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('e.g. Bank Ref, Receipt #'),
                                 Select::make('status')
                                     ->options([
                                         'pending' => 'Pending',
@@ -96,9 +111,11 @@ class DonationResource extends Resource
                                     ->required()
                                     ->default(fn () => \App\Models\Currency::where('code', 'ETB')->first()?->id ?? 1),
                                 TextInput::make('payment_method')
+                                    ->required()
                                     ->maxLength(50)
                                     ->placeholder('e.g., Bank Transfer, Telebirr, Cash'),
                                 TextInput::make('transaction_id')
+                                    ->required()
                                     ->maxLength(100)
                                     ->placeholder('Transaction reference number'),
                                 TextInput::make('receipt_number')
