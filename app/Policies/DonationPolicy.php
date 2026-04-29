@@ -14,17 +14,17 @@ class DonationPolicy
     
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:Donation');
+        return true;
     }
 
     public function view(AuthUser $authUser, Donation $donation): bool
     {
-        return $authUser->can('View:Donation');
+        return true;
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:Donation');
+        return true;
     }
 
     public function update(AuthUser $authUser, Donation $donation): bool

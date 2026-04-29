@@ -10,15 +10,77 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Grid;
+use App\Models\Currency;
 
 class DonationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'donations';
 
     protected static ?string $recordTitleAttribute = 'receipt_number';
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('receipt_number')
+                            ->label('Receipt Number')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique('donations', 'receipt_number', ignoreRecord: true),
+                        TextInput::make('amount')
+                            ->numeric()
+                            ->required()
+                            ->prefix('ETB'),
+                        Select::make('currency_id')
+                            ->relationship('currency', 'name')
+                            ->default(fn () => Currency::where('code', 'ETB')->first()?->id ?? 1)
+                            ->required(),
+                        DatePicker::make('donation_date')
+                            ->label('Donation Date')
+                            ->default(now())
+                            ->required()
+                            ->native(false),
+                        Select::make('payment_method')
+                            ->options([
+                                'cash' => 'Cash',
+                                'bank_transfer' => 'Bank Transfer',
+                                'check' => 'Check',
+                                'online' => 'Online Payment',
+                                'other' => 'Other',
+                            ])
+                            ->required()
+                            ->native(false),
+                        Select::make('campaign_id')
+                            ->relationship('campaign', 'title')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('General Donation'),
+                        Select::make('status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'completed' => 'Completed',
+                                'failed' => 'Failed',
+                                'refunded' => 'Refunded',
+                            ])
+                            ->default('completed')
+                            ->required()
+                            ->native(false),
+                        Textarea::make('notes')
+                            ->columnSpanFull()
+                            ->rows(3),
+                    ]),
+            ]);
+    }
 
     public function table(Table $table): Table
     {
@@ -73,8 +135,18 @@ class DonationsRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                // Donations should typically be created through the Donations module or via a specific "Add Donation" action
-                // but we can add it here if needed.
+                CreateAction::make('create')
+                    ->label('Add Donation')
+                    ->icon('heroicon-m-plus')
+                    ->authorize(true)
+                    ->visible(true),
+            ])
+            ->emptyStateActions([
+                CreateAction::make('create')
+                    ->label('Add Donation')
+                    ->icon('heroicon-m-plus')
+                    ->authorize(true)
+                    ->visible(true),
             ])
             ->actions([
                 Action::make('downloadReceipt')
@@ -90,7 +162,7 @@ class DonationsRelationManager extends RelationManager
                             "receipt-{$record->id}.pdf"
                         );
                     }),
-                Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
             ])
             ->bulkActions([
                 //

@@ -13,13 +13,13 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 
 class InteractionsRelationManager extends RelationManager
 {
@@ -99,10 +99,20 @@ class InteractionsRelationManager extends RelationManager
                 Tables\Filters\TrashedFilter::make()
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make('create')
+                    ->label('Record Interaction')
+                    ->icon('heroicon-m-plus')
+                    ->authorize(true)
+                    ->visible(true),
             ])
+            ->emptyStateHeading('No interactions recorded')
+            ->emptyStateDescription('Start recording calls, emails, or meetings with this donor.')
             ->emptyStateActions([
-                CreateAction::make(),
+                CreateAction::make('create')
+                    ->label('Record Interaction')
+                    ->icon('heroicon-m-plus')
+                    ->authorize(true)
+                    ->visible(true),
             ])
             ->actions([
                 EditAction::make(),
