@@ -100,7 +100,7 @@ class InteractionsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make('create')
-                    ->label('Record Interaction')
+                    ->label('Add Interaction')
                     ->icon('heroicon-m-plus')
                     ->authorize(true)
                     ->visible(true),
