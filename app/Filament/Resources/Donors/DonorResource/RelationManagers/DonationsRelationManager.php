@@ -32,11 +32,16 @@ class DonationsRelationManager extends RelationManager
             ->components([
                 Grid::make(2)
                     ->schema([
+                        Select::make('donation_type_id')
+                            ->relationship('donationType', 'name', fn ($query) => $query->active())
+                            ->searchable()
+                            ->preload()
+                            ->required(),
                         TextInput::make('receipt_number')
                             ->label('Receipt Number')
-                            ->required()
-                            ->maxLength(255)
-                            ->unique('donations', 'receipt_number', ignoreRecord: true),
+                            ->placeholder('Auto-generated')
+                            ->disabled()
+                            ->hidden(fn ($record) => $record === null), // Hide on create, show on edit
                         TextInput::make('amount')
                             ->numeric()
                             ->required()
