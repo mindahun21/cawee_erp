@@ -330,9 +330,27 @@ class ImportService
                     $bankName = $bankCode ?: $codeRaw;
                 }
 
-                // Check duplicate by account_number
-                if (BankAccount::where('account_number', $accountNumber)->exists()) {
-                    $skipped++;
+                // Check duplicate by account_number (including soft-deleted records)
+                $existing = BankAccount::withTrashed()
+                    ->where('account_number', $accountNumber)
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->trashed()) {
+                        // Restore soft-deleted record and update it
+                        $existing->restore();
+                        $existing->update([
+                            'account_name'    => $nameRaw ?: $subTypeRaw,
+                            'bank_name'       => $bankName,
+                            'currency_id'     => $currency?->id,
+                            'is_active'       => true,
+                            'notes'           => "Imported: {$subTypeRaw}",
+                        ]);
+                        $imported++;
+                    } else {
+                        // Active record already exists — skip
+                        $skipped++;
+                    }
                     continue;
                 }
 
