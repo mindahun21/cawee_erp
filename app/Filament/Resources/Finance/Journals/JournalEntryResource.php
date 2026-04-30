@@ -74,7 +74,8 @@ class JournalEntryResource extends Resource
 
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return $r->isEditable(); }
-    public static function canDelete($r): bool { return $r->isDraft() && static::canViewAny(); }
+    public static function canDelete($r): bool { return static::canViewAny(); }
+    public static function canDeleteAny(): bool{ return static::canViewAny(); }
 
     // ── Form ──────────────────────────────────────────────────────────
 

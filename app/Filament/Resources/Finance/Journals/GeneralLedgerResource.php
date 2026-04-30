@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 
 class GeneralLedgerResource extends Resource
 {
@@ -48,11 +50,11 @@ class GeneralLedgerResource extends Resource
         return $user instanceof User && ($user->isFinanceOfficer() || $user->isSuperAdmin());
     }
 
-    // The GL is read-only — no create, edit, or delete
+    // The GL is usually read-only — allowing delete here only for initial setup phase.
     public static function canCreate(): bool        { return false; }
     public static function canEdit($r): bool        { return false; }
-    public static function canDelete($r): bool      { return false; }
-    public static function canDeleteAny(): bool     { return false; }
+    public static function canDelete($r): bool      { return static::canViewAny(); }
+    public static function canDeleteAny(): bool     { return static::canViewAny(); }
 
     // ── Table ─────────────────────────────────────────────────────────
 
@@ -346,7 +348,15 @@ class GeneralLedgerResource extends Resource
             ->description('Read-only view of all posted journal entry lines. Use the filters above to drill into a specific account, period, or NGO dimension.')
             ->emptyStateIcon('heroicon-o-table-cells')
             ->emptyStateHeading('No GL entries found')
-            ->emptyStateDescription('Post a Journal Entry to see entries appear here. Adjust the active filters if you expected to see data.');
+            ->emptyStateDescription('Post a Journal Entry to see entries appear here. Adjust the active filters if you expected to see data.')
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Selected GL Postings')
+                        ->modalDescription('Are you sure you want to soft-delete these entries? This should only be used during testing and setup.')
+                ]),
+            ]);
     }
 
     // ── No form / infolist — GL is read-only ─────────────────────────

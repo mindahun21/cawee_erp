@@ -17,6 +17,7 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -208,30 +209,11 @@ class ListJournalEntries extends ListRecords
                             ->send();
                     }),
 
-                // ── Bulk Delete (Draft only) ────────────────────────
-                BulkAction::make('bulk_delete')
-                    ->label('Delete Selected')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
+                // ── Bulk Delete (Soft Delete) ───────────────────────────
+                DeleteBulkAction::make()
                     ->requiresConfirmation()
                     ->modalHeading('Delete Selected Journal Entries')
-                    ->modalDescription('Only Draft entries will be deleted. Posted or Approved entries are skipped.')
-                    ->deselectRecordsAfterCompletion()
-                    ->action(function (Collection $records) {
-                        $done = 0;
-                        foreach ($records as $je) {
-                            if ($je->isDraft()) {
-                                $je->lines()->forceDelete();
-                                $je->forceDelete();
-                                $done++;
-                            }
-                        }
-                        Notification::make()
-                            ->title("{$done} draft journal entr" . ($done === 1 ? 'y' : 'ies') . ' deleted.')
-                            ->warning()
-                            ->send();
-                    }),
-
+                    ->modalDescription('Are you sure? This will soft-delete the selected entries (setup phase only).'),
             ])->label('Bulk Actions'),
         ];
     }
