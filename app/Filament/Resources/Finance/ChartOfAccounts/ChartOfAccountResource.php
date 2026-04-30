@@ -30,6 +30,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -405,7 +407,14 @@ class ChartOfAccountResource extends Resource
             ->defaultSort('code', 'asc')
             ->striped()
             ->paginated([50, 100, 'all'])
-            ->bulkActions([]);
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Selected Chart of Accounts')
+                        ->modalDescription('Are you sure you want to delete these accounts? This action cannot be undone.')
+                ]),
+            ]);
     }
 
     // ── Infolist (View page) ──────────────────────────────────────────
