@@ -214,7 +214,7 @@ class ListJournalEntries extends ListRecords
                     ->requiresConfirmation()
                     ->modalHeading('Delete Selected Journal Entries')
                     ->modalDescription('Are you sure? This will soft-delete the selected entries (setup phase only).'),
-            ])->label('Bulk Actions'),
+            ]),
         ];
     }
 
