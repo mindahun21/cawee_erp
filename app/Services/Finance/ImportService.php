@@ -383,6 +383,46 @@ class ImportService
     // ── Journal Entries Import ────────────────────────────────────────────
 
     /**
+     * Pre-flight check: scans all account codes used in the Excel and returns
+     * any that are missing from the active Chart of Accounts.
+     *
+     * @return array<string>  List of missing account codes, empty if all OK.
+     */
+    private function missingAccountCodes(string $filePath): array
+    {
+        $headers    = $this->loadHeaders($filePath);
+        $rows       = $this->loadRows($filePath);
+        $colAccount = array_search('account', $headers);
+
+        if ($colAccount === false) {
+            return [];
+        }
+
+        // Collect every unique account code referenced in the file
+        $usedCodes = $rows
+            ->map(fn ($r) => strtoupper(trim((string) ($r[$colAccount] ?? ''))))
+            ->filter(fn ($c) => $c !== '')
+            ->unique()
+            ->values();
+
+        if ($usedCodes->isEmpty()) {
+            return [];
+        }
+
+        // Build set of existing CoA codes (uppercase for comparison)
+        $existingCodes = ChartOfAccount::where('is_active', true)
+            ->pluck('code')
+            ->map(fn ($c) => strtoupper(trim($c)))
+            ->flip()
+            ->toArray();
+
+        return $usedCodes
+            ->filter(fn ($code) => ! isset($existingCodes[$code]))
+            ->values()
+            ->all();
+    }
+
+    /**
      * Import columns expected:
      *   number | journal_date | reference | description | account |
      *   budget_code | cost_category | source_of_fund | debit | credit | vendor
@@ -419,6 +459,20 @@ class ImportService
                 'imported' => 0,
                 'skipped'  => 0,
                 'errors'   => ['⚠ Chart of Accounts is empty. Please import the Chart of Accounts first before importing Journal Entries.'],
+            ];
+        }
+
+        // ── Pre-flight: abort if any account codes are missing ────────────
+        $missingCodes = $this->missingAccountCodes($filePath);
+        if (! empty($missingCodes)) {
+            $list = implode(', ', $missingCodes);
+            return [
+                'imported' => 0,
+                'skipped'  => 0,
+                'errors'   => [
+                    '❌ Import blocked — ' . count($missingCodes) . ' account code(s) not found in Chart of Accounts: ' . $list . '. '
+                    . 'Please add these accounts to the CoA first, then re-import.',
+                ],
             ];
         }
 
@@ -501,7 +555,8 @@ class ImportService
 
                     $account = $accountByCode[$accountCode] ?? null;
                     if (! $account) {
-                        $lineErrors[] = "Account code [{$accountCode}] not found — line in {$reference} skipped. (Import CoA first)";
+                        // Should not happen after pre-flight, but guard anyway
+                        $lineErrors[] = "Account code [{$accountCode}] not found — line in {$reference} skipped.";
                         continue;
                     }
 
