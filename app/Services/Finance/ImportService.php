@@ -492,11 +492,39 @@ class ImportService
             // Group rows by reference number
             $grouped = $rows->groupBy(fn ($r) => trim((string) ($r[$colRef] ?? 'UNKNOWN')));
 
+            // ── Pre-flight: balance check (Σ DR = Σ CR per reference) ─────────
+            $unbalanced = [];
+            foreach ($grouped as $reference => $lines) {
+                if ($reference === '' || $reference === 'UNKNOWN') {
+                    continue;
+                }
+                $totalDR = $lines->sum(fn ($r) => (float) ($r[$colDebit]  ?? 0));
+                $totalCR = $lines->sum(fn ($r) => (float) ($r[$colCredit] ?? 0));
+                $diff    = round(abs($totalDR - $totalCR), 2);
+                if ($diff > 0.01) {
+                    $unbalanced[] = sprintf(
+                        '%s — DR %.2f ≠ CR %.2f (diff: %.2f)',
+                        $reference, $totalDR, $totalCR, $diff
+                    );
+                }
+            }
+
+            if (! empty($unbalanced)) {
+                return [
+                    'imported' => 0,
+                    'skipped'  => 0,
+                    'errors'   => array_merge(
+                        ['❌ Import blocked — ' . count($unbalanced) . ' unbalanced journal entry/entries (Debit ≠ Credit):'],
+                        $unbalanced
+                    ),
+                ];
+            }
+
             DB::beginTransaction();
 
             foreach ($grouped as $reference => $lines) {
                 if ($reference === '' || $reference === 'UNKNOWN') {
-                    $skipped += count($lines);
+                    $skipped++; // count groups, not rows
                     continue;
                 }
 
@@ -512,7 +540,7 @@ class ImportService
                         // Reset status to draft so it can be processed normally
                         $existing->update(['status' => 'draft', 'notes' => 'Restored from re-import']);
                     }
-                    $skipped += count($lines);
+                    $skipped++; // count groups, not rows
                     continue;
                 }
 
