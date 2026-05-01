@@ -79,7 +79,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 \Filament\View\PanelsRenderHook::BODY_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render('@livewire(\App\Livewire\FloatingAiWidget::class)')
+                fn (): string => \App\Support\ModuleManager::isEnabled('ai_intelligence')
+                    ? \Illuminate\Support\Facades\Blade::render('@livewire(\App\Livewire\FloatingAiWidget::class)')
+                    : ''
             );
     }
 
