@@ -90,6 +90,14 @@ class CampaignEventForm
                                     ->numeric()
                                     ->required()
                                     ->minValue(1)
+                                    ->rules([
+                                        fn (\Filament\Schemas\Components\Utilities\Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                            $ticketsSold = (int) ($get('tickets_sold') ?? 0);
+                                            if ((int) $value < $ticketsSold) {
+                                                $fail("Maximum capacity cannot be less than the number of tickets already sold ({$ticketsSold}).");
+                                            }
+                                        },
+                                    ])
                                     ->helperText('Maximum number of attendees allowed'),
                             ]),
                         ]),
