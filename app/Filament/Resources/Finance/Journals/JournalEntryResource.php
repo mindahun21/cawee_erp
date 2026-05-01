@@ -207,11 +207,10 @@ class JournalEntryResource extends Resource
                                         ->mapWithKeys(fn ($a) => [$a->id => "[{$a->code}] {$a->name}"])
                                         ->toArray()
                                 )
-                                ->getOptionLabelUsing(fn ($value) =>
-                                    ChartOfAccount::find($value)
-                                        ? "[" . ChartOfAccount::find($value)->code . "] " . ChartOfAccount::find($value)->name
-                                        : $value
-                                )
+                                ->getOptionLabelUsing(function ($value) {
+                                    $a = ChartOfAccount::find($value);
+                                    return $a ? "[{$a->code}] {$a->name}" : $value;
+                                })
                                 ->required()
                                 ->native(false)
                                 ->columnSpan(4)
