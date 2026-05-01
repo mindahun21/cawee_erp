@@ -138,5 +138,43 @@ class Donation extends Model
                 $donation->base_amount = $donation->amount * ($donation->exchange_rate ?? 1);
             }
         });
+
+        // Automatically sync campaign totals whenever a donation is saved via any route
+        static::created(function ($donation) {
+            static::syncCampaignTotals($donation->campaign_id);
+        });
+
+        static::updated(function ($donation) {
+            static::syncCampaignTotals($donation->campaign_id);
+            // If the campaign changed, update the OLD campaign too
+            if ($donation->wasChanged('campaign_id') && $donation->getOriginal('campaign_id')) {
+                static::syncCampaignTotals($donation->getOriginal('campaign_id'));
+            }
+        });
+
+        static::deleted(function ($donation) {
+            static::syncCampaignTotals($donation->campaign_id);
+        });
+    }
+
+    /**
+     * Recalculate and persist total_raised and donor_count for a given campaign.
+     */
+    protected static function syncCampaignTotals(?int $campaignId): void
+    {
+        if (!$campaignId) return;
+
+        $stats = static::where('campaign_id', $campaignId)
+            ->where('status', 'completed')
+            ->selectRaw('
+                SUM(COALESCE(base_amount, amount)) as total_raised,
+                COUNT(DISTINCT donor_id) as donor_count
+            ')
+            ->first();
+
+        \App\Models\Campaign::where('id', $campaignId)->update([
+            'total_raised' => $stats->total_raised ?? 0,
+            'donor_count'  => $stats->donor_count ?? 0,
+        ]);
     }
 }
