@@ -20,6 +20,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -73,23 +74,61 @@ class CampaignResource extends Resource
                         ->icon('heroicon-o-currency-dollar')
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
-                                TextInput::make('goal_amount')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('ETB')
-                                    ->minValue(0),
                                 Select::make('currency_id')
                                     ->relationship('currency', 'name')
                                     ->required()
                                     ->default(fn () => \App\Models\Currency::where('code', 'ETB')->first()?->id ?? 1)
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $currency = \App\Models\Currency::find($state);
+                                        $rate = $currency?->exchange_rate ?? 1;
+                                        $set('exchange_rate', $rate);
+                                        $goal = (float) $get('goal_amount');
+                                        $budget = (float) $get('budget');
+                                        if ($goal > 0) $set('base_goal_amount', round($goal * $rate, 2));
+                                        if ($budget > 0) $set('base_budget', round($budget * $rate, 2));
+                                    }),
+                                TextInput::make('goal_amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix(fn (\Filament\Schemas\Components\Utilities\Get $get) => \App\Models\Currency::find($get('currency_id'))?->code ?? 'ETB')
+                                    ->minValue(0)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $rate = (float) $get('exchange_rate') ?: 1;
+                                        if ((float) $state > 0) $set('base_goal_amount', round((float) $state * $rate, 2));
+                                    }),
                                 TextInput::make('budget')
                                     ->required()
                                     ->numeric()
                                     ->default(0)
+                                    ->prefix(fn (\Filament\Schemas\Components\Utilities\Get $get) => \App\Models\Currency::find($get('currency_id'))?->code ?? 'ETB')
+                                    ->minValue(0)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $rate = (float) $get('exchange_rate') ?: 1;
+                                        if ((float) $state > 0) $set('base_budget', round((float) $state * $rate, 2));
+                                    }),
+                                TextInput::make('exchange_rate')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Exchange Rate')
+                                    ->default(1.000000)
+                                    ->helperText('Current rate for selected currency'),
+                                TextInput::make('base_goal_amount')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Goal Amount (ETB Est.)')
                                     ->prefix('ETB')
-                                    ->minValue(0),
+                                    ->helperText('Goal converted to ETB using exchange rate'),
+                                TextInput::make('base_budget')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Budget (ETB Est.)')
+                                    ->prefix('ETB')
+                                    ->helperText('Budget converted to ETB using exchange rate'),
                             ]),
                         ]),
 

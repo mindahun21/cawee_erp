@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Campaigns\CampaignResource\Widgets;
 use App\Models\Campaign;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\DB;
 
 class CampaignStats extends StatsOverviewWidget
 {
@@ -19,8 +20,8 @@ class CampaignStats extends StatsOverviewWidget
                 ->description('Campaigns currently running')
                 ->descriptionIcon('heroicon-m-play')
                 ->color('success'),
-            Stat::make('Total Goal Amount', '$' . number_format(Campaign::sum('goal_amount'), 2))
-                ->description('Combined goal of all campaigns')
+            Stat::make('Total Goal (Est. ETB)', 'ETB ' . number_format(Campaign::sum(\Illuminate\Support\Facades\DB::raw('COALESCE(base_goal_amount, goal_amount)')), 2))
+                ->description('Combined goal (converted to ETB using daily exchange rate)')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('warning'),
         ];
