@@ -1182,21 +1182,25 @@ class JournalEntryResource extends Resource
                                 ->label('Before')
                                 ->formatStateUsing(fn ($state) =>
                                     is_array($state)
-                                        ? collect($state)->map(fn ($v, $k) => "{$k}: {$v}")->implode(' | ')
+                                        ? collect($state)->map(fn ($v, $k) =>
+                                            $k . ': ' . (is_array($v) ? json_encode($v) : $v)
+                                        )->implode(' | ')
                                         : '—'
                                 )
                                 ->placeholder('—')
-                                ->limit(60),
+                                ->limit(80),
 
                             TextEntry::make('new_values')
                                 ->label('After')
                                 ->formatStateUsing(fn ($state) =>
                                     is_array($state)
-                                        ? collect($state)->map(fn ($v, $k) => "{$k}: {$v}")->implode(' | ')
+                                        ? collect($state)->map(fn ($v, $k) =>
+                                            $k . ': ' . (is_array($v) ? json_encode($v) : $v)
+                                        )->implode(' | ')
                                         : '—'
                                 )
                                 ->placeholder('—')
-                                ->limit(60),
+                                ->limit(80),
                         ]),
                 ]),
         ]);
