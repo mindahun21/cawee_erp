@@ -101,15 +101,46 @@ class DonationResource extends Resource
                         ->icon('heroicon-o-banknotes')
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
-                                TextInput::make('amount')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('ETB')
-                                    ->minValue(0.01),
                                 Select::make('currency_id')
                                     ->relationship('currency', 'name')
                                     ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $currency = \App\Models\Currency::find($state);
+                                        if ($currency) {
+                                            $set('exchange_rate', $currency->exchange_rate ?? 1);
+                                            $amount = (float) $get('amount');
+                                            if ($amount > 0) {
+                                                $set('base_amount', round($amount * ($currency->exchange_rate ?? 1), 2));
+                                            }
+                                        }
+                                    })
                                     ->default(fn () => \App\Models\Currency::where('code', 'ETB')->first()?->id ?? 1),
+                                TextInput::make('amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $rate = (float) $get('exchange_rate') ?: 1;
+                                        $amount = (float) $state;
+                                        if ($amount > 0) {
+                                            $set('base_amount', round($amount * $rate, 2));
+                                        }
+                                    })
+                                    ->prefix(fn (\Filament\Schemas\Components\Utilities\Get $get) => \App\Models\Currency::find($get('currency_id'))?->code ?? 'ETB')
+                                    ->minValue(0.01),
+                                TextInput::make('exchange_rate')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Exchange Rate')
+                                    ->default(1.000000)
+                                    ->helperText('Current rate for selected currency'),
+                                TextInput::make('base_amount')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Base Amount (ETB)')
+                                    ->prefix('ETB')
+                                    ->helperText('Amount converted to base currency'),
                                 TextInput::make('payment_method')
                                     ->required()
                                     ->maxLength(50)
@@ -143,13 +174,21 @@ class DonationResource extends Resource
                     Tab::make('Additional Information')
                         ->icon('heroicon-o-plus-circle')
                         ->schema([
-                            \Filament\Schemas\Components\Section::make()->schema([
+                            \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Toggle::make('is_tax_deductible')
+                                    ->label('Tax Deductible')
+                                    ->helperText('Eligible for tax deduction receipt'),
+                                Toggle::make('is_gift_aid_eligible')
+                                    ->label('Gift Aid Eligible')
+                                    ->helperText('Eligible for Gift Aid claim'),
                                 Textarea::make('in_kind_description')
                                     ->label('In-Kind Description')
                                     ->rows(3)
+                                    ->columnSpanFull()
                                     ->helperText('For non-monetary donations'),
                                 Textarea::make('notes')
                                     ->rows(3)
+                                    ->columnSpanFull()
                                     ->helperText('Internal notes'),
                             ]),
                         ]),

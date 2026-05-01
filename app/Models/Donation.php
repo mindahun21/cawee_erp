@@ -26,13 +26,21 @@ class Donation extends Model
         'pledge_id',
         'notes',
         'status',
+        'exchange_rate',
+        'base_amount',
+        'is_tax_deductible',
+        'is_gift_aid_eligible',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
+        'base_amount' => 'decimal:2',
         'pledge_amount' => 'decimal:2',
         'donation_date' => 'date',
         'is_recurring' => 'boolean',
+        'is_tax_deductible' => 'boolean',
+        'is_gift_aid_eligible' => 'boolean',
     ];
 
     public function donor(): BelongsTo
@@ -116,6 +124,18 @@ class Donation extends Model
             }
             if (empty($donation->status)) {
                 $donation->status = 'completed';
+            }
+            if ($donation->exchange_rate === null) {
+                $donation->exchange_rate = 1.000000;
+            }
+            if ($donation->base_amount === null && $donation->amount !== null) {
+                $donation->base_amount = $donation->amount * $donation->exchange_rate;
+            }
+        });
+        
+        static::updating(function ($donation) {
+            if ($donation->isDirty(['amount', 'exchange_rate'])) {
+                $donation->base_amount = $donation->amount * ($donation->exchange_rate ?? 1);
             }
         });
     }

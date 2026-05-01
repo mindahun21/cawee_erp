@@ -88,6 +88,12 @@ class DonationsRelationManager extends RelationManager
                         Textarea::make('notes')
                             ->columnSpanFull()
                             ->rows(3),
+                        \Filament\Forms\Components\Toggle::make('is_tax_deductible')
+                            ->label('Tax Deductible')
+                            ->helperText('Eligible for tax deduction receipt'),
+                        \Filament\Forms\Components\Toggle::make('is_gift_aid_eligible')
+                            ->label('Gift Aid Eligible')
+                            ->helperText('Eligible for Gift Aid claim'),
                     ]),
             ]);
     }
