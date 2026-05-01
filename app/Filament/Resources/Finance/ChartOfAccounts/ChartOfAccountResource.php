@@ -41,6 +41,7 @@ use Illuminate\Support\HtmlString;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column as ExcelColumn;
 use Maatwebsite\Excel\Excel as ExcelType;
 
 class ChartOfAccountResource extends Resource
@@ -414,18 +415,59 @@ class ChartOfAccountResource extends Resource
             ->headerActions([
                 ExportAction::make()->exports([
                     ExcelExport::make('excel')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::XLSX),
+                        ->withWriterType(ExcelType::XLSX)
+                        ->withColumns([
+                            ExcelColumn::make('code')->heading('Code'),
+                            ExcelColumn::make('name')->heading('Account Name'),
+                            ExcelColumn::make('accountType.name')->heading('Account Type'),
+                            ExcelColumn::make('accountType.classification')->heading('Classification'),
+                            ExcelColumn::make('accountType.normal_balance')->heading('Normal Balance'),
+                            ExcelColumn::make('parent.name')->heading('Parent Account'),
+                            ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                            ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                            ExcelColumn::make('notes')->heading('Notes'),
+                        ]),
                     ExcelExport::make('csv')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::CSV),
+                        ->withWriterType(ExcelType::CSV)
+                        ->withColumns([
+                            ExcelColumn::make('code')->heading('Code'),
+                            ExcelColumn::make('name')->heading('Account Name'),
+                            ExcelColumn::make('accountType.name')->heading('Account Type'),
+                            ExcelColumn::make('accountType.classification')->heading('Classification'),
+                            ExcelColumn::make('parent.name')->heading('Parent Account'),
+                            ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                            ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                            ExcelColumn::make('notes')->heading('Notes'),
+                        ]),
                 ])->label('Export All'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     ExportBulkAction::make()->exports([
                         ExcelExport::make('excel')->withFilename('chart-of-accounts-selected')
-                            ->withWriterType(ExcelType::XLSX),
+                            ->withWriterType(ExcelType::XLSX)
+                            ->withColumns([
+                                ExcelColumn::make('code')->heading('Code'),
+                                ExcelColumn::make('name')->heading('Account Name'),
+                                ExcelColumn::make('accountType.name')->heading('Account Type'),
+                                ExcelColumn::make('accountType.classification')->heading('Classification'),
+                                ExcelColumn::make('parent.name')->heading('Parent Account'),
+                                ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                                ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                                ExcelColumn::make('notes')->heading('Notes'),
+                            ]),
                         ExcelExport::make('csv')->withFilename('chart-of-accounts-selected')
-                            ->withWriterType(ExcelType::CSV),
+                            ->withWriterType(ExcelType::CSV)
+                            ->withColumns([
+                                ExcelColumn::make('code')->heading('Code'),
+                                ExcelColumn::make('name')->heading('Account Name'),
+                                ExcelColumn::make('accountType.name')->heading('Account Type'),
+                                ExcelColumn::make('accountType.classification')->heading('Classification'),
+                                ExcelColumn::make('parent.name')->heading('Parent Account'),
+                                ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                                ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                                ExcelColumn::make('notes')->heading('Notes'),
+                            ]),
                     ]),
                     DeleteBulkAction::make()
                         ->requiresConfirmation()

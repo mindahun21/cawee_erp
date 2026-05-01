@@ -28,6 +28,7 @@ use Filament\Actions\DeleteBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column as ExcelColumn;
 use Maatwebsite\Excel\Excel as ExcelType;
 
 class GeneralLedgerResource extends Resource
@@ -356,18 +357,58 @@ class GeneralLedgerResource extends Resource
             ->headerActions([
                 ExportAction::make()->exports([
                     ExcelExport::make('excel')->withFilename('general-ledger-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::XLSX),
+                        ->withWriterType(ExcelType::XLSX)
+                        ->withColumns([
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('account.code')->heading('Account Code'),
+                            ExcelColumn::make('account.name')->heading('Account Name'),
+                            ExcelColumn::make('debit')->heading('Debit (DR)'),
+                            ExcelColumn::make('credit')->heading('Credit (CR)'),
+                            ExcelColumn::make('running_balance')->heading('Running Balance'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                        ]),
                     ExcelExport::make('csv')->withFilename('general-ledger-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::CSV),
+                        ->withWriterType(ExcelType::CSV)
+                        ->withColumns([
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('account.code')->heading('Account Code'),
+                            ExcelColumn::make('account.name')->heading('Account Name'),
+                            ExcelColumn::make('debit')->heading('Debit (DR)'),
+                            ExcelColumn::make('credit')->heading('Credit (CR)'),
+                            ExcelColumn::make('running_balance')->heading('Running Balance'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                        ]),
                 ])->label('Export All'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     ExportBulkAction::make()->exports([
                         ExcelExport::make('excel')->withFilename('general-ledger-selected')
-                            ->withWriterType(ExcelType::XLSX),
+                            ->withWriterType(ExcelType::XLSX)
+                            ->withColumns([
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('account.code')->heading('Account Code'),
+                                ExcelColumn::make('account.name')->heading('Account Name'),
+                                ExcelColumn::make('debit')->heading('Debit (DR)'),
+                                ExcelColumn::make('credit')->heading('Credit (CR)'),
+                                ExcelColumn::make('running_balance')->heading('Running Balance'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('period.name')->heading('Period'),
+                            ]),
                         ExcelExport::make('csv')->withFilename('general-ledger-selected')
-                            ->withWriterType(ExcelType::CSV),
+                            ->withWriterType(ExcelType::CSV)
+                            ->withColumns([
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('account.code')->heading('Account Code'),
+                                ExcelColumn::make('account.name')->heading('Account Name'),
+                                ExcelColumn::make('debit')->heading('Debit (DR)'),
+                                ExcelColumn::make('credit')->heading('Credit (CR)'),
+                                ExcelColumn::make('running_balance')->heading('Running Balance'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('period.name')->heading('Period'),
+                            ]),
                     ]),
                     DeleteBulkAction::make()
                         ->requiresConfirmation()

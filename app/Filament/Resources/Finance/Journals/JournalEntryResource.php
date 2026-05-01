@@ -52,6 +52,7 @@ use Filament\Actions\DeleteBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column as ExcelColumn;
 use Maatwebsite\Excel\Excel as ExcelType;
 
 class JournalEntryResource extends Resource
@@ -801,9 +802,31 @@ class JournalEntryResource extends Resource
             ->headerActions([
                 ExportAction::make()->exports([
                     ExcelExport::make('excel')->withFilename('journal-entries-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::XLSX),
+                        ->withWriterType(ExcelType::XLSX)
+                        ->withColumns([
+                            ExcelColumn::make('reference_number')->heading('Reference'),
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                            ExcelColumn::make('status')->heading('Status'),
+                            ExcelColumn::make('source')->heading('Source'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('description')->heading('Description'),
+                            ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                            ExcelColumn::make('posted_at')->heading('Posted At'),
+                        ]),
                     ExcelExport::make('csv')->withFilename('journal-entries-' . now()->format('Y-m-d'))
-                        ->withWriterType(ExcelType::CSV),
+                        ->withWriterType(ExcelType::CSV)
+                        ->withColumns([
+                            ExcelColumn::make('reference_number')->heading('Reference'),
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                            ExcelColumn::make('status')->heading('Status'),
+                            ExcelColumn::make('source')->heading('Source'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('description')->heading('Description'),
+                            ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                            ExcelColumn::make('posted_at')->heading('Posted At'),
+                        ]),
                 ])->label('Export All'),
             ])
             ->bulkActions([
@@ -888,9 +911,27 @@ class JournalEntryResource extends Resource
 
                     ExportBulkAction::make()->exports([
                         ExcelExport::make('excel')->withFilename('journal-entries-selected')
-                            ->withWriterType(ExcelType::XLSX),
+                            ->withWriterType(ExcelType::XLSX)
+                            ->withColumns([
+                                ExcelColumn::make('reference_number')->heading('Reference'),
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('status')->heading('Status'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('description')->heading('Description'),
+                                ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                                ExcelColumn::make('posted_at')->heading('Posted At'),
+                            ]),
                         ExcelExport::make('csv')->withFilename('journal-entries-selected')
-                            ->withWriterType(ExcelType::CSV),
+                            ->withWriterType(ExcelType::CSV)
+                            ->withColumns([
+                                ExcelColumn::make('reference_number')->heading('Reference'),
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('status')->heading('Status'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('description')->heading('Description'),
+                                ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                                ExcelColumn::make('posted_at')->heading('Posted At'),
+                            ]),
                     ]),
                 ]),
             ]);
