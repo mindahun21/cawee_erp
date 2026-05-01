@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Increase memory limit for complex Livewire / Filament pages (e.g. large JE repeaters)
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M');
     }
 
     /**

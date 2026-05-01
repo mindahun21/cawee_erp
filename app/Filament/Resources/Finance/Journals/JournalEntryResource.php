@@ -164,11 +164,11 @@ class JournalEntryResource extends Resource
                     Repeater::make('lines')
                         ->relationship('lines')
                         ->label('')
-                        ->live()
                         ->addActionLabel('+ Add Line')
                         ->minItems(2)
                         ->defaultItems(2)
                         ->collapsible()
+                        ->collapsed()           // start collapsed — huge memory saving on large JEs
                         ->cloneable()
                         ->columns(12)
                         ->itemLabel(function (array $state): string {
@@ -176,9 +176,12 @@ class JournalEntryResource extends Resource
                             $debit     = (float) ($state['debit']  ?? 0);
                             $credit    = (float) ($state['credit'] ?? 0);
 
-                            $accountLabel = $accountId
-                                ? (ChartOfAccount::find($accountId)?->name ?? "Account #{$accountId}")
-                                : 'New Line';
+                            // Use cached CoA for the label — avoid N+1 per collapse toggle
+                            static $coaCache = [];
+                            if ($accountId && ! isset($coaCache[$accountId])) {
+                                $coaCache[$accountId] = ChartOfAccount::find($accountId)?->name ?? "Account #{$accountId}";
+                            }
+                            $accountLabel = $accountId ? ($coaCache[$accountId] ?? "Account #{$accountId}") : 'New Line';
 
                             $amountPart = $debit > 0
                                 ? '  ·  DR ' . number_format($debit, 2)
