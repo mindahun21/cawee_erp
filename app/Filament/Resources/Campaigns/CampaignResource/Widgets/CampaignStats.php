@@ -24,6 +24,10 @@ class CampaignStats extends StatsOverviewWidget
                 ->description('Combined goal (converted to ETB using daily exchange rate)')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('warning'),
+            Stat::make('Total Raised (ETB Est.)', 'ETB ' . number_format(Campaign::sum('total_raised'), 2))
+                ->description('Actual donations received across all campaigns')
+                ->descriptionIcon('heroicon-m-banknotes')
+                ->color('success'),
         ];
     }
 }

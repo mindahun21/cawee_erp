@@ -165,8 +165,23 @@ class CampaignResource extends Resource
                     ->sortable()
                     ->weight('semibold'),
                 TextColumn::make('goal_amount')
+                    ->label('Goal')
                     ->money(fn ($record) => $record->currency->code ?? 'ETB')
                     ->sortable(),
+                TextColumn::make('total_raised')
+                    ->label('Raised (ETB Est.)')
+                    ->money('ETB')
+                    ->sortable()
+                    ->color('success')
+                    ->description(fn ($record) => $record->goal_amount > 0
+                        ? number_format(min(($record->total_raised / max($record->base_goal_amount ?? $record->goal_amount, 1)) * 100, 100), 1) . '% of goal'
+                        : null
+                    ),
+                TextColumn::make('donor_count')
+                    ->label('Donors')
+                    ->sortable()
+                    ->icon('heroicon-m-users')
+                    ->toggleable(),
                 TextColumn::make('currency.code')
                     ->label('Currency')
                     ->searchable(),
