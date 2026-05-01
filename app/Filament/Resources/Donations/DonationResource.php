@@ -56,17 +56,89 @@ class DonationResource extends Resource
                                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                                     ->searchable()
                                     ->preload()
-                                    ->required(),
+                                    ->required()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                Select::make('donor_type')
+                                                    ->options([
+                                                        'individual' => 'Individual',
+                                                        'corporate' => 'Corporate',
+                                                        'foundation' => 'Foundation',
+                                                    ])
+                                                    ->required()
+                                                    ->default('individual')
+                                                    ->reactive(),
+                                                TextInput::make('email')
+                                                    ->email()
+                                                    ->required()
+                                                    ->unique('donors', 'email'),
+                                                TextInput::make('first_name')
+                                                    ->label('First Name')
+                                                    ->required(fn ($get) => $get('donor_type') === 'individual')
+                                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
+                                                TextInput::make('last_name')
+                                                    ->label('Last Name')
+                                                    ->required(fn ($get) => $get('donor_type') === 'individual')
+                                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
+                                                TextInput::make('organization_name')
+                                                    ->label('Organization Name')
+                                                    ->required(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
+                                                    ->hidden(fn ($get) => $get('donor_type') === 'individual'),
+                                                TextInput::make('phone')
+                                                    ->tel(),
+                                            ]),
+                                    ]),
                                 Select::make('campaign_id')
                                     ->relationship('campaign', 'title')
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('title')
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                TextInput::make('goal_amount')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->minValue(0),
+                                                Select::make('currency_id')
+                                                    ->relationship('currency', 'code')
+                                                    ->required()
+                                                    ->default(fn () => \App\Models\Currency::where('is_procurement_default', true)->value('id') ?? 1),
+                                                DatePicker::make('start_date')
+                                                    ->required()
+                                                    ->default(now()),
+                                                DatePicker::make('end_date')
+                                                    ->required()
+                                                    ->after('start_date')
+                                                    ->default(now()->addMonth()),
+                                            ]),
+                                    ]),
                                 Select::make('donation_type_id')
                                     ->relationship('donationType', 'name', fn ($query) => $query->active())
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('name')
+                                                    ->required()
+                                                    ->maxLength(100),
+                                                TextInput::make('code')
+                                                    ->required()
+                                                    ->maxLength(20)
+                                                    ->unique('donation_types', 'code'),
+                                                \Filament\Forms\Components\Toggle::make('is_active')
+                                                    ->label('Active')
+                                                    ->default(true),
+                                                \Filament\Forms\Components\Toggle::make('is_recurring')
+                                                    ->label('Supports Recurring'),
+                                            ]),
+                                    ]),
                                 DatePicker::make('donation_date')
                                     ->required()
                                     ->default(now()),

@@ -110,8 +110,7 @@ class DonorReports extends Page implements HasTable, HasForms
                                     ->label('Campaign')
                                     ->options(fn () => Campaign::pluck('title', 'id')->toArray())
                                     ->placeholder('All Campaigns')
-                                    ->live()
-                                    ->hidden(fn() => $this->activeTab === 'campaigns'),
+                                    ->live(),
                             ]),
                     ])
                     ->compact(),
