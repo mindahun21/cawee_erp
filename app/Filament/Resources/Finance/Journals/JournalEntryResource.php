@@ -193,8 +193,25 @@ class JournalEntryResource extends Resource
                             // Account — spans 4 of 12 cols
                             Select::make('account_id')
                                 ->label('Account')
-                                ->options(ChartOfAccount::transactionOptions())
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    ChartOfAccount::where('is_active', true)
+                                        ->where('is_header', false)
+                                        ->where(fn ($q) => $q
+                                            ->where('code', 'like', "%{$search}%")
+                                            ->orWhere('name', 'like', "%{$search}%")
+                                        )
+                                        ->orderBy('code')
+                                        ->limit(30)
+                                        ->get()
+                                        ->mapWithKeys(fn ($a) => [$a->id => "[{$a->code}] {$a->name}"])
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    ChartOfAccount::find($value)
+                                        ? "[" . ChartOfAccount::find($value)->code . "] " . ChartOfAccount::find($value)->name
+                                        : $value
+                                )
                                 ->required()
                                 ->native(false)
                                 ->columnSpan(4)
@@ -236,8 +253,22 @@ class JournalEntryResource extends Resource
                             // Cost Centre — spans 3
                             Select::make('cost_center_id')
                                 ->label('cost_category')
-                                ->options(CostCenter::activeOptions())
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    CostCenter::where('is_active', true)
+                                        ->where(fn ($q) => $q
+                                            ->where('code', 'like', "%{$search}%")
+                                            ->orWhere('name', 'like', "%{$search}%")
+                                        )
+                                        ->orderBy('code')
+                                        ->limit(20)
+                                        ->get()
+                                        ->mapWithKeys(fn ($c) => [$c->id => "[{$c->code}] {$c->name}"])
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(CostCenter::find($value))->name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
@@ -245,14 +276,22 @@ class JournalEntryResource extends Resource
                             // Donor — spans 3
                             Select::make('donor_id')
                                 ->label('Source of Fund')
-                                ->options(fn () => Donor::orderBy('organization_name')
+                                ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Donor::where(fn ($q) => $q
+                                        ->where('organization_name', 'like', "%{$search}%")
+                                        ->orWhere('first_name', 'like', "%{$search}%")
+                                        ->orWhere('last_name', 'like', "%{$search}%")
+                                    )
+                                    ->orderBy('organization_name')
+                                    ->limit(20)
                                     ->get()
-                                    ->mapWithKeys(fn ($d) => [
-                                        $d->id => $d->full_name ?? $d->organization_name,
-                                    ])
+                                    ->mapWithKeys(fn ($d) => [$d->id => $d->full_name ?? $d->organization_name])
                                     ->toArray()
                                 )
-                                ->searchable()
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Donor::find($value))->organization_name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3)
@@ -261,23 +300,34 @@ class JournalEntryResource extends Resource
                             // Project — spans 3
                             Select::make('project_id')
                                 ->label('Project')
-                                ->options(fn () => Project::orderBy('project_name')
-                                    ->pluck('project_name', 'id')
-                                    ->toArray()
-                                )
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Project::where('project_name', 'like', "%{$search}%")
+                                        ->orderBy('project_name')
+                                        ->limit(20)
+                                        ->pluck('project_name', 'id')
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Project::find($value))->project_name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
 
                             Select::make('supplier_id')
                                 ->label('Vendor')
-                                ->options(fn () => Supplier::query()
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->toArray()
-                                )
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Supplier::where('name', 'like', "%{$search}%")
+                                        ->orderBy('name')
+                                        ->limit(20)
+                                        ->pluck('name', 'id')
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Supplier::find($value))->name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
