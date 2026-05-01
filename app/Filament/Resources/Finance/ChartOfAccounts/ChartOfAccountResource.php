@@ -8,6 +8,7 @@ use App\Filament\Resources\Finance\ChartOfAccounts\Pages\ListChartOfAccounts;
 use App\Filament\Resources\Finance\ChartOfAccounts\Pages\ViewChartOfAccount;
 use App\Models\Currency;
 use App\Models\Finance\AccountType;
+use App\Models\Finance\AccountSubClassification;
 use App\Models\Finance\ChartOfAccount;
 use App\Models\Finance\FinancialStatementCategory;
 use App\Models\Finance\GeneralLedger;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Get;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -115,6 +117,21 @@ class ChartOfAccountResource extends Resource
                         ->native(false)
                         ->searchable()
                         ->helperText('Asset / Liability / Equity / Income / Expense — drives normal balance direction.')
+                        ->preload()
+                        ->live(),
+
+                    Select::make('sub_classification_id')
+                        ->label('Sub-Classification')
+                        ->options(fn (Get $get): array =>
+                            ($typeId = $get('account_type_id')) && ($type = AccountType::find($typeId))
+                                ? AccountSubClassification::optionsForClassification($type->classification)
+                                : AccountSubClassification::groupedOptions()
+                        )
+                        ->nullable()
+                        ->native(false)
+                        ->searchable()
+                        ->placeholder('Select a sub-classification...')
+                        ->helperText('e.g. Cash & Cash Equivalents, Bank, Accounts Receivable, Fixed Asset.')
                         ->preload(),
 
                     Select::make('financial_statement_category_id')

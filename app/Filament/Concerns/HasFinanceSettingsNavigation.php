@@ -4,6 +4,7 @@ namespace App\Filament\Concerns;
 
 use Filament\Navigation\NavigationItem;
 use App\Filament\Resources\Finance\Settings\AccountTypeResource;
+use App\Filament\Resources\Finance\Settings\AccountSubClassificationResource;
 use App\Filament\Resources\Finance\Settings\AccountingPeriodResource;
 use App\Filament\Resources\Finance\Settings\BudgetTypeResource;
 use App\Filament\Resources\Finance\Settings\CashierResource;
@@ -23,6 +24,11 @@ trait HasFinanceSettingsNavigation
                 ->icon('heroicon-o-rectangle-stack')
                 ->url(AccountTypeResource::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs(AccountTypeResource::getRouteBaseName() . '.*')),
+
+            NavigationItem::make('Account Sub-Classifications')
+                ->icon('heroicon-o-tag')
+                ->url(AccountSubClassificationResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs(AccountSubClassificationResource::getRouteBaseName() . '.*')),
 
             NavigationItem::make('Statement Categories')
                 ->icon('heroicon-o-document-chart-bar')
