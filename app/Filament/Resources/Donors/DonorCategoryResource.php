@@ -43,6 +43,14 @@ class DonorCategoryResource extends Resource
                             ->maxLength(255),
                         Textarea::make('description')
                             ->columnSpanFull(),
+                        \Filament\Forms\Components\Select::make('donors')
+                            ->multiple()
+                            ->relationship('donors', 'first_name')
+                            ->preload()
+                            ->searchable()
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                            ->columnSpanFull()
+                            ->helperText('Assign donors to this category directly from here.'),
                     ]),
             ]);
     }
@@ -73,6 +81,13 @@ class DonorCategoryResource extends Resource
                 EditAction::make(),
                 DeleteAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            DonorCategoryResource\RelationManagers\DonorsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

@@ -18,6 +18,7 @@ class ChartOfAccount extends Model
         'code',
         'name',
         'account_type_id',
+        'sub_classification_id',
         'parent_id',
         'financial_statement_category_id',
         'currency_id',
@@ -133,6 +134,11 @@ class ChartOfAccount extends Model
     public function accountType(): BelongsTo
     {
         return $this->belongsTo(AccountType::class, 'account_type_id');
+    }
+
+    public function subClassification(): BelongsTo
+    {
+        return $this->belongsTo(AccountSubClassification::class, 'sub_classification_id');
     }
 
     public function parent(): BelongsTo

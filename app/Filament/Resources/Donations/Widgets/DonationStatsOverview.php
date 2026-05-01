@@ -22,12 +22,12 @@ class DonationStatsOverview extends BaseWidget
                 ->color('primary'),
 
             Stat::make('Total Amount Raised', 'ETB ' . number_format($overall['total_amount'], 2))
-                ->description('All time')
+                ->description('All time (Est. using daily ETB rate)')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('success'),
 
             Stat::make('This Year', 'ETB ' . number_format($currentYear['total_amount'], 2))
-                ->description('Year to date')
+                ->description('Year to date (Est. in ETB)')
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('info')
                 ->chart([$currentYear['total_amount']]), // Placeholder for sparkline if we had monthly data readily available as array

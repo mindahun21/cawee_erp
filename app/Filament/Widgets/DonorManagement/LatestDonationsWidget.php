@@ -16,7 +16,7 @@ class LatestDonationsWidget extends BaseWidget
     protected static ?string $heading = 'Latest Contributions';
     protected string $view = 'filament.widgets.latest-donations-widget';
 
-    protected int | string | array $columnSpan = 'half';
+    protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
@@ -26,14 +26,26 @@ class LatestDonationsWidget extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('donor.full_name')
-                    ->label('Donor'),
+                    ->label('Donor')
+                    ->description(fn($record) => $record->campaign?->title)
+                    ->icon('heroicon-m-user-circle')
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('amount')
-                    ->money('ETB'),
+                    ->money('ETB')
+                    ->color('success')
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'completed' => 'success',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('donation_date')
-                    ->date()
-                    ->label('Date'),
+                    ->date('M d, Y')
+                    ->label('Date')
+                    ->color('gray'),
             ])
             ->paginated(false);
     }

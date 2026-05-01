@@ -8,6 +8,7 @@ use App\Filament\Resources\Finance\ChartOfAccounts\Pages\ListChartOfAccounts;
 use App\Filament\Resources\Finance\ChartOfAccounts\Pages\ViewChartOfAccount;
 use App\Models\Currency;
 use App\Models\Finance\AccountType;
+use App\Models\Finance\AccountSubClassification;
 use App\Models\Finance\ChartOfAccount;
 use App\Models\Finance\FinancialStatementCategory;
 use App\Models\Finance\GeneralLedger;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -30,6 +32,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,6 +41,11 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use App\Traits\BelongsToModule;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column as ExcelColumn;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class ChartOfAccountResource extends Resource
 {
@@ -110,6 +119,21 @@ class ChartOfAccountResource extends Resource
                         ->native(false)
                         ->searchable()
                         ->helperText('Asset / Liability / Equity / Income / Expense — drives normal balance direction.')
+                        ->preload()
+                        ->live(),
+
+                    Select::make('sub_classification_id')
+                        ->label('Sub-Classification')
+                        ->options(fn (Get $get): array =>
+                            ($typeId = $get('account_type_id')) && ($type = AccountType::find($typeId))
+                                ? AccountSubClassification::optionsForClassification($type->classification)
+                                : AccountSubClassification::groupedOptions()
+                        )
+                        ->nullable()
+                        ->native(false)
+                        ->searchable()
+                        ->placeholder('Select a sub-classification...')
+                        ->helperText('e.g. Cash & Cash Equivalents, Bank, Accounts Receivable, Fixed Asset.')
                         ->preload(),
 
                     Select::make('financial_statement_category_id')
@@ -407,7 +431,69 @@ class ChartOfAccountResource extends Resource
             ->defaultSort('code', 'asc')
             ->striped()
             ->paginated([50, 100, 'all'])
-            ->bulkActions([]);
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make('excel')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::XLSX)
+                        ->withColumns([
+                            ExcelColumn::make('code')->heading('Code'),
+                            ExcelColumn::make('name')->heading('Account Name'),
+                            ExcelColumn::make('accountType.name')->heading('Account Type'),
+                            ExcelColumn::make('accountType.classification')->heading('Classification'),
+                            ExcelColumn::make('accountType.normal_balance')->heading('Normal Balance'),
+                            ExcelColumn::make('parent.name')->heading('Parent Account'),
+                            ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                            ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                            ExcelColumn::make('notes')->heading('Notes'),
+                        ]),
+                    ExcelExport::make('csv')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::CSV)
+                        ->withColumns([
+                            ExcelColumn::make('code')->heading('Code'),
+                            ExcelColumn::make('name')->heading('Account Name'),
+                            ExcelColumn::make('accountType.name')->heading('Account Type'),
+                            ExcelColumn::make('accountType.classification')->heading('Classification'),
+                            ExcelColumn::make('parent.name')->heading('Parent Account'),
+                            ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                            ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                            ExcelColumn::make('notes')->heading('Notes'),
+                        ]),
+                ])->label('Export All'),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make('excel')->withFilename('chart-of-accounts-selected')
+                            ->withWriterType(ExcelType::XLSX)
+                            ->withColumns([
+                                ExcelColumn::make('code')->heading('Code'),
+                                ExcelColumn::make('name')->heading('Account Name'),
+                                ExcelColumn::make('accountType.name')->heading('Account Type'),
+                                ExcelColumn::make('accountType.classification')->heading('Classification'),
+                                ExcelColumn::make('parent.name')->heading('Parent Account'),
+                                ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                                ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                                ExcelColumn::make('notes')->heading('Notes'),
+                            ]),
+                        ExcelExport::make('csv')->withFilename('chart-of-accounts-selected')
+                            ->withWriterType(ExcelType::CSV)
+                            ->withColumns([
+                                ExcelColumn::make('code')->heading('Code'),
+                                ExcelColumn::make('name')->heading('Account Name'),
+                                ExcelColumn::make('accountType.name')->heading('Account Type'),
+                                ExcelColumn::make('accountType.classification')->heading('Classification'),
+                                ExcelColumn::make('parent.name')->heading('Parent Account'),
+                                ExcelColumn::make('is_header')->heading('Header')->formatStateUsing(fn ($s) => $s ? 'Yes' : 'No'),
+                                ExcelColumn::make('is_active')->heading('Active')->formatStateUsing(fn ($s) => $s ? 'Active' : 'Inactive'),
+                                ExcelColumn::make('notes')->heading('Notes'),
+                            ]),
+                    ]),
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Selected Chart of Accounts')
+                        ->modalDescription('Are you sure you want to delete these accounts? This action cannot be undone.')
+                ]),
+            ]);
     }
 
     // ── Infolist (View page) ──────────────────────────────────────────
@@ -468,6 +554,12 @@ class ChartOfAccountResource extends Resource
 
                     TextEntry::make('financialStatementCategory.name')
                         ->label('Financial Statement Category')
+                        ->placeholder('Not assigned'),
+
+                    TextEntry::make('subClassification.name')
+                        ->label('Sub-Classification')
+                        ->badge()
+                        ->color('primary')
                         ->placeholder('Not assigned'),
 
                     TextEntry::make('parent.name')

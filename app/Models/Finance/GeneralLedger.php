@@ -5,6 +5,7 @@ namespace App\Models\Finance;
 use App\Models\Currency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * GeneralLedger
@@ -35,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class GeneralLedger extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'finance_general_ledgers';
 
     /**

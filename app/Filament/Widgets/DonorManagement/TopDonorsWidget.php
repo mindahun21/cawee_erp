@@ -16,7 +16,7 @@ class TopDonorsWidget extends BaseWidget
 
     protected static ?string $heading = 'Top Donors (All Time)';
 
-    protected int | string | array $columnSpan = 'half';
+    protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
     {

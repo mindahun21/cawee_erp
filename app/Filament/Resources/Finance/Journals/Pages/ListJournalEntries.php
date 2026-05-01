@@ -6,6 +6,7 @@ use App\Filament\Resources\Finance\Journals\JournalEntryResource;
 use App\Models\Finance\AccountingPeriod;
 use App\Models\Finance\JournalEntry;
 use App\Services\Finance\ImportService;
+use App\Services\Finance\JournalEntryService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
@@ -14,7 +15,11 @@ use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class ListJournalEntries extends ListRecords
@@ -122,6 +127,94 @@ class ListJournalEntries extends ListRecords
             CreateAction::make()
                 ->label('New Journal Entry')
                 ->icon('heroicon-o-plus'),
+        ];
+    }
+
+    // ── Bulk Actions ──────────────────────────────────────────────────
+
+    protected function getTableBulkActions(): array
+    {
+        return [
+            BulkActionGroup::make([
+
+                // ── Bulk Approve (Draft → Approved) ──────────────────
+                BulkAction::make('bulk_approve')
+                    ->label('Approve Selected')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Approve Selected Journal Entries')
+                    ->modalDescription('Selected Draft entries will be marked as Approved and become eligible for posting to the GL.')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records) {
+                        $service = app(JournalEntryService::class);
+                        $user    = auth()->user();
+                        $done    = 0;
+                        $failed  = 0;
+
+                        foreach ($records as $je) {
+                            try {
+                                if ($je->isDraft()) {
+                                    $service->approve($je, $user);
+                                    $done++;
+                                }
+                            } catch (\Throwable) {
+                                $failed++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("Bulk Approve: {$done} approved" . ($failed ? ", {$failed} failed." : '.'))
+                            ->color($failed ? 'warning' : 'success')
+                            ->send();
+                    }),
+
+                // ── Bulk Post to GL (Approved or Draft → Posted) ────────
+                BulkAction::make('bulk_post')
+                    ->label('Post to GL')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->modalHeading('Post Selected Entries to General Ledger')
+                    ->modalDescription('Selected Approved entries will be posted to the GL. This action cannot be undone — corrections require a Reversal entry.')
+                    ->modalSubmitActionLabel('Yes, Post to GL')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records) {
+                        $service = app(JournalEntryService::class);
+                        $user    = auth()->user();
+                        $done    = 0;
+                        $failed  = [];
+
+                        foreach ($records as $je) {
+                            try {
+                                if ($je->isApproved()) {
+                                    $service->post($je, $user);
+                                    $done++;
+                                }
+                            } catch (\Throwable $e) {
+                                $failed[] = "{$je->reference_number}: " . $e->getMessage();
+                            }
+                        }
+
+                        $body = "{$done} entr" . ($done === 1 ? 'y' : 'ies') . " posted to GL.";
+                        if ($failed) {
+                            $body .= ' Errors: ' . implode('; ', array_slice($failed, 0, 3));
+                        }
+
+                        Notification::make()
+                            ->title('Bulk Post to GL')
+                            ->body($body)
+                            ->color($failed ? 'warning' : 'success')
+                            ->persistent()
+                            ->send();
+                    }),
+
+                // ── Bulk Delete (Soft Delete) ───────────────────────────
+                DeleteBulkAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Selected Journal Entries')
+                    ->modalDescription('Are you sure? This will soft-delete the selected entries (setup phase only).'),
+            ]),
         ];
     }
 

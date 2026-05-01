@@ -13,9 +13,8 @@ class DonationTypeDistributionChart extends ChartWidget
 
     protected ?string $heading = 'Donations by Type';
     
-    protected int | string | array $columnSpan = 'half';
-
-    protected ?string $maxHeight = '300px';
+    protected ?string $maxHeight = '275px';
+    protected int | string | array $columnSpan = 1;
 
     protected function getData(): array
     {
@@ -30,6 +29,9 @@ class DonationTypeDistributionChart extends ChartWidget
                     'backgroundColor' => [
                         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'
                     ],
+                    'hoverOffset' => 15,
+                    'borderWidth' => 2,
+                    'borderColor' => '#fff',
                 ],
             ],
             'labels' => array_column($distribution, 'type'),

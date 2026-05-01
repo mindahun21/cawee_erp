@@ -44,8 +44,17 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\HtmlString;
 use App\Traits\BelongsToModule;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column as ExcelColumn;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class JournalEntryResource extends Resource
 {
@@ -76,7 +85,8 @@ class JournalEntryResource extends Resource
 
     public static function canCreate(): bool   { return static::canViewAny(); }
     public static function canEdit($r): bool   { return $r->isEditable(); }
-    public static function canDelete($r): bool { return $r->isDraft() && static::canViewAny(); }
+    public static function canDelete($r): bool { return static::canViewAny(); }
+    public static function canDeleteAny(): bool{ return static::canViewAny(); }
 
     // ── Form ──────────────────────────────────────────────────────────
 
@@ -161,11 +171,11 @@ class JournalEntryResource extends Resource
                     Repeater::make('lines')
                         ->relationship('lines')
                         ->label('')
-                        ->live()
                         ->addActionLabel('+ Add Line')
                         ->minItems(2)
                         ->defaultItems(2)
                         ->collapsible()
+                        ->collapsed()           // start collapsed — huge memory saving on large JEs
                         ->cloneable()
                         ->columns(12)
                         ->itemLabel(function (array $state): string {
@@ -173,9 +183,12 @@ class JournalEntryResource extends Resource
                             $debit     = (float) ($state['debit']  ?? 0);
                             $credit    = (float) ($state['credit'] ?? 0);
 
-                            $accountLabel = $accountId
-                                ? (ChartOfAccount::find($accountId)?->name ?? "Account #{$accountId}")
-                                : 'New Line';
+                            // Use cached CoA for the label — avoid N+1 per collapse toggle
+                            static $coaCache = [];
+                            if ($accountId && ! isset($coaCache[$accountId])) {
+                                $coaCache[$accountId] = ChartOfAccount::find($accountId)?->name ?? "Account #{$accountId}";
+                            }
+                            $accountLabel = $accountId ? ($coaCache[$accountId] ?? "Account #{$accountId}") : 'New Line';
 
                             $amountPart = $debit > 0
                                 ? '  ·  DR ' . number_format($debit, 2)
@@ -190,8 +203,24 @@ class JournalEntryResource extends Resource
                             // Account — spans 4 of 12 cols
                             Select::make('account_id')
                                 ->label('Account')
-                                ->options(ChartOfAccount::transactionOptions())
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    ChartOfAccount::where('is_active', true)
+                                        ->where('is_header', false)
+                                        ->where(fn ($q) => $q
+                                            ->where('code', 'like', "%{$search}%")
+                                            ->orWhere('name', 'like', "%{$search}%")
+                                        )
+                                        ->orderBy('code')
+                                        ->limit(30)
+                                        ->get()
+                                        ->mapWithKeys(fn ($a) => [$a->id => "[{$a->code}] {$a->name}"])
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(function ($value) {
+                                    $a = ChartOfAccount::find($value);
+                                    return $a ? "[{$a->code}] {$a->name}" : $value;
+                                })
                                 ->required()
                                 ->native(false)
                                 ->columnSpan(4)
@@ -233,8 +262,22 @@ class JournalEntryResource extends Resource
                             // Cost Centre — spans 3
                             Select::make('cost_center_id')
                                 ->label('cost_category')
-                                ->options(CostCenter::activeOptions())
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    CostCenter::where('is_active', true)
+                                        ->where(fn ($q) => $q
+                                            ->where('code', 'like', "%{$search}%")
+                                            ->orWhere('name', 'like', "%{$search}%")
+                                        )
+                                        ->orderBy('code')
+                                        ->limit(20)
+                                        ->get()
+                                        ->mapWithKeys(fn ($c) => [$c->id => "[{$c->code}] {$c->name}"])
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(CostCenter::find($value))->name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
@@ -242,14 +285,22 @@ class JournalEntryResource extends Resource
                             // Donor — spans 3
                             Select::make('donor_id')
                                 ->label('Source of Fund')
-                                ->options(fn () => Donor::orderBy('organization_name')
+                                ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Donor::where(fn ($q) => $q
+                                        ->where('organization_name', 'like', "%{$search}%")
+                                        ->orWhere('first_name', 'like', "%{$search}%")
+                                        ->orWhere('last_name', 'like', "%{$search}%")
+                                    )
+                                    ->orderBy('organization_name')
+                                    ->limit(20)
                                     ->get()
-                                    ->mapWithKeys(fn ($d) => [
-                                        $d->id => $d->full_name ?? $d->organization_name,
-                                    ])
+                                    ->mapWithKeys(fn ($d) => [$d->id => $d->full_name ?? $d->organization_name])
                                     ->toArray()
                                 )
-                                ->searchable()
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Donor::find($value))->organization_name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3)
@@ -258,23 +309,34 @@ class JournalEntryResource extends Resource
                             // Project — spans 3
                             Select::make('project_id')
                                 ->label('Project')
-                                ->options(fn () => Project::orderBy('project_name')
-                                    ->pluck('project_name', 'id')
-                                    ->toArray()
-                                )
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Project::where('project_name', 'like', "%{$search}%")
+                                        ->orderBy('project_name')
+                                        ->limit(20)
+                                        ->pluck('project_name', 'id')
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Project::find($value))->project_name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
 
                             Select::make('supplier_id')
                                 ->label('Vendor')
-                                ->options(fn () => Supplier::query()
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->toArray()
-                                )
                                 ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) =>
+                                    Supplier::where('name', 'like', "%{$search}%")
+                                        ->orderBy('name')
+                                        ->limit(20)
+                                        ->pluck('name', 'id')
+                                        ->toArray()
+                                )
+                                ->getOptionLabelUsing(fn ($value) =>
+                                    optional(Supplier::find($value))->name ?? $value
+                                )
                                 ->nullable()
                                 ->native(false)
                                 ->columnSpan(3),
@@ -420,15 +482,19 @@ class JournalEntryResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('account_id')
-                    ->label('Account Id')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('account.code')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->label('Accounts')
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($codes) => $codes->count() > 3
+                            ? $codes->take(2)->implode(', ') . ' +' . ($codes->count() - 2) . ' more'
+                            : ($codes->implode(', ') ?: '—')
+                    )($record->lines->pluck('account.code')->filter()->unique()->values())
+                    )
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('account.code')->filter()->unique()->implode(', ') ?: '—'
                     )
                     ->fontFamily('mono')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->wrap(false),
 
                 TextColumn::make('description')
                     ->label('Description')
@@ -464,58 +530,65 @@ class JournalEntryResource extends Resource
 
                 TextColumn::make('budget_code')
                     ->label('Budget Code')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('activity_code')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($codes) => $codes->count() > 2
+                            ? $codes->take(1)->implode(', ') . ' +' . ($codes->count() - 1) . ' more'
+                            : ($codes->implode(', ') ?: '—')
+                    )($record->lines->pluck('activity_code')->filter()->unique()->values())
                     )
-                    ->fontFamily('mono'),
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('activity_code')->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('cost_category')
-                    ->label('cost_category')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('costCenter.name')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
-                    ),
+                    ->label('Cost Category')
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($cats) => $cats->count() > 2
+                            ? $cats->take(1)->implode(', ') . ' +' . ($cats->count() - 1) . ' more'
+                            : ($cats->implode(', ') ?: '—')
+                    )($record->lines->pluck('costCenter.name')->filter()->unique()->values())
+                    )
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('costCenter.name')->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('source_of_fund')
                     ->label('Source of Fund')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->map(fn ($line) => $line->donor?->full_name ?? $line->donor?->organization_name)
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($donors) => $donors->count() > 2
+                            ? $donors->take(1)->implode(', ') . ' +' . ($donors->count() - 1) . ' more'
+                            : ($donors->implode(', ') ?: '—')
+                    )($record->lines->map(fn ($l) => $l->donor?->organization_name)->filter()->unique()->values())
                     )
-                    ->wrap(),
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->map(fn ($l) => $l->donor?->organization_name)->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('vendor')
                     ->label('Vendor')
                     ->getStateUsing(function (JournalEntry $record): string {
-                        $supplierNames = $record->lines
-                            ->pluck('supplier.name')
-                            ->filter()
-                            ->unique()
-                            ->implode(', ');
+                        $names = $record->lines->pluck('supplier.name')->merge(
+                            $record->lines->pluck('vendor_name')
+                        )->filter()->unique()->values();
 
-                        if ($supplierNames !== '') {
-                            return $supplierNames;
+                        if ($names->isNotEmpty()) {
+                            return $names->count() > 2
+                                ? $names->take(1)->implode(', ') . ' +' . ($names->count() - 1) . ' more'
+                                : $names->implode(', ');
                         }
-
-                        $lineVendors = $record->lines
-                            ->pluck('vendor_name')
-                            ->filter()
-                            ->unique()
-                            ->implode(', ');
-
-                        if ($lineVendors !== '') {
-                            return $lineVendors;
-                        }
-
                         return static::resolveVendorName($record);
-                    }),
+                    })
+                    ->tooltip(function (JournalEntry $record): string {
+                        $names = $record->lines->pluck('supplier.name')->merge(
+                            $record->lines->pluck('vendor_name')
+                        )->filter()->unique()->values();
+                        return $names->implode(', ') ?: static::resolveVendorName($record);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -738,7 +811,143 @@ class JournalEntryResource extends Resource
             ->striped()
             ->paginated([25, 50, 100])
             ->deferLoading()
-            ->poll('120s');
+            ->poll('120s')
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make('excel')->withFilename('journal-entries-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::XLSX)
+                        ->withColumns([
+                            ExcelColumn::make('reference_number')->heading('Reference'),
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                            ExcelColumn::make('status')->heading('Status'),
+                            ExcelColumn::make('source')->heading('Source'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('description')->heading('Description'),
+                            ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                            ExcelColumn::make('posted_at')->heading('Posted At'),
+                        ]),
+                    ExcelExport::make('csv')->withFilename('journal-entries-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::CSV)
+                        ->withColumns([
+                            ExcelColumn::make('reference_number')->heading('Reference'),
+                            ExcelColumn::make('transaction_date')->heading('Date'),
+                            ExcelColumn::make('period.name')->heading('Period'),
+                            ExcelColumn::make('status')->heading('Status'),
+                            ExcelColumn::make('source')->heading('Source'),
+                            ExcelColumn::make('currency.code')->heading('Currency'),
+                            ExcelColumn::make('description')->heading('Description'),
+                            ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                            ExcelColumn::make('posted_at')->heading('Posted At'),
+                        ]),
+                ])->label('Export All'),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    // ── Bulk Approve (Draft → Approved) ──────────────────
+                    BulkAction::make('bulk_approve')
+                        ->label('Approve Selected')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Approve Selected Journal Entries')
+                        ->modalDescription('Selected Draft entries will be marked as Approved and become eligible for posting to the GL.')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records) {
+                            $service = app(JournalEntryService::class);
+                            $user    = auth()->user();
+                            $done    = 0;
+                            $failed  = 0;
+
+                            foreach ($records as $je) {
+                                try {
+                                    if ($je->isDraft()) {
+                                        $service->approve($je, $user);
+                                        $done++;
+                                    }
+                                } catch (\Throwable) {
+                                    $failed++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title("Bulk Approve: {$done} approved" . ($failed ? ", {$failed} failed." : '.'))
+                                ->color($failed ? 'warning' : 'success')
+                                ->send();
+                        }),
+
+                    // ── Bulk Post to GL (Approved or Draft → Posted) ────────
+                    BulkAction::make('bulk_post')
+                        ->label('Post to GL')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->modalHeading('Post Selected Entries to General Ledger')
+                        ->modalDescription('Selected Approved entries will be posted to the GL. This action cannot be undone — corrections require a Reversal entry.')
+                        ->modalSubmitActionLabel('Yes, Post to GL')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records) {
+                            $service = app(JournalEntryService::class);
+                            $user    = auth()->user();
+                            $done    = 0;
+                            $failed  = [];
+
+                            foreach ($records as $je) {
+                                try {
+                                    if ($je->isApproved()) {
+                                        $service->post($je, $user);
+                                        $done++;
+                                    }
+                                } catch (\Throwable $e) {
+                                    $failed[] = "{$je->reference_number}: " . $e->getMessage();
+                                }
+                            }
+
+                            $body = "{$done} entr" . ($done === 1 ? 'y' : 'ies') . " posted to GL.";
+                            if ($failed) {
+                                $body .= ' Errors: ' . implode('; ', array_slice($failed, 0, 3));
+                            }
+
+                            Notification::make()
+                                ->title('Bulk Post to GL')
+                                ->body($body)
+                                ->color($failed ? 'warning' : 'success')
+                                ->persistent()
+                                ->send();
+                        }),
+
+                    // ── Bulk Delete (Soft Delete) ───────────────────────────
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Selected Journal Entries')
+                        ->modalDescription('Are you sure? This will soft-delete the selected entries (setup phase only).'),
+
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make('excel')->withFilename('journal-entries-selected')
+                            ->withWriterType(ExcelType::XLSX)
+                            ->withColumns([
+                                ExcelColumn::make('reference_number')->heading('Reference'),
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('status')->heading('Status'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('description')->heading('Description'),
+                                ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                                ExcelColumn::make('posted_at')->heading('Posted At'),
+                            ]),
+                        ExcelExport::make('csv')->withFilename('journal-entries-selected')
+                            ->withWriterType(ExcelType::CSV)
+                            ->withColumns([
+                                ExcelColumn::make('reference_number')->heading('Reference'),
+                                ExcelColumn::make('transaction_date')->heading('Date'),
+                                ExcelColumn::make('status')->heading('Status'),
+                                ExcelColumn::make('currency.code')->heading('Currency'),
+                                ExcelColumn::make('description')->heading('Description'),
+                                ExcelColumn::make('preparedBy.name')->heading('Prepared By'),
+                                ExcelColumn::make('posted_at')->heading('Posted At'),
+                            ]),
+                    ]),
+                ]),
+            ]);
     }
 
     protected static function resolveVendorName(JournalEntry $record): string
@@ -986,21 +1195,25 @@ class JournalEntryResource extends Resource
                                 ->label('Before')
                                 ->formatStateUsing(fn ($state) =>
                                     is_array($state)
-                                        ? collect($state)->map(fn ($v, $k) => "{$k}: {$v}")->implode(' | ')
+                                        ? collect($state)->map(fn ($v, $k) =>
+                                            $k . ': ' . (is_array($v) ? json_encode($v) : $v)
+                                        )->implode(' | ')
                                         : '—'
                                 )
                                 ->placeholder('—')
-                                ->limit(60),
+                                ->limit(80),
 
                             TextEntry::make('new_values')
                                 ->label('After')
                                 ->formatStateUsing(fn ($state) =>
                                     is_array($state)
-                                        ? collect($state)->map(fn ($v, $k) => "{$k}: {$v}")->implode(' | ')
+                                        ? collect($state)->map(fn ($v, $k) =>
+                                            $k . ': ' . (is_array($v) ? json_encode($v) : $v)
+                                        )->implode(' | ')
                                         : '—'
                                 )
                                 ->placeholder('—')
-                                ->limit(60),
+                                ->limit(80),
                         ]),
                 ]),
         ]);

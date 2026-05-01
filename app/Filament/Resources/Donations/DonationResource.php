@@ -58,20 +58,107 @@ class DonationResource extends Resource
                                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                                     ->searchable()
                                     ->preload()
-                                    ->required(),
+                                    ->required()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                Select::make('donor_type')
+                                                    ->options([
+                                                        'individual' => 'Individual',
+                                                        'corporate' => 'Corporate',
+                                                        'foundation' => 'Foundation',
+                                                    ])
+                                                    ->required()
+                                                    ->default('individual')
+                                                    ->reactive(),
+                                                TextInput::make('email')
+                                                    ->email()
+                                                    ->required()
+                                                    ->unique('donors', 'email'),
+                                                TextInput::make('first_name')
+                                                    ->label('First Name')
+                                                    ->required(fn ($get) => $get('donor_type') === 'individual')
+                                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
+                                                TextInput::make('last_name')
+                                                    ->label('Last Name')
+                                                    ->required(fn ($get) => $get('donor_type') === 'individual')
+                                                    ->hidden(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation'])),
+                                                TextInput::make('organization_name')
+                                                    ->label('Organization Name')
+                                                    ->required(fn ($get) => in_array($get('donor_type'), ['corporate', 'foundation']))
+                                                    ->hidden(fn ($get) => $get('donor_type') === 'individual'),
+                                                TextInput::make('phone')
+                                                    ->tel(),
+                                            ]),
+                                    ]),
                                 Select::make('campaign_id')
                                     ->relationship('campaign', 'title')
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('title')
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                TextInput::make('goal_amount')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->minValue(0),
+                                                Select::make('currency_id')
+                                                    ->relationship('currency', 'code')
+                                                    ->required()
+                                                    ->default(fn () => \App\Models\Currency::where('is_procurement_default', true)->value('id') ?? 1),
+                                                DatePicker::make('start_date')
+                                                    ->required()
+                                                    ->default(now()),
+                                                DatePicker::make('end_date')
+                                                    ->required()
+                                                    ->after('start_date')
+                                                    ->default(now()->addMonth()),
+                                            ]),
+                                    ]),
                                 Select::make('donation_type_id')
                                     ->relationship('donationType', 'name', fn ($query) => $query->active())
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->createOptionForm([
+                                        \Filament\Schemas\Components\Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('name')
+                                                    ->required()
+                                                    ->maxLength(100),
+                                                TextInput::make('code')
+                                                    ->required()
+                                                    ->maxLength(20)
+                                                    ->unique('donation_types', 'code'),
+                                                \Filament\Forms\Components\Toggle::make('is_active')
+                                                    ->label('Active')
+                                                    ->default(true),
+                                                \Filament\Forms\Components\Toggle::make('is_recurring')
+                                                    ->label('Supports Recurring'),
+                                            ]),
+                                    ]),
                                 DatePicker::make('donation_date')
                                     ->required()
                                     ->default(now()),
+                                Select::make('payment_method')
+                                    ->options([
+                                        'cash' => 'Cash',
+                                        'bank_transfer' => 'Bank Transfer',
+                                        'check' => 'Check',
+                                        'online' => 'Online Payment',
+                                        'other' => 'Other',
+                                    ])
+                                    ->required()
+                                    ->native(false),
+                                TextInput::make('transaction_id')
+                                    ->label('Transaction ID')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('e.g. Bank Ref, Receipt #'),
                                 Select::make('status')
                                     ->options([
                                         'pending' => 'Pending',
@@ -88,19 +175,52 @@ class DonationResource extends Resource
                         ->icon('heroicon-o-banknotes')
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
-                                TextInput::make('amount')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('ETB')
-                                    ->minValue(0.01),
                                 Select::make('currency_id')
                                     ->relationship('currency', 'name')
                                     ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $currency = \App\Models\Currency::find($state);
+                                        if ($currency) {
+                                            $set('exchange_rate', $currency->exchange_rate ?? 1);
+                                            $amount = (float) $get('amount');
+                                            if ($amount > 0) {
+                                                $set('base_amount', round($amount * ($currency->exchange_rate ?? 1), 2));
+                                            }
+                                        }
+                                    })
                                     ->default(fn () => \App\Models\Currency::where('code', 'ETB')->first()?->id ?? 1),
+                                TextInput::make('amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, $state) {
+                                        $rate = (float) $get('exchange_rate') ?: 1;
+                                        $amount = (float) $state;
+                                        if ($amount > 0) {
+                                            $set('base_amount', round($amount * $rate, 2));
+                                        }
+                                    })
+                                    ->prefix(fn (\Filament\Schemas\Components\Utilities\Get $get) => \App\Models\Currency::find($get('currency_id'))?->code ?? 'ETB')
+                                    ->minValue(0.01),
+                                TextInput::make('exchange_rate')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Exchange Rate')
+                                    ->default(1.000000)
+                                    ->helperText('Current rate for selected currency'),
+                                TextInput::make('base_amount')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->label('Base Amount (ETB)')
+                                    ->prefix('ETB')
+                                    ->helperText('Amount converted to base currency'),
                                 TextInput::make('payment_method')
+                                    ->required()
                                     ->maxLength(50)
                                     ->placeholder('e.g., Bank Transfer, Telebirr, Cash'),
                                 TextInput::make('transaction_id')
+                                    ->required()
                                     ->maxLength(100)
                                     ->placeholder('Transaction reference number'),
                                 TextInput::make('receipt_number')
@@ -128,13 +248,21 @@ class DonationResource extends Resource
                     Tab::make('Additional Information')
                         ->icon('heroicon-o-plus-circle')
                         ->schema([
-                            \Filament\Schemas\Components\Section::make()->schema([
+                            \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Toggle::make('is_tax_deductible')
+                                    ->label('Tax Deductible')
+                                    ->helperText('Eligible for tax deduction receipt'),
+                                Toggle::make('is_gift_aid_eligible')
+                                    ->label('Gift Aid Eligible')
+                                    ->helperText('Eligible for Gift Aid claim'),
                                 Textarea::make('in_kind_description')
                                     ->label('In-Kind Description')
                                     ->rows(3)
+                                    ->columnSpanFull()
                                     ->helperText('For non-monetary donations'),
                                 Textarea::make('notes')
                                     ->rows(3)
+                                    ->columnSpanFull()
                                     ->helperText('Internal notes'),
                             ]),
                         ]),

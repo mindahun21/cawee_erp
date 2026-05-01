@@ -49,19 +49,37 @@ class EventsRelationManager extends RelationManager
                     ->default('planned'),
                 \Filament\Forms\Components\DateTimePicker::make('event_date')
                     ->required(),
-                TextInput::make('venue'),
+                TextInput::make('venue')
+                    ->required()
+                    ->maxLength(255),
+                \Filament\Forms\Components\Textarea::make('venue_address')
+                    ->required()
+                    ->rows(2),
+                TextInput::make('expected_attendees')
+                    ->required()
+                    ->numeric()
+                    ->default(0)
+                    ->minValue(0)
+                    ->helperText('How many attendees are expected?'),
+                TextInput::make('max_capacity')
+                    ->required()
+                    ->numeric()
+                    ->minValue(1)
+                    ->helperText('Maximum number of attendees allowed'),
                 TextInput::make('budget')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB'),
                 TextInput::make('actual_cost')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB'),
                 TextInput::make('funds_raised')
                     ->numeric()
+                    ->readOnly()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB')
+                    ->helperText('Automatically calculated from attendee payments'),
             ]);
     }
 

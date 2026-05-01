@@ -13,9 +13,8 @@ class CampaignPerformanceChart extends ChartWidget
 
     protected ?string $heading = 'Active Campaign Progress (%)';
     
-    protected int | string | array $columnSpan = 'half';
-
-    protected ?string $maxHeight = '300px';
+    protected ?string $maxHeight = '275px';
+    protected int | string | array $columnSpan = 2;
 
     protected function getData(): array
     {
