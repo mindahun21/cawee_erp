@@ -32,6 +32,7 @@ class CampaignEvent extends Model
         'actual_cost',
         'funds_raised',
         'funds_to_campaign',
+        'organizer_id',
         'organizer_name',
         'organizer_email',
         'organizer_phone',
@@ -57,6 +58,11 @@ class CampaignEvent extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'organizer_id');
     }
 
     public function attendees(): HasMany

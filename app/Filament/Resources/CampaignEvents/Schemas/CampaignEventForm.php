@@ -150,18 +150,45 @@ class CampaignEventForm
                         ->icon('heroicon-o-user')
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Select::make('organizer_id')
+                                    ->label('Select Internal Staff')
+                                    ->relationship('organizer', 'first_name')
+                                    ->searchable(['first_name', 'last_name', 'email'])
+                                    ->preload()
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
+                                        if ($state) {
+                                            $employee = \App\Models\Employee::find($state);
+                                            if ($employee) {
+                                                $set('organizer_name', $employee->full_name);
+                                                $set('organizer_email', $employee->email);
+                                                $set('organizer_phone', $employee->phone);
+                                            }
+                                        }
+                                    })
+                                    ->helperText('Select a staff member from the system to automatically link this event.'),
                                 TextInput::make('organizer_name')
-                                    ->maxLength(100),
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->helperText('Manual name if organizer is external.'),
                                 TextInput::make('organizer_email')
-                                    ->email(),
+                                    ->required()
+                                    ->email()
+                                    ->helperText('Valid email required for event communications.'),
                                 TextInput::make('organizer_phone')
-                                    ->tel(),
+                                    ->tel()
+                                    ->helperText('Contact number for logistics.'),
                                 TextInput::make('registration_link')
                                     ->url()
-                                    ->maxLength(500),
+                                    ->maxLength(500)
+                                    ->placeholder('https://example.com/register')
+                                    ->helperText('Valid URL required for external registrations.'),
                                 TextInput::make('social_media_link')
                                     ->url()
-                                    ->maxLength(500),
+                                    ->maxLength(500)
+                                    ->placeholder('https://facebook.com/events/...')
+                                    ->helperText('Valid URL required for event promotion.'),
                             ]),
                         ]),
 
