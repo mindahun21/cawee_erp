@@ -59,8 +59,10 @@ class CampaignEventForm
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
                                 TextInput::make('venue')
+                                    ->required()
                                     ->maxLength(255),
                                 Textarea::make('venue_address')
+                                    ->required()
                                     ->columnSpanFull()
                                     ->rows(2),
                                 DateTimePicker::make('event_date')

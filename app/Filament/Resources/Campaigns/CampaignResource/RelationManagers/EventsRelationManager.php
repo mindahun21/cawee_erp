@@ -49,19 +49,24 @@ class EventsRelationManager extends RelationManager
                     ->default('planned'),
                 \Filament\Forms\Components\DateTimePicker::make('event_date')
                     ->required(),
-                TextInput::make('venue'),
+                TextInput::make('venue')
+                    ->required()
+                    ->maxLength(255),
+                \Filament\Forms\Components\Textarea::make('venue_address')
+                    ->required()
+                    ->rows(2),
                 TextInput::make('budget')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB'),
                 TextInput::make('actual_cost')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB'),
                 TextInput::make('funds_raised')
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->prefix('ETB'),
             ]);
     }
 
