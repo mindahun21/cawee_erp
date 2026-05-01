@@ -117,11 +117,11 @@ class CampaignEventForm
                                     ->prefix('ETB')
                                     ->minValue(0),
                                 TextInput::make('funds_raised')
-                                    ->required()
                                     ->numeric()
+                                    ->readOnly()
                                     ->default(0)
                                     ->prefix('ETB')
-                                    ->minValue(0),
+                                    ->helperText('Automatically calculated from attendee payments'),
                                 Toggle::make('funds_to_campaign')
                                     ->required()
                                     ->default(true),
@@ -131,10 +131,10 @@ class CampaignEventForm
                                     ->default(0)
                                     ->minValue(0),
                                 TextInput::make('volunteers_registered')
-                                    ->required()
                                     ->numeric()
+                                    ->readOnly()
                                     ->default(0)
-                                    ->readOnly(),
+                                    ->helperText('Automatically calculated from volunteer registrations'),
                             ]),
                         ]),
 

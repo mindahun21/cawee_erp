@@ -76,8 +76,10 @@ class EventsRelationManager extends RelationManager
                     ->prefix('ETB'),
                 TextInput::make('funds_raised')
                     ->numeric()
+                    ->readOnly()
                     ->default(0)
-                    ->prefix('ETB'),
+                    ->prefix('ETB')
+                    ->helperText('Automatically calculated from attendee payments'),
             ]);
     }
 

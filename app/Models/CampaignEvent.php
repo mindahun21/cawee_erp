@@ -77,6 +77,7 @@ class CampaignEvent extends Model
         $this->update([
             'volunteers_registered' => $this->volunteers()->count(),
             'tickets_sold' => $this->attendees()->sum('tickets_purchased'),
+            'funds_raised' => $this->attendees()->sum('amount_paid'),
         ]);
     }
 }
