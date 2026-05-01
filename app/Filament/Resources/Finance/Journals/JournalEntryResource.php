@@ -480,15 +480,19 @@ class JournalEntryResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('account_id')
-                    ->label('Account Id')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('account.code')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->label('Accounts')
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($codes) => $codes->count() > 3
+                            ? $codes->take(2)->implode(', ') . ' +' . ($codes->count() - 2) . ' more'
+                            : ($codes->implode(', ') ?: '—')
+                    )($record->lines->pluck('account.code')->filter()->unique()->values())
+                    )
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('account.code')->filter()->unique()->implode(', ') ?: '—'
                     )
                     ->fontFamily('mono')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->wrap(false),
 
                 TextColumn::make('description')
                     ->label('Description')
@@ -524,58 +528,65 @@ class JournalEntryResource extends Resource
 
                 TextColumn::make('budget_code')
                     ->label('Budget Code')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('activity_code')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($codes) => $codes->count() > 2
+                            ? $codes->take(1)->implode(', ') . ' +' . ($codes->count() - 1) . ' more'
+                            : ($codes->implode(', ') ?: '—')
+                    )($record->lines->pluck('activity_code')->filter()->unique()->values())
                     )
-                    ->fontFamily('mono'),
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('activity_code')->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->fontFamily('mono')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('cost_category')
-                    ->label('cost_category')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->pluck('costCenter.name')
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
-                    ),
+                    ->label('Cost Category')
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($cats) => $cats->count() > 2
+                            ? $cats->take(1)->implode(', ') . ' +' . ($cats->count() - 1) . ' more'
+                            : ($cats->implode(', ') ?: '—')
+                    )($record->lines->pluck('costCenter.name')->filter()->unique()->values())
+                    )
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->pluck('costCenter.name')->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('source_of_fund')
                     ->label('Source of Fund')
-                    ->getStateUsing(fn (JournalEntry $record): string => $record->lines
-                        ->map(fn ($line) => $line->donor?->full_name ?? $line->donor?->organization_name)
-                        ->filter()
-                        ->unique()
-                        ->implode(', ') ?: '—'
+                    ->getStateUsing(fn (JournalEntry $record): string => (
+                        fn ($donors) => $donors->count() > 2
+                            ? $donors->take(1)->implode(', ') . ' +' . ($donors->count() - 1) . ' more'
+                            : ($donors->implode(', ') ?: '—')
+                    )($record->lines->map(fn ($l) => $l->donor?->organization_name)->filter()->unique()->values())
                     )
-                    ->wrap(),
+                    ->tooltip(fn (JournalEntry $record): string =>
+                        $record->lines->map(fn ($l) => $l->donor?->organization_name)->filter()->unique()->implode(', ') ?: '—'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('vendor')
                     ->label('Vendor')
                     ->getStateUsing(function (JournalEntry $record): string {
-                        $supplierNames = $record->lines
-                            ->pluck('supplier.name')
-                            ->filter()
-                            ->unique()
-                            ->implode(', ');
+                        $names = $record->lines->pluck('supplier.name')->merge(
+                            $record->lines->pluck('vendor_name')
+                        )->filter()->unique()->values();
 
-                        if ($supplierNames !== '') {
-                            return $supplierNames;
+                        if ($names->isNotEmpty()) {
+                            return $names->count() > 2
+                                ? $names->take(1)->implode(', ') . ' +' . ($names->count() - 1) . ' more'
+                                : $names->implode(', ');
                         }
-
-                        $lineVendors = $record->lines
-                            ->pluck('vendor_name')
-                            ->filter()
-                            ->unique()
-                            ->implode(', ');
-
-                        if ($lineVendors !== '') {
-                            return $lineVendors;
-                        }
-
                         return static::resolveVendorName($record);
-                    }),
+                    })
+                    ->tooltip(function (JournalEntry $record): string {
+                        $names = $record->lines->pluck('supplier.name')->merge(
+                            $record->lines->pluck('vendor_name')
+                        )->filter()->unique()->values();
+                        return $names->implode(', ') ?: static::resolveVendorName($record);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
                     ->label('Status')
