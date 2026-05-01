@@ -139,9 +139,23 @@ class AttendeesRelationManager extends RelationManager
                     ->modalHeading('Add Attendee')
                     ->icon('heroicon-o-plus')
                     ->using(function (array $data, string $model): EventAttendee {
+                        $event = $this->getOwnerRecord();
+                        $currentAttendees = $event->attendees()->sum('tickets_purchased');
+                        $newTickets = (int) ($data['tickets_purchased'] ?? 1);
+
+                        if ($event->max_capacity > 0 && ($currentAttendees + $newTickets) > $event->max_capacity) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Event Full')
+                                ->body("Cannot add attendee. This would exceed the maximum capacity of {$event->max_capacity}.")
+                                ->danger()
+                                ->send();
+                            
+                            throw new \Illuminate\Validation\ValidationException(\Illuminate\Support\Facades\Validator::make([], []));
+                        }
+
                         // Handle donor uniqueness
                         if (!empty($data['donor_id'])) {
-                            return $this->getOwnerRecord()->attendees()->firstOrCreate(
+                            return $event->attendees()->firstOrCreate(
                                 ['donor_id' => $data['donor_id']],
                                 $data
                             );
@@ -149,13 +163,13 @@ class AttendeesRelationManager extends RelationManager
                         
                         // Handle email uniqueness for non-donors
                         if (!empty($data['email'])) {
-                            return $this->getOwnerRecord()->attendees()->firstOrCreate(
+                            return $event->attendees()->firstOrCreate(
                                 ['email' => $data['email']],
                                 $data
                             );
                         }
 
-                        return $this->getOwnerRecord()->attendees()->create($data);
+                        return $event->attendees()->create($data);
                     }),
                 Action::make('sendAllInvitations')
                     ->label('Send All Invitations')

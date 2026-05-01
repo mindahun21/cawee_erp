@@ -101,9 +101,9 @@ class DonationService
             ->where('status', 'completed')
             ->selectRaw('
                 COUNT(*) as total_donations,
-                SUM(amount) as total_amount,
+                SUM(COALESCE(base_amount, amount)) as total_amount,
                 MAX(donation_date) as last_donation_date,
-                AVG(amount) as average_donation
+                AVG(COALESCE(base_amount, amount)) as average_donation
             ')
             ->first();
 
@@ -119,7 +119,7 @@ class DonationService
         $stats = Donation::where('campaign_id', $campaignId)
             ->where('status', 'completed')
             ->selectRaw('
-                SUM(amount) as total_raised,
+                SUM(COALESCE(base_amount, amount)) as total_raised,
                 COUNT(DISTINCT donor_id) as donor_count,
                 COUNT(*) as donation_count
             ')
@@ -158,15 +158,15 @@ class DonationService
         // Get overall statistics
         $overall = $query->selectRaw('
             COUNT(*) as total_count,
-            SUM(amount) as total_amount,
-            AVG(amount) as average_amount,
-            MAX(amount) as largest_donation,
-            MIN(amount) as smallest_donation
+            SUM(COALESCE(base_amount, amount)) as total_amount,
+            AVG(COALESCE(base_amount, amount)) as average_amount,
+            MAX(COALESCE(base_amount, amount)) as largest_donation,
+            MIN(COALESCE(base_amount, amount)) as smallest_donation
         ')->first();
 
         // Get recurring statistics
         $recurring = (clone $query)->where('is_recurring', true)
-            ->selectRaw('COUNT(*) as count, SUM(amount) as total')
+            ->selectRaw('COUNT(*) as count, SUM(COALESCE(base_amount, amount)) as total')
             ->first();
 
         // Get monthly trends (last 12 months)
@@ -220,8 +220,8 @@ class DonationService
             ->selectRaw("
                 {$monthExpression} as month,
                 COUNT(*) as count,
-                SUM(amount) as total_amount,
-                AVG(amount) as average_amount
+                SUM(COALESCE(base_amount, amount)) as total_amount,
+                AVG(COALESCE(base_amount, amount)) as average_amount
             ")
             ->where('donation_date', '>=', now()->subMonths(12))
             ->groupBy('month')
@@ -259,7 +259,7 @@ class DonationService
             ->selectRaw('
                 donation_type_id,
                 COUNT(*) as count,
-                SUM(amount) as total_amount
+                SUM(COALESCE(base_amount, amount)) as total_amount
             ')
             ->groupBy('donation_type_id')
             ->get()
@@ -298,7 +298,7 @@ class DonationService
             ->selectRaw('
                 donor_id,
                 COUNT(*) as donation_count,
-                SUM(amount) as total_donated
+                SUM(COALESCE(base_amount, amount)) as total_donated
             ')
             ->groupBy('donor_id')
             ->orderByDesc('total_donated')
@@ -393,9 +393,9 @@ class DonationService
             $stats = Donation::whereYear('donation_date', $year)
                 ->where('status', 'completed')
                 ->selectRaw('
-                    COALESCE(SUM(amount), 0) as total_amount,
+                    COALESCE(SUM(COALESCE(base_amount, amount)), 0) as total_amount,
                     COUNT(*) as count,
-                    COALESCE(AVG(amount), 0) as avg_amount
+                    COALESCE(AVG(COALESCE(base_amount, amount)), 0) as avg_amount
                 ')
                 ->first();
 
@@ -433,13 +433,13 @@ class DonationService
             $currMonthStats = Donation::whereYear('donation_date', $currentYear)
                 ->whereMonth('donation_date', $m)
                 ->where('status', 'completed')
-                ->selectRaw('COALESCE(SUM(amount), 0) as total, COUNT(*) as count')
+                ->selectRaw('COALESCE(SUM(COALESCE(base_amount, amount)), 0) as total, COUNT(*) as count')
                 ->first();
 
             $prevMonthStats = Donation::whereYear('donation_date', $previousYear)
                 ->whereMonth('donation_date', $m)
                 ->where('status', 'completed')
-                ->selectRaw('COALESCE(SUM(amount), 0) as total, COUNT(*) as count')
+                ->selectRaw('COALESCE(SUM(COALESCE(base_amount, amount)), 0) as total, COUNT(*) as count')
                 ->first();
 
             $monthlyComparison[] = [

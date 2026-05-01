@@ -50,6 +50,8 @@ class DonorReports extends Page implements HasTable, HasForms
 
     public ?array $filters = [
         'period' => 'this_month',
+        'start_date' => null,
+        'end_date' => null,
         'currency' => 'ALL',
         'campaign_id' => null,
     ];
@@ -61,6 +63,8 @@ class DonorReports extends Page implements HasTable, HasForms
         // Load query params if present
         $this->activeTab = request()->query('tab', 'summary');
         $this->filters['period'] = request()->query('period', 'this_month');
+        $this->filters['start_date'] = request()->query('start_date');
+        $this->filters['end_date'] = request()->query('end_date');
         $this->filters['currency'] = request()->query('currency', 'ALL');
         
         $this->form->fill($this->filters);
@@ -82,21 +86,31 @@ class DonorReports extends Page implements HasTable, HasForms
                                         'last_90_days' => 'Last 90 Days',
                                         'this_year' => 'This Year',
                                         'last_year' => 'Last Year',
+                                        'custom' => 'Custom Range',
                                         'all_time' => 'All Time',
                                     ])
                                     ->default('this_month')
                                     ->live(),
+                                DatePicker::make('start_date')
+                                    ->label('From Date')
+                                    ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('period') === 'custom')
+                                    ->required(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('period') === 'custom')
+                                    ->live(),
+                                DatePicker::make('end_date')
+                                    ->label('To Date')
+                                    ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('period') === 'custom')
+                                    ->required(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('period') === 'custom')
+                                    ->live(),
                                 Select::make('currency')
                                     ->label('Currency')
-                                    ->options(array_merge(['ALL' => 'All Currencies'], Currency::pluck('code', 'code')->toArray()))
+                                    ->options(fn () => array_merge(['ALL' => 'All Currencies'], Currency::pluck('code', 'code')->toArray()))
                                     ->default('ALL')
                                     ->live(),
                                 Select::make('campaign_id')
                                     ->label('Campaign')
-                                    ->options(Campaign::pluck('title', 'id'))
+                                    ->options(fn () => Campaign::pluck('title', 'id')->toArray())
                                     ->placeholder('All Campaigns')
-                                    ->live()
-                                    ->hidden(fn() => $this->activeTab === 'campaigns'),
+                                    ->live(),
                             ]),
                     ])
                     ->compact(),
@@ -248,12 +262,16 @@ class DonorReports extends Page implements HasTable, HasForms
         $stats = [
             'total_amount' => Donation::whereBetween('donation_date', [$startDate ?? '1970-01-01', $endDate ?? '2099-12-31'])
                 ->when($this->filters['currency'] !== 'ALL', fn($q) => $q->whereHas('currency', fn($c) => $c->where('code', $this->filters['currency'])))
+                ->when($this->filters['campaign_id'], fn($q) => $q->where('campaign_id', $this->filters['campaign_id']))
                 ->sum('amount'),
             'count' => Donation::whereBetween('donation_date', [$startDate ?? '1970-01-01', $endDate ?? '2099-12-31'])
                 ->when($this->filters['currency'] !== 'ALL', fn($q) => $q->whereHas('currency', fn($c) => $c->where('code', $this->filters['currency'])))
+                ->when($this->filters['campaign_id'], fn($q) => $q->where('campaign_id', $this->filters['campaign_id']))
                 ->count(),
             'donors' => Donor::whereHas('donations', function($q) use ($startDate, $endDate) {
-                    $q->whereBetween('donation_date', [$startDate ?? '1970-01-01', $endDate ?? '2099-12-31']);
+                    $q->whereBetween('donation_date', [$startDate ?? '1970-01-01', $endDate ?? '2099-12-31'])
+                      ->when($this->filters['currency'] !== 'ALL', fn($sq) => $sq->whereHas('currency', fn($c) => $c->where('code', $this->filters['currency'])))
+                      ->when($this->filters['campaign_id'], fn($sq) => $sq->where('campaign_id', $this->filters['campaign_id']));
                 })->count(),
         ];
 
@@ -310,6 +328,11 @@ class DonorReports extends Page implements HasTable, HasForms
                 $today->copy()->subDays(89),
                 $today->copy(),
                 'Last 90 Days',
+            ],
+            'custom' => [
+                $this->filters['start_date'] ? Carbon::parse($this->filters['start_date'])->startOfDay() : null,
+                $this->filters['end_date'] ? Carbon::parse($this->filters['end_date'])->endOfDay() : null,
+                'Custom Range',
             ],
             'all_time' => [null, null, 'All Time'],
             default => [

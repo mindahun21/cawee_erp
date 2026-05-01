@@ -32,6 +32,7 @@ class CampaignEvent extends Model
         'actual_cost',
         'funds_raised',
         'funds_to_campaign',
+        'organizer_id',
         'organizer_name',
         'organizer_email',
         'organizer_phone',
@@ -59,6 +60,11 @@ class CampaignEvent extends Model
         return $this->belongsTo(Campaign::class);
     }
 
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'organizer_id');
+    }
+
     public function attendees(): HasMany
     {
         return $this->hasMany(EventAttendee::class);
@@ -77,6 +83,7 @@ class CampaignEvent extends Model
         $this->update([
             'volunteers_registered' => $this->volunteers()->count(),
             'tickets_sold' => $this->attendees()->sum('tickets_purchased'),
+            'funds_raised' => $this->attendees()->sum('amount_paid'),
         ]);
     }
 }

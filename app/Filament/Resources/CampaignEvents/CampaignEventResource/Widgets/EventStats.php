@@ -25,8 +25,8 @@ class EventStats extends StatsOverviewWidget
                 ->description('Total volunteers registered')
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('warning'),
-            Stat::make('Total Funds Raised', '$' . number_format(CampaignEvent::sum('funds_raised'), 2))
-                ->description('Funds raised through events')
+            Stat::make('Total Funds Raised (ETB Est.)', 'ETB ' . number_format(CampaignEvent::sum('funds_raised'), 2))
+                ->description('Funds raised through events (Est. ETB)')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('primary'),
         ];

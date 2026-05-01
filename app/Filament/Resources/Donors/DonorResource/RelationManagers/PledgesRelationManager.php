@@ -10,7 +10,7 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
@@ -106,7 +106,22 @@ class PledgesRelationManager extends RelationManager
                 Tables\Filters\TrashedFilter::make()
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make('create')
+                    ->label('Add Pledge')
+                    ->icon('heroicon-m-plus')
+                    ->authorize(true)
+                    ->visible(true),
+            ])
+            ->emptyStateHeading('No pledges found')
+            ->emptyStateDescription('Start by recording a new pledge for this donor to track future commitments.')
+            ->emptyStateActions([
+                CreateAction::make('create_pledge_action') // Use a custom name to avoid potential mounting conflicts
+                    ->label('Create Pledge')
+                    ->icon('heroicon-m-plus')
+                    ->modalHeading('Create Pledge')
+                    ->authorize(true)
+                    ->visible(true)
+                    ->action(fn () => null), // Add a dummy action to ensure it's treated as a functional button
             ])
             ->actions([
                 ViewAction::make(),
