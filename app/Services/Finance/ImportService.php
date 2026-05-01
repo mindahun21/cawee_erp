@@ -500,8 +500,18 @@ class ImportService
                     continue;
                 }
 
-                // Skip if JE with this reference already exists
-                if (JournalEntry::where('reference_number', $reference)->exists()) {
+                // Skip if JE with this reference already exists (including soft-deleted)
+                $existing = JournalEntry::withTrashed()
+                    ->where('reference_number', $reference)
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->trashed()) {
+                        // Restore the soft-deleted record so it's usable again
+                        $existing->restore();
+                        // Reset status to draft so it can be processed normally
+                        $existing->update(['status' => 'draft', 'notes' => 'Restored from re-import']);
+                    }
                     $skipped += count($lines);
                     continue;
                 }
