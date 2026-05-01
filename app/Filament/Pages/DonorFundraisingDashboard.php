@@ -56,7 +56,7 @@ class DonorFundraisingDashboard extends Page
             $donationsTodayQuery = Donation::where('status', 'completed')
                 ->whereDate('donation_date', today());
             $donationsToday = $donationsTodayQuery->count();
-            $raisedToday = $donationsTodayQuery->sum('amount');
+            $raisedToday = $donationsTodayQuery->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(base_amount, amount)'));
 
             $newDonorsThisMonth = Donor::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
@@ -66,7 +66,7 @@ class DonorFundraisingDashboard extends Page
                 ->whereMonth('donation_date', now()->month)
                 ->whereYear('donation_date', now()->year);
             $donationsThisMonth = $donationsMonthQuery->count();
-            $raisedThisMonth = $donationsMonthQuery->sum('amount');
+            $raisedThisMonth = $donationsMonthQuery->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(base_amount, amount)'));
             $avgDonationThisMonth = $donationsThisMonth > 0 ? $raisedThisMonth / $donationsThisMonth : 0;
 
             return [

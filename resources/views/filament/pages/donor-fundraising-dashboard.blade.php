@@ -22,7 +22,7 @@
                             ['label' => 'Total Donors',      'value' => number_format($totalDonors),    'icon' => 'heroicon-o-users',         'cls' => 'bg-gray-50 ring-gray-950/5 dark:bg-white/5 dark:ring-white/10'],
                             ['label' => 'Active Campaigns',  'value' => number_format($activeCampaigns),'icon' => 'heroicon-o-flag',          'cls' => 'bg-gray-50 ring-gray-950/5 dark:bg-white/5 dark:ring-white/10'],
                             ['label' => 'Donations Today',   'value' => number_format($donationsToday), 'icon' => 'heroicon-o-gift',          'cls' => $donationsToday > 0 ? 'bg-success-50 ring-success-500/20 text-success-600 dark:bg-success-500/10 dark:text-success-400 dark:ring-success-500/20' : 'bg-gray-50 ring-gray-950/5 dark:bg-white/5 dark:text-gray-400'],
-                            ['label' => 'Raised Today',      'value' => 'ETB '.number_format($raisedToday),'icon' => 'heroicon-o-currency-dollar','cls' => $raisedToday > 0 ? 'bg-primary-50 ring-primary-500/20 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 dark:ring-primary-500/20' : 'bg-gray-50 ring-gray-950/5 dark:bg-white/5 dark:text-gray-400'],
+                            ['label' => 'Raised Today (Est.)',      'value' => 'ETB '.number_format($raisedToday),'icon' => 'heroicon-o-currency-dollar','cls' => $raisedToday > 0 ? 'bg-primary-50 ring-primary-500/20 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 dark:ring-primary-500/20' : 'bg-gray-50 ring-gray-950/5 dark:bg-white/5 dark:text-gray-400'],
                         ];
                     @endphp
 
@@ -64,7 +64,7 @@
                         'trend'    => $donationsThisMonth > 0 ? 'up' : null,
                     ],
                     [
-                        'label'    => 'Funds Raised',
+                        'label'    => 'Funds Raised (Est.)',
                         'value'    => 'ETB ' . number_format($raisedThisMonth),
                         'sub'      => now()->format('F'),
                         'icon'     => 'heroicon-o-banknotes',
@@ -73,7 +73,7 @@
                         'trend'    => $raisedThisMonth > 0 ? 'up' : null,
                     ],
                     [
-                        'label'    => 'Avg. Donation',
+                        'label'    => 'Avg. Donation (Est.)',
                         'value'    => 'ETB ' . number_format($avgDonationThisMonth),
                         'sub'      => now()->format('F'),
                         'icon'     => 'heroicon-o-chart-bar',
