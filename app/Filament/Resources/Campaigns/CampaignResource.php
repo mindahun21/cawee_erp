@@ -138,11 +138,17 @@ class CampaignResource extends Resource
                             \Filament\Schemas\Components\Section::make()->columns(['default' => 2])->schema([
                                 DatePicker::make('start_date')
                                     ->required()
-                                    ->displayFormat('d/m/Y'),
+                                    ->displayFormat('d/m/Y')
+                                    ->minDate('2000-01-01')
+                                    ->maxDate(now()->addYears(10))
+                                    ->helperText('Must be a realistic date (year 2000 or later)'),
                                 DatePicker::make('end_date')
                                     ->required()
                                     ->displayFormat('d/m/Y')
-                                    ->after('start_date'),
+                                    ->after('start_date')
+                                    ->minDate('2000-01-01')
+                                    ->maxDate(now()->addYears(10))
+                                    ->helperText('Must be after the start date'),
                             ]),
                         ]),
                 ])->columnSpanFull(),
