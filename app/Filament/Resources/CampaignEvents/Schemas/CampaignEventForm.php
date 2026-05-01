@@ -82,11 +82,15 @@ class CampaignEventForm
                                     ->before('event_date'),
                                 TextInput::make('expected_attendees')
                                     ->numeric()
+                                    ->required()
                                     ->default(0)
-                                    ->minValue(0),
+                                    ->minValue(0)
+                                    ->helperText('How many attendees are expected?'),
                                 TextInput::make('max_capacity')
                                     ->numeric()
-                                    ->minValue(0),
+                                    ->required()
+                                    ->minValue(1)
+                                    ->helperText('Maximum number of attendees allowed'),
                             ]),
                         ]),
 

@@ -55,6 +55,17 @@ class EventsRelationManager extends RelationManager
                 \Filament\Forms\Components\Textarea::make('venue_address')
                     ->required()
                     ->rows(2),
+                TextInput::make('expected_attendees')
+                    ->required()
+                    ->numeric()
+                    ->default(0)
+                    ->minValue(0)
+                    ->helperText('How many attendees are expected?'),
+                TextInput::make('max_capacity')
+                    ->required()
+                    ->numeric()
+                    ->minValue(1)
+                    ->helperText('Maximum number of attendees allowed'),
                 TextInput::make('budget')
                     ->numeric()
                     ->default(0)
