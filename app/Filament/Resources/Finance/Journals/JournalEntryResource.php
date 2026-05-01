@@ -49,6 +49,10 @@ use Illuminate\Support\HtmlString;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class JournalEntryResource extends Resource
 {
@@ -794,6 +798,14 @@ class JournalEntryResource extends Resource
             ->paginated([25, 50, 100])
             ->deferLoading()
             ->poll('120s')
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make('excel')->withFilename('journal-entries-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::XLSX),
+                    ExcelExport::make('csv')->withFilename('journal-entries-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::CSV),
+                ])->label('Export All'),
+            ])
             ->bulkActions([
                 BulkActionGroup::make([
                     // ── Bulk Approve (Draft → Approved) ──────────────────
@@ -873,6 +885,13 @@ class JournalEntryResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Delete Selected Journal Entries')
                         ->modalDescription('Are you sure? This will soft-delete the selected entries (setup phase only).'),
+
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make('excel')->withFilename('journal-entries-selected')
+                            ->withWriterType(ExcelType::XLSX),
+                        ExcelExport::make('csv')->withFilename('journal-entries-selected')
+                            ->withWriterType(ExcelType::CSV),
+                    ]),
                 ]),
             ]);
     }

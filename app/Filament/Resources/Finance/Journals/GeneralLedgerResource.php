@@ -25,6 +25,10 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class GeneralLedgerResource extends Resource
 {
@@ -349,8 +353,22 @@ class GeneralLedgerResource extends Resource
             ->emptyStateIcon('heroicon-o-table-cells')
             ->emptyStateHeading('No GL entries found')
             ->emptyStateDescription('Post a Journal Entry to see entries appear here. Adjust the active filters if you expected to see data.')
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make('excel')->withFilename('general-ledger-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::XLSX),
+                    ExcelExport::make('csv')->withFilename('general-ledger-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::CSV),
+                ])->label('Export All'),
+            ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make('excel')->withFilename('general-ledger-selected')
+                            ->withWriterType(ExcelType::XLSX),
+                        ExcelExport::make('csv')->withFilename('general-ledger-selected')
+                            ->withWriterType(ExcelType::CSV),
+                    ]),
                     DeleteBulkAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Selected GL Postings')

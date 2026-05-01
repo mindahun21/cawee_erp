@@ -38,6 +38,10 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class ChartOfAccountResource extends Resource
 {
@@ -407,8 +411,22 @@ class ChartOfAccountResource extends Resource
             ->defaultSort('code', 'asc')
             ->striped()
             ->paginated([50, 100, 'all'])
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make('excel')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::XLSX),
+                    ExcelExport::make('csv')->withFilename('chart-of-accounts-' . now()->format('Y-m-d'))
+                        ->withWriterType(ExcelType::CSV),
+                ])->label('Export All'),
+            ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    ExportBulkAction::make()->exports([
+                        ExcelExport::make('excel')->withFilename('chart-of-accounts-selected')
+                            ->withWriterType(ExcelType::XLSX),
+                        ExcelExport::make('csv')->withFilename('chart-of-accounts-selected')
+                            ->withWriterType(ExcelType::CSV),
+                    ]),
                     DeleteBulkAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Selected Chart of Accounts')
