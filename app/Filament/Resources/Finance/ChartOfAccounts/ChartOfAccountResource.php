@@ -554,6 +554,12 @@ class ChartOfAccountResource extends Resource
                         ->label('Financial Statement Category')
                         ->placeholder('Not assigned'),
 
+                    TextEntry::make('subClassification.name')
+                        ->label('Sub-Classification')
+                        ->badge()
+                        ->color('primary')
+                        ->placeholder('Not assigned'),
+
                     TextEntry::make('parent.name')
                         ->label('Parent Account')
                         ->placeholder('Root account (no parent)'),
