@@ -115,8 +115,8 @@
                 </div>
 
                 {{-- Difference preview --}}
-                @if($this->ending_balance !== null && $this->beginning_balance !== null)
-                @php $diff = (float)($this->ending_balance ?? 0) - (float)($this->beginning_balance ?? 0); @endphp
+                @if($this->ending_balance !== null && $this->computed_gl_balance !== null)
+                @php $diff = (float)($this->ending_balance ?? 0) - (float)($this->computed_gl_balance ?? 0); @endphp
                 <div class="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm
                     {{ abs($diff) < 0.01
                         ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
