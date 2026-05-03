@@ -32,10 +32,11 @@ class Reconcile extends Page implements HasTable
 
     // ── Form state ────────────────────────────────────────────────────
 
-    public ?int    $bank_account_id   = null;
-    public ?float  $beginning_balance = null;
-    public ?float  $ending_balance    = null;
-    public ?string $ending_date       = null;
+    public ?int    $bank_account_id     = null;
+    public ?float  $ending_balance      = null;
+    public ?string $ending_date         = null;
+    // Computed on-the-fly from the GeneralLedger — never entered by hand
+    public ?float  $computed_gl_balance = null;
 
     // ── Auth ──────────────────────────────────────────────────────────
 
@@ -191,32 +192,32 @@ class Reconcile extends Page implements HasTable
             ->paginated(true);
     }
 
-    // ── Livewire hook — auto-fill beginning balance ────────────────────
+    // ── Livewire hooks — recompute GL preview when account or date changes ────
 
-    public function updatedBankAccountId(?string $value): void
+    public function updatedBankAccountId(): void
     {
-        if (!$value) {
-            $this->beginning_balance = null;
-            return;
+        $this->recomputeGlBalance();
+    }
+
+    public function updatedEndingDate(): void
+    {
+        $this->recomputeGlBalance();
+    }
+
+    /**
+     * Reads the current book balance from the GeneralLedger table so the user
+     * can see it on the wizard before they click "Start Reconciling".
+     */
+    protected function recomputeGlBalance(): void
+    {
+        if ($this->bank_account_id && $this->ending_date) {
+            $this->computed_gl_balance = BankReconciliation::glBalanceFor(
+                (int) $this->bank_account_id,
+                $this->ending_date
+            );
+        } else {
+            $this->computed_gl_balance = null;
         }
-
-        $last = BankReconciliation::where('bank_account_id', (int) $value)
-            ->where('status', 'reconciled')
-            ->orderByDesc('statement_date')
-            ->value('adjusted_bank_balance');
-
-        if ($last !== null) {
-            $this->beginning_balance = (float) $last;
-            return;
-        }
-
-        $account = BankAccount::query()->find((int) $value);
-        if ($account) {
-            $this->beginning_balance = (float) ($account->current_balance ?? $account->opening_balance ?? 0);
-            return;
-        }
-
-        $this->beginning_balance = 0.00;
     }
 
     // ── Start Reconciling action ───────────────────────────────────────
@@ -224,10 +225,9 @@ class Reconcile extends Page implements HasTable
     public function startReconciling(): void
     {
         $this->validate([
-            'bank_account_id'   => 'required|exists:finance_bank_accounts,id',
-            'ending_balance'    => 'required|numeric',
-            'ending_date'       => 'required|date',
-            'beginning_balance' => 'nullable|numeric',
+            'bank_account_id' => 'required|exists:finance_bank_accounts,id',
+            'ending_balance'  => 'required|numeric',
+            'ending_date'     => 'required|date',
         ]);
 
         // If an in-progress reconciliation already exists, resume it
@@ -260,7 +260,7 @@ class Reconcile extends Page implements HasTable
 
         // Match to an accounting period
         $periodId = $this->resolveAccountingPeriodId($this->ending_date);
-        if (!$periodId) {
+        if (! $periodId) {
             Notification::make()
                 ->danger()
                 ->title('No accounting period found')
@@ -269,20 +269,30 @@ class Reconcile extends Page implements HasTable
             return;
         }
 
-        $beginningBalance = (float) ($this->beginning_balance ?? 0);
-        $endingBalance    = (float) ($this->ending_balance ?? 0);
+        $statementBalance = (float) ($this->ending_balance ?? 0);
+
+        // ✔ Core fix: compute the true GL ending balance from the ledger.
+        // Reads running_balance from the GeneralLedger table for the bank
+        // account's linked chart-of-account as of the statement date.
+        $glBalance = BankReconciliation::glBalanceFor(
+            (int) $this->bank_account_id,
+            $this->ending_date
+        );
+
+        // With no outstanding items yet, adjustedBank = statementBalance
+        $difference = $statementBalance - $glBalance;
 
         $reconciliation = BankReconciliation::create([
             'reference'             => $reference,
             'bank_account_id'       => $this->bank_account_id,
             'accounting_period_id'  => $periodId,
             'statement_date'        => $this->ending_date,
-            'statement_balance'     => $endingBalance,
-            'gl_balance'            => $beginningBalance,
+            'statement_balance'     => $statementBalance,
+            'gl_balance'            => $glBalance,
             'outstanding_deposits'  => 0,
             'outstanding_cheques'   => 0,
-            'adjusted_bank_balance' => $endingBalance,
-            'difference'            => $endingBalance - $beginningBalance,
+            'adjusted_bank_balance' => $statementBalance,
+            'difference'            => $difference,
             'status'                => 'in_progress',
             'prepared_by'           => auth()->id(),
         ]);
@@ -290,7 +300,7 @@ class Reconcile extends Page implements HasTable
         Notification::make()
             ->success()
             ->title('Reconciliation started — ' . $reference)
-            ->body('Add your outstanding deposits and cheques, then mark items as cleared.')
+            ->body('Add any outstanding deposits and unpresented cheques, then mark items as cleared.')
             ->send();
 
         $this->redirect(
