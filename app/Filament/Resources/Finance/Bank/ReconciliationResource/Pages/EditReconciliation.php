@@ -43,6 +43,10 @@ class EditReconciliation extends EditRecord
     {
         $this->record->calculateTotals();
 
+        // Refresh so the in-memory record (subheading, form state) shows the
+        // newly computed difference, not the stale pre-save value.
+        $this->record->refresh();
+
         $diff = abs((float) $this->record->difference);
 
         if ($diff < 0.01) {
