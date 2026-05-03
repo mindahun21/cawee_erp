@@ -249,9 +249,9 @@ class Reconcile extends Page implements HasTable
             return;
         }
 
-        // Generate reference
+        // Generate reference — include soft-deleted rows so we never re-issue a ref
         $year = now()->year;
-        $last = BankReconciliation::where('reference', 'like', "BR-{$year}-%")
+        $last = BankReconciliation::withTrashed()->where('reference', 'like', "BR-{$year}-%")
             ->orderByRaw('LENGTH(reference) DESC')
             ->orderBy('reference', 'desc')
             ->value('reference');

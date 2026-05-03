@@ -35,7 +35,7 @@ class CreateReconciliation extends CreateRecord
     {
         // Auto-reference
         $year = now()->year;
-        $last = BankReconciliation::where('reference', 'like', "BR-{$year}-%")
+        $last = BankReconciliation::withTrashed()->where('reference', 'like', "BR-{$year}-%")
             ->orderByRaw('LENGTH(reference) DESC')
             ->orderBy('reference', 'desc')
             ->value('reference');
