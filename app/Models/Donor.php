@@ -24,6 +24,9 @@ class Donor extends Model
         'country',
         'status',
         'notes',
+        'communication_preferences',
+        'marketing_opt_in',
+        'interests',
         'total_donated',
         'last_donation_date',
     ];
@@ -31,6 +34,9 @@ class Donor extends Model
     protected $casts = [
         'last_donation_date' => 'datetime',
         'total_donated' => 'decimal:2',
+        'communication_preferences' => 'array',
+        'marketing_opt_in' => 'boolean',
+        'interests' => 'array',
     ];
 
     public function categories(): BelongsToMany

@@ -59,8 +59,10 @@ class CampaignEventForm
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
                                 TextInput::make('venue')
+                                    ->required()
                                     ->maxLength(255),
                                 Textarea::make('venue_address')
+                                    ->required()
                                     ->columnSpanFull()
                                     ->rows(2),
                                 DateTimePicker::make('event_date')
@@ -80,11 +82,23 @@ class CampaignEventForm
                                     ->before('event_date'),
                                 TextInput::make('expected_attendees')
                                     ->numeric()
+                                    ->required()
                                     ->default(0)
-                                    ->minValue(0),
+                                    ->minValue(0)
+                                    ->helperText('How many attendees are expected?'),
                                 TextInput::make('max_capacity')
                                     ->numeric()
-                                    ->minValue(0),
+                                    ->required()
+                                    ->minValue(1)
+                                    ->rules([
+                                        fn (\Filament\Schemas\Components\Utilities\Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                            $ticketsSold = (int) ($get('tickets_sold') ?? 0);
+                                            if ((int) $value < $ticketsSold) {
+                                                $fail("Maximum capacity cannot be less than the number of tickets already sold ({$ticketsSold}).");
+                                            }
+                                        },
+                                    ])
+                                    ->helperText('Maximum number of attendees allowed'),
                             ]),
                         ]),
 
@@ -111,11 +125,11 @@ class CampaignEventForm
                                     ->prefix('ETB')
                                     ->minValue(0),
                                 TextInput::make('funds_raised')
-                                    ->required()
                                     ->numeric()
+                                    ->readOnly()
                                     ->default(0)
                                     ->prefix('ETB')
-                                    ->minValue(0),
+                                    ->helperText('Automatically calculated from attendee payments'),
                                 Toggle::make('funds_to_campaign')
                                     ->required()
                                     ->default(true),
@@ -125,10 +139,10 @@ class CampaignEventForm
                                     ->default(0)
                                     ->minValue(0),
                                 TextInput::make('volunteers_registered')
-                                    ->required()
                                     ->numeric()
+                                    ->readOnly()
                                     ->default(0)
-                                    ->readOnly(),
+                                    ->helperText('Automatically calculated from volunteer registrations'),
                             ]),
                         ]),
 
@@ -136,18 +150,45 @@ class CampaignEventForm
                         ->icon('heroicon-o-user')
                         ->schema([
                             \Filament\Schemas\Components\Section::make()->columns(2)->schema([
+                                Select::make('organizer_id')
+                                    ->label('Select Internal Staff')
+                                    ->relationship('organizer', 'first_name')
+                                    ->searchable(['first_name', 'last_name', 'email'])
+                                    ->preload()
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
+                                        if ($state) {
+                                            $employee = \App\Models\Employee::find($state);
+                                            if ($employee) {
+                                                $set('organizer_name', $employee->full_name);
+                                                $set('organizer_email', $employee->email);
+                                                $set('organizer_phone', $employee->phone);
+                                            }
+                                        }
+                                    })
+                                    ->helperText('Select a staff member from the system to automatically link this event.'),
                                 TextInput::make('organizer_name')
-                                    ->maxLength(100),
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->helperText('Manual name if organizer is external.'),
                                 TextInput::make('organizer_email')
-                                    ->email(),
+                                    ->required()
+                                    ->email()
+                                    ->helperText('Valid email required for event communications.'),
                                 TextInput::make('organizer_phone')
-                                    ->tel(),
+                                    ->tel()
+                                    ->helperText('Contact number for logistics.'),
                                 TextInput::make('registration_link')
                                     ->url()
-                                    ->maxLength(500),
+                                    ->maxLength(500)
+                                    ->placeholder('https://example.com/register')
+                                    ->helperText('Valid URL required for external registrations.'),
                                 TextInput::make('social_media_link')
                                     ->url()
-                                    ->maxLength(500),
+                                    ->maxLength(500)
+                                    ->placeholder('https://facebook.com/events/...')
+                                    ->helperText('Valid URL required for event promotion.'),
                             ]),
                         ]),
 
