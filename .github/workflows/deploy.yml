@@ -1,0 +1,93 @@
+name: Deploy CI
+
+on:
+  push:
+    branches: [deploy]
+
+jobs:
+  deploy-zemen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Zemen Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ZEMEN_SSH_HOST }}
+          username: ${{ secrets.ZEMEN_SSH_USER }}
+          key: ${{ secrets.ZEMEN_SSH_KEY }}
+          script: |
+            cd /opt/client_zemen_erp
+            
+            # Fetch upstream changes
+            git fetch upstream deploy
+            
+            # Attempt merge
+            if git merge --no-commit --no-ff upstream/deploy; then
+              git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
+              
+              # Run client-specific update script
+              bash update.sh
+              
+              echo "✅ Zemen deployment successful"
+            else
+              # Merge conflict detected
+              git merge --abort
+              echo "❌ Merge conflict detected in Zemen repo"
+              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+                -H "Content-Type: application/json" \
+                -d '{"text":"❌ Deployment failed: Merge conflict in client_zemen_erp"}'
+              exit 1
+            fi
+
+  deploy-petco:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Petco Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PETCO_SSH_HOST }}
+          username: ${{ secrets.PETCO_SSH_USER }}
+          key: ${{ secrets.PETCO_SSH_KEY }}
+          script: |
+            cd /opt/client_petco_erp
+            
+            git fetch upstream deploy
+            
+            if git merge --no-commit --no-ff upstream/deploy; then
+              git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
+              bash update.sh
+              echo "✅ Petco deployment successful"
+            else
+              git merge --abort
+              echo "❌ Merge conflict detected in Petco repo"
+              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+                -H "Content-Type: application/json" \
+                -d '{"text":"❌ Deployment failed: Merge conflict in client_petco_erp"}'
+              exit 1
+            fi
+
+  deploy-svo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to SVO Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SVO_SSH_HOST }}
+          username: ${{ secrets.SVO_SSH_USER }}
+          key: ${{ secrets.SVO_SSH_KEY }}
+          script: |
+            cd /opt/svo_erp
+            
+            git fetch upstream deploy
+            
+            if git merge --no-commit --no-ff upstream/deploy; then
+              git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
+              bash update.sh
+              echo "✅ SVO deployment successful"
+            else
+              git merge --abort
+              echo "❌ Merge conflict detected in SVO repo"
+              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+                -H "Content-Type: application/json" \
+                -d '{"text":"❌ Deployment failed: Merge conflict in svo_erp"}'
+              exit 1
+            fi

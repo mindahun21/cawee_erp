@@ -1,0 +1,25 @@
+name: Test CI
+
+on:
+  pull_request:
+    branches: [deploy]
+
+jobs:
+  deploy-readiness-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Full Deploy Readiness Test
+        run: |
+          chmod +x docker/local_deploy_test.sh
+          bash docker/local_deploy_test.sh
+        
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-test-logs
+          path: /tmp/elisoft_deploy_build.log
+          retention-days: 7

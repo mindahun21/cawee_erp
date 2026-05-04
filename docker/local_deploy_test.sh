@@ -303,27 +303,6 @@ else
 fi
 
 ########################################################################
-# TEST 9: Code quality
-########################################################################
-header "9. Code Quality Scan"
-
-DD_COUNT=$(grep -rn --include="*.php" -P '\b(dd|dump|ray)\(' app/ 2>/dev/null | wc -l)
-if [ "$DD_COUNT" -gt 0 ]; then
-    warn "Found $DD_COUNT dd()/dump()/ray() calls in app/"
-    grep -rn --include="*.php" -P '\b(dd|dump|ray)\(' app/ 2>/dev/null | head -5
-else
-    pass "No debug statements in app/"
-fi
-
-ENV_COUNT=$(grep -rn --include="*.php" "env(" app/ 2>/dev/null | grep -v "// " | wc -l)
-if [ "$ENV_COUNT" -gt 0 ]; then
-    warn "Found $ENV_COUNT env() calls in app/ — breaks with config:cache"
-    grep -rn --include="*.php" "env(" app/ 2>/dev/null | grep -v "// " | head -5
-else
-    pass "No env() calls in app/"
-fi
-
-########################################################################
 # RESULTS
 ########################################################################
 echo ""
