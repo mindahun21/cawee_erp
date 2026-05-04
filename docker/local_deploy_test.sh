@@ -6,7 +6,7 @@
 # Spins up the production docker-compose.yml with its OWN MySQL,
 # Redis, and pgvector — completely separate from your dev environment.
 # Runs all checks inside those containers, then tears everything down.
-#
+# test
 #
 # Usage:  bash docker/local_deploy_test.sh
 #######################################################################
