@@ -115,6 +115,7 @@ class Employee extends Model
 
     // ── Payroll ────────────────────────────────────────────────────
     public function payrollRecords(): HasMany { return $this->hasMany(Payroll::class); }
+    public function payrollSummaries(): HasMany { return $this->hasMany(\App\Models\Finance\PayrollSummary::class); }
 
     // ── Onboarding / Offboarding ───────────────────────────────────
     public function onboarding(): HasMany     { return $this->hasMany(EmployeeOnboarding::class); }

@@ -41,7 +41,7 @@ class PayrollGLPostingService
     // Auto-numbering
     // ─────────────────────────────────────────────────────────────────
 
-    public function generatePdrReference(int $year = null): string
+    public function generatePdrReference(?int $year = null): string
     {
         $year   = $year ?? now()->year;
         $prefix = FinanceSetting::get('pdr_number_prefix', 'PDR');
@@ -76,7 +76,8 @@ class PayrollGLPostingService
 
         $pension_ee  = round($gross * $pensionRate_ee, 2);
         $pension_er  = round($gross * $pensionRate_er, 2);
-        $deductions  = $incomeTax + $pension_ee;
+        $otherDeductions = (float) ($overrides['other_deductions'] ?? 0);
+        $deductions  = $incomeTax + $pension_ee + $otherDeductions;
         $netPay      = $gross - $deductions;
 
         $employee = $payroll->employee;
@@ -95,7 +96,7 @@ class PayrollGLPostingService
             'income_tax_withheld' => round($incomeTax, 2),
             'pension_employee'    => $pension_ee,
             'pension_employer'    => $pension_er,
-            'other_deductions'    => 0,
+            'other_deductions'    => $otherDeductions,
             'deductions_total'    => $deductions,
             'net_pay'             => $netPay,
             'employer_total_cost' => $netPay + $pension_er,
