@@ -116,6 +116,8 @@ cleanup() {
     echo ""
     echo "▶ Tearing down test environment..."
     $COMPOSE down -v --remove-orphans 2>/dev/null || true
+    # Remove test network
+    docker network rm traefik-public 2>/dev/null || true
     # Restore original .env
     if [ -f .env.backup.deploytest ]; then
         mv .env.backup.deploytest .env
@@ -129,6 +131,11 @@ trap cleanup EXIT
 # TEST 1: Docker image build + services start
 ########################################################################
 header "1. Docker Image Build & Services"
+
+# Create external networks if they don't exist
+echo "  ▶ Creating required Docker networks..."
+docker network create traefik-public 2>/dev/null || true
+pass "Docker networks ready"
 
 echo "  ▶ Building image (this may take a few minutes on first run)..."
 echo "    Full log: /tmp/elisoft_deploy_build.log"
