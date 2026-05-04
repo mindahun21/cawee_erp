@@ -229,6 +229,11 @@ class BankAccountResource extends Resource
 
                 TextColumn::make('current_balance')
                     ->label('Balance')
+                    ->getStateUsing(function (BankAccount $record) {
+                        return $record->chart_of_account_id
+                            ? $record->chartOfAccount?->currentBalance() ?? 0.00
+                            : $record->current_balance ?? 0.00;
+                    })
                     ->numeric(decimalPlaces: 2)
                     ->alignEnd()
                     ->fontFamily('mono')
@@ -303,6 +308,11 @@ class BankAccountResource extends Resource
                         ->fontFamily('mono'),
                     TextEntry::make('current_balance')
                         ->label('Current Balance')
+                        ->getStateUsing(function (BankAccount $record) {
+                            return $record->chart_of_account_id
+                                ? $record->chartOfAccount?->currentBalance() ?? 0.00
+                                : $record->current_balance ?? 0.00;
+                        })
                         ->numeric(decimalPlaces: 2)
                         ->fontFamily('mono')
                         ->weight('bold')
