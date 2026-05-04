@@ -25,16 +25,13 @@ jobs:
               git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
               
               # Run client-specific update script
-              bash update.sh
+              bash docker/update.sh
               
               echo "✅ Zemen deployment successful"
             else
               # Merge conflict detected
               git merge --abort
               echo "❌ Merge conflict detected in Zemen repo"
-              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
-                -H "Content-Type: application/json" \
-                -d '{"text":"❌ Deployment failed: Merge conflict in client_zemen_erp"}'
               exit 1
             fi
 
@@ -48,7 +45,7 @@ jobs:
           username: ${{ secrets.PETCO_SSH_USER }}
           key: ${{ secrets.PETCO_SSH_KEY }}
           script: |
-            cd /opt/client_petco_erp
+            cd quickbooks-app
             
             git fetch upstream deploy
             
@@ -59,9 +56,6 @@ jobs:
             else
               git merge --abort
               echo "❌ Merge conflict detected in Petco repo"
-              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
-                -H "Content-Type: application/json" \
-                -d '{"text":"❌ Deployment failed: Merge conflict in client_petco_erp"}'
               exit 1
             fi
 
@@ -81,13 +75,10 @@ jobs:
             
             if git merge --no-commit --no-ff upstream/deploy; then
               git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
-              bash update.sh
+              bash docker/update.sh
               echo "✅ SVO deployment successful"
             else
               git merge --abort
               echo "❌ Merge conflict detected in SVO repo"
-              curl -s -X POST "${{ secrets.SLACK_WEBHOOK }}" \
-                -H "Content-Type: application/json" \
-                -d '{"text":"❌ Deployment failed: Merge conflict in svo_erp"}'
               exit 1
             fi
