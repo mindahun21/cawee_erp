@@ -61,26 +61,21 @@
                 {{-- Balances + Date --}}
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
 
-                    {{-- Beginning balance --}}
+                    {{-- GL Balance — auto-computed from ledger (read-only) --}}
                     <div>
-                        <label for="beginning_balance" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Beginning Balance (GL)
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Book Balance (GL) <span class="text-xs text-gray-400 dark:text-gray-500">(auto)</span>
                         </label>
-                        <x-filament::input.wrapper>
-                            <x-filament::input type="number" id="beginning_balance"
-                                wire:model="beginning_balance" step="0.01" placeholder="0.00" />
-                        </x-filament::input.wrapper>
-                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                            @if($lastReconciliation)
-                                Auto-filled from last reconciled closing balance
-                                ({{ $lastReconciliation->statement_date?->format('d M Y') }}).
+                        <div class="flex h-10 items-center rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-3 font-mono text-sm text-gray-700 dark:text-gray-200">
+                            @if($computed_gl_balance !== null)
+                                {{ number_format($computed_gl_balance, 2) }}
                             @else
-                                Your book / GL balance at the start of this period.
+                                <span class="text-gray-400 dark:text-gray-500">— select account & date —</span>
                             @endif
+                        </div>
+                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                            Fetched automatically from your General Ledger as of the statement date.
                         </p>
-                        @error('beginning_balance')
-                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
-                        @enderror
                     </div>
 
                     {{-- Ending balance --}}
@@ -90,7 +85,7 @@
                         </label>
                         <x-filament::input.wrapper>
                             <x-filament::input type="number" id="ending_balance"
-                                wire:model="ending_balance" step="0.01" placeholder="0.00" required />
+                                wire:model.live="ending_balance" step="0.01" placeholder="0.00" required />
                         </x-filament::input.wrapper>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                             The closing balance shown on your bank statement.
@@ -107,7 +102,7 @@
                         </label>
                         <x-filament::input.wrapper>
                             <x-filament::input type="date" id="ending_date"
-                                wire:model="ending_date" required />
+                                wire:model.live="ending_date" required />
                         </x-filament::input.wrapper>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                             The closing date printed on your bank statement.
@@ -120,8 +115,8 @@
                 </div>
 
                 {{-- Difference preview --}}
-                @if($this->ending_balance !== null && $this->beginning_balance !== null)
-                @php $diff = (float)($this->ending_balance ?? 0) - (float)($this->beginning_balance ?? 0); @endphp
+                @if($this->ending_balance !== null && $this->computed_gl_balance !== null)
+                @php $diff = (float)($this->ending_balance ?? 0) - (float)($this->computed_gl_balance ?? 0); @endphp
                 <div class="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm
                     {{ abs($diff) < 0.01
                         ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'

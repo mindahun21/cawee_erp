@@ -53,7 +53,9 @@ class ReconciliationResource extends Resource
                     ->options(fn() => AccountingPeriod::orderBy('start_date', 'desc')->pluck('name', 'id')),
                 DatePicker::make('statement_date')->label('Statement Date')->required(),
                 TextInput::make('statement_balance')->label('Bank Statement Balance')->numeric()->required()->default(0),
-                TextInput::make('gl_balance')->label('GL Balance')->numeric()->required()->default(0),
+                TextInput::make('gl_balance')->label('GL Balance (from Ledger)')
+                    ->numeric()->disabled()->dehydrated()
+                    ->hint('Auto-computed from the General Ledger — do not edit.')->hintColor('warning'),
             ]),
 
             Section::make('Outstanding Items')->icon('heroicon-o-list-bullet')->schema([
