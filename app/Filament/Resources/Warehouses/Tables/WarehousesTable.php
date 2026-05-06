@@ -93,12 +93,13 @@ class WarehousesTable
                 \Filament\Actions\DeleteAction::make(),
             ])
             ->toolbarActions([
-                \Filament\Actions\BulkActionGroup::make([
+                \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
                     \Filament\Actions\ForceDeleteBulkAction::make(),
                     \Filament\Actions\RestoreBulkAction::make(),
                 ]),
             ])
+            ->defaultSort('name')
             ->groups([
                 \Filament\Tables\Grouping\Group::make('country.name')
                     ->label('Country')

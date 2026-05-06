@@ -6,6 +6,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -60,10 +61,10 @@ class WarehouseForm
                                     ->createOptionForm([
                                         TextInput::make('name')->required()->unique('warehouse_types', 'name'),
                                     ]),
-                                \Filament\Forms\Components\Toggle::make('is_active')
-                                    ->label('Is Active?')
-                                    ->default(true)
-                                    ->columnSpanFull(),
+                                 Toggle::make('is_active')
+                                     ->label('Is Active?')
+                                     ->default(true)
+                                     ->columnSpanFull(),
                             ]),
                         Grid::make(2)
                             ->schema([

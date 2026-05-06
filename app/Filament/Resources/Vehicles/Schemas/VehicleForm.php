@@ -30,7 +30,10 @@ class VehicleForm
                                     ->relationship('type', 'name')
                                     ->required()
                                     ->preload()
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->unique('vehicle_types', 'name'),
+                                    ]),
                                 TextInput::make('manufacturer'),
                                 TextInput::make('model'),
                                 TextInput::make('year_manufactured'),
@@ -40,12 +43,18 @@ class VehicleForm
                                     ->relationship('statusRecord', 'name')
                                     ->required()
                                     ->preload()
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->unique('vehicle_statuses', 'name'),
+                                    ]),
                                 Select::make('current_location_id')
                                     ->label('Current Location')
                                     ->relationship('currentLocation', 'location_name')
                                     ->preload()
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('location_name')->required()->unique('locations', 'location_name'),
+                                    ]),
                                 Toggle::make('is_active')
                                     ->default(true)
                                     ->required(),
@@ -55,16 +64,32 @@ class VehicleForm
                             ->schema([
                                 TextInput::make('country_manufacturer'),
                                 TextInput::make('engine_size_cc')
-                                    ->label('Engine Size (CC)'),
-                                TextInput::make('horsepower'),
+                                    ->label('Engine Size')
+                                    ->numeric()
+                                    ->suffix('CC'),
+                                TextInput::make('horsepower')
+                                    ->numeric()
+                                    ->suffix('HP'),
                                 TextInput::make('number_of_cylinders')
-                                    ->numeric(),
-                                TextInput::make('fuel_type'),
+                                    ->numeric()
+                                    ->integer(),
+                                Select::make('fuel_type')
+                                    ->options([
+                                        'Diesel' => 'Diesel',
+                                        'Petrol' => 'Petrol',
+                                        'Electric' => 'Electric',
+                                        'Hybrid' => 'Hybrid',
+                                    ])
+                                    ->native(false),
                                 TextInput::make('capacity'),
                                 TextInput::make('chassis_number'),
                                 TextInput::make('motor_number'),
-                                TextInput::make('general_weight'),
-                                TextInput::make('single_weight'),
+                                TextInput::make('general_weight')
+                                    ->numeric()
+                                    ->suffix('KG'),
+                                TextInput::make('single_weight')
+                                    ->numeric()
+                                    ->suffix('KG'),
                             ]),
                         Tab::make('Acquisition & Valuation')
                             ->columns(['default' => 2])
@@ -72,7 +97,10 @@ class VehicleForm
                                 Select::make('supplier_id')
                                     ->relationship('supplier', 'name')
                                     ->preload()
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->unique('donors', 'name'),
+                                    ]),
                                 Select::make('acquisition_status')
                                     ->options([
                                         'New' => 'New',

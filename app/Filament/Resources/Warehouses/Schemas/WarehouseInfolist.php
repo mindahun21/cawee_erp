@@ -44,8 +44,8 @@ class WarehouseInfolist
                                 TextEntry::make('postal_code')
                                     ->label('Postal Code'),
                             ]),
-                        TextEntry::make('country')
-                            ->formatStateUsing(fn ($state) => config("countries.{$state}", $state)),
+                        TextEntry::make('country.name')
+                            ->label('Country'),
                     ]),
                 Section::make('Additional Information')
                     ->schema([
