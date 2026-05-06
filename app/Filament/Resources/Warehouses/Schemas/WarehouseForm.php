@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Warehouses\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -34,7 +35,22 @@ class WarehouseForm
                                     ->relationship('manager', 'first_name')
                                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('first_name')->required()->maxLength(100),
+                                                TextInput::make('last_name')->required()->maxLength(100),
+                                                TextInput::make('email')->email()->required()->maxLength(150),
+                                                Select::make('gender')
+                                                    ->options(['M' => 'Male', 'F' => 'Female'])
+                                                    ->required()
+                                                    ->native(false),
+                                                DatePicker::make('date_of_employment')
+                                                    ->default(now())
+                                                    ->required(),
+                                            ]),
+                                    ]),
                                 Select::make('warehouse_type_id')
                                     ->label('Warehouse Type')
                                     ->relationship('warehouseType', 'name')
@@ -60,7 +76,22 @@ class WarehouseForm
                                     ->multiple()
                                     ->preload()
                                     ->searchable()
-                                    ->label('Assign to Staff'),
+                                    ->label('Assign to Staff')
+                                    ->createOptionForm([
+                                        Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('first_name')->required()->maxLength(100),
+                                                TextInput::make('last_name')->required()->maxLength(100),
+                                                TextInput::make('email')->email()->required()->maxLength(150),
+                                                Select::make('gender')
+                                                    ->options(['M' => 'Male', 'F' => 'Female'])
+                                                    ->required()
+                                                    ->native(false),
+                                                DatePicker::make('date_of_employment')
+                                                    ->default(now())
+                                                    ->required(),
+                                            ]),
+                                    ]),
                             ]),
                     ]),
                 Section::make('Address Details')
