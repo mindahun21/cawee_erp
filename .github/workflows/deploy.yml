@@ -17,6 +17,8 @@ jobs:
           script: |
             cd /opt/client_zemen_erp
             
+            git config user.email "ci@elisoft.com"
+            git config user.name "Elisoft CI"
             git stash
             git fetch upstream deploy
             
@@ -44,6 +46,8 @@ jobs:
           script: |
             cd quickbooks-app
             
+            git config user.email "ci@elisoft.com"
+            git config user.name "Elisoft CI"
             git stash
             git fetch upstream deploy
             
@@ -71,6 +75,8 @@ jobs:
           script: |
             cd /opt/svo_erp
             
+            git config user.email "ci@elisoft.com"
+            git config user.name "Elisoft CI"
             git stash
             git fetch upstream deploy
             
