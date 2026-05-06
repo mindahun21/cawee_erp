@@ -37,7 +37,7 @@ class AssetAssignmentsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('department.name')
-                    ->label('Assigned Dept')
+                    ->label('Assigned Department')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('project.project_name')

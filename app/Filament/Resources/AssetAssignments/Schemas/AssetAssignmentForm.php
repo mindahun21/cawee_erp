@@ -46,7 +46,7 @@ class AssetAssignmentForm
                             ->default(1)
                             ->required(),
                         Select::make('employee_id')
-                            ->label('Assigned to staff')
+                            ->label('Assigned Staff')
                             ->relationship('employee', 'first_name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable()
@@ -60,7 +60,7 @@ class AssetAssignmentForm
                             ->label('Purpose / Reason')
                             ->maxLength(255),
                         Select::make('department_id')
-                            ->label('Assigned To Department')
+                            ->label('Assigned Department')
                             ->relationship('department', 'name')
                             ->searchable()
                             ->preload()
