@@ -78,23 +78,6 @@
                         </p>
                     </div>
 
-                    {{-- Ending balance --}}
-                    <div>
-                        <label for="ending_balance" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Ending Balance (Statement) <span class="text-danger-500">*</span>
-                        </label>
-                        <x-filament::input.wrapper>
-                            <x-filament::input type="number" id="ending_balance"
-                                wire:model.live="ending_balance" step="0.01" placeholder="0.00" required />
-                        </x-filament::input.wrapper>
-                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                            The closing balance shown on your bank statement.
-                        </p>
-                        @error('ending_balance')
-                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     {{-- Statement end date --}}
                     <div>
                         <label for="ending_date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -102,12 +85,29 @@
                         </label>
                         <x-filament::input.wrapper>
                             <x-filament::input type="date" id="ending_date"
-                                wire:model.live="ending_date" required />
+                                wire:model.blur="ending_date" required />
                         </x-filament::input.wrapper>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                             The closing date printed on your bank statement.
                         </p>
                         @error('ending_date')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Ending balance --}}
+                    <div>
+                        <label for="ending_balance" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Ending Balance (Statement) <span class="text-danger-500">*</span>
+                        </label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input type="number" id="ending_balance"
+                                wire:model.blur="ending_balance" step="0.01" placeholder="0.00" required />
+                        </x-filament::input.wrapper>
+                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                            The closing balance shown on your bank statement.
+                        </p>
+                        @error('ending_balance')
                             <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
                         @enderror
                     </div>
