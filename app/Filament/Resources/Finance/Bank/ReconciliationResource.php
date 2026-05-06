@@ -56,26 +56,50 @@ class ReconciliationResource extends Resource
                     ->hint('Auto-computed from the General Ledger — do not edit.')->hintColor('warning'),
             ]),
 
-            Section::make('Outstanding Items')->icon('heroicon-o-list-bullet')->schema([
+            Section::make('Outstanding Items')
+                ->icon('heroicon-o-list-bullet')
+                ->description('Add items that are in your books but not yet on the bank statement (or vice versa). ↑ items INCREASE the adjusted balance; ↓ items DECREASE it.')
+                ->schema([
                 Repeater::make('items')
                     ->relationship('items')
                     ->schema([
-                        Select::make('item_type')->label('Type')->native(false)->required()
+                        Select::make('item_type')
+                            ->label('Type')
+                            ->native(false)
+                            ->required()
+                            ->helperText(fn ($state): string => match ($state) {
+                                'deposit'     => '↑ INCREASES adjusted balance — money you deposited not yet shown on bank statement.',
+                                'payment'     => '↓ DECREASES adjusted balance — cheque/transfer issued but not yet cleared by bank.',
+                                'bank_charge' => '↓ DECREASES adjusted balance — bank fee shown on statement not yet in your books.',
+                                'interest'    => '↓ DECREASES adjusted balance — bank interest/penalty not yet in your books.',
+                                'other'       => '↓ DECREASES adjusted balance — any other item reducing the bank balance.',
+                                default       => 'Select a type to see its effect on the reconciliation.',
+                            })
                             ->options([
-                                'deposit' => 'Deposit in Transit',
-                                'payment' => 'Outstanding Cheque/Payment',
-                                'bank_charge' => 'Bank Charge',
-                                'interest' => 'Interest',
-                                'other' => 'Other'
+                                '── Increases Adjusted Balance ──────' => [],
+                                'deposit'     => '↑  Deposit in Transit  (adds to balance)',
+                                '── Decreases Adjusted Balance ──────' => [],
+                                'payment'     => '↓  Outstanding Cheque / Payment  (subtracts)',
+                                'bank_charge' => '↓  Bank Charge / Fee  (subtracts)',
+                                'interest'    => '↓  Bank Interest / Penalty  (subtracts)',
+                                'other'       => '↓  Other Deduction  (subtracts)',
                             ]),
                         DatePicker::make('transaction_date')->label('Date')->required(),
                         TextInput::make('description')->label('Description')->required(),
-                        TextInput::make('amount')->label('Amount')->numeric()->required()->default(0),
+                        TextInput::make('amount')
+                            ->label('Amount')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->helperText('Always enter a positive number — the type above determines the direction.'),
                         TextInput::make('bank_reference')->label('Bank Ref/Cheque #')->nullable(),
-                        Toggle::make('is_cleared')->label('Cleared?')->onColor('success')->offColor('gray'),
+                        Toggle::make('is_cleared')
+                            ->label('Cleared?')
+                            ->helperText('Toggle ON once the bank has processed this item.')
+                            ->onColor('success')
+                            ->offColor('gray'),
                     ])->columns(6)->addActionLabel('Add Item')
                      ->mutateRelationshipDataBeforeCreateUsing(function (array $data) {
-                         // On save, we can calc cleared_date if cleared
                          if ($data['is_cleared'] ?? false) {
                              $data['cleared_date'] = now()->toDateString();
                          }

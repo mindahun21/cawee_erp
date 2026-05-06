@@ -35,6 +35,10 @@ class AccountType extends Model
             'equity'    => 'Equity',
             'income'    => 'Income',
             'expense'   => 'Expense',
+            // Note: 'bank' classification is stored as 'asset' in the DB so that
+            // all report WHERE-IN clauses continue to work without changes.
+            // The dedicated 'Bank' AccountType row uses classification='asset'
+            // and is shown to users under the 'Bank' name via the name column.
         ];
     }
 
