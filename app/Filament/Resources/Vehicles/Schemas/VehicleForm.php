@@ -103,10 +103,15 @@ class VehicleForm
                                     ]),
                                 Select::make('acquisition_status')
                                     ->options([
+                                        'Purchased' => 'Purchased',
+                                        'Leased' => 'Leased',
+                                        'Donation' => 'Donation',
+                                        'Loaned' => 'Loaned',
                                         'New' => 'New',
                                         'Used' => 'Used',
-                                        'Donation' => 'Donation',
-                                    ]),
+                                    ])
+                                    ->required()
+                                    ->native(false),
                                 DatePicker::make('purchase_date'),
                                 TextInput::make('kms_driven_at_purchase')
                                     ->numeric()
@@ -114,8 +119,17 @@ class VehicleForm
                                 TextInput::make('purchase_price')
                                     ->numeric()
                                     ->prefix('Amt'),
-                                TextInput::make('currency')
-                                    ->default('ETB'),
+                                Select::make('currency')
+                                    ->label('Currency')
+                                    ->options(fn () => \App\Models\Currency::pluck('code', 'code')->toArray())
+                                    ->searchable()
+                                    ->default('ETB')
+                                    ->required()
+                                    ->createOptionForm([
+                                        TextInput::make('code')->required()->unique('currencies', 'code'),
+                                        TextInput::make('name')->required(),
+                                        TextInput::make('exchange_rate')->numeric()->required(),
+                                    ]),
                             ]),
                         Tab::make('Insurance & Inspection')
                             ->columns(['default' => 2])
