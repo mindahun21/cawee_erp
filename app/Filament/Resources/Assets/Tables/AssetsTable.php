@@ -68,7 +68,7 @@ class AssetsTable
                     ->sortable(),
 
                 \Filament\Tables\Columns\TextColumn::make('purchase_cost')
-                    ->money('INR')
+                    ->money(fn ($record) => $record->currency?->code ?? 'ETB')
                     ->sortable()
                     ->toggleable(),
 

@@ -290,11 +290,13 @@ class AssetForm
                                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
 
                                         DatePicker::make('purchase_date')
+                                            ->live()
                                             ->hidden(fn (Get $get) => AcquisitionType::find($get('acquisition_type_id'))?->name === 'Donation'),
 
                                         DatePicker::make('warranty_expiry_date')
                                             ->label('Warranty Expiry')
                                             ->afterOrEqual('purchase_date')
+                                            ->live()
                                             ->validationMessages([
                                                 'after_or_equal' => 'The warranty expiry date must be on or after the purchase date.',
                                             ])
@@ -315,6 +317,7 @@ class AssetForm
                                         DatePicker::make('end_of_life_date')
                                             ->label('End of Life / Write-off Date')
                                             ->afterOrEqual('warranty_expiry_date')
+                                            ->live()
                                             ->validationMessages([
                                                 'after_or_equal' => 'The end of life date must be on or after the warranty expiry date.',
                                             ]),
@@ -444,6 +447,7 @@ class AssetForm
 
                                 Section::make('Disposal & Retirement')
                                     ->description('Optional: record if this asset is being retired')
+                                    ->visibleOn('edit')
                                     ->collapsed()
                                     ->columns(['default' => 2])
                                     ->schema([

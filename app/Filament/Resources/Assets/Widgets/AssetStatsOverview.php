@@ -13,20 +13,19 @@ class AssetStatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        $totalAssets = Asset::sum('quantity');
+        $assets = Asset::all();
+        $totalAssets = $assets->sum('quantity');
         
-        // Calculate total value in ETB (estimation based on currency rates)
-        // We use COALESCE to handle cases where currency or exchange_rate might be missing
-        $totalValueEtb = Asset::query()
-            ->leftJoin('currencies', 'assets.currency_id', '=', 'currencies.id')
-            ->selectRaw('SUM(assets.purchase_cost * assets.quantity * COALESCE(currencies.exchange_rate, 1)) as total')
-            ->value('total') ?? 0;
+        $totalValueEtb = $assets->sum(function ($asset) {
+            $rate = $asset->currency?->exchange_rate ?? 1;
+            return $asset->purchase_cost * $asset->quantity * $rate;
+        });
 
         $availableStatusId = AssetStatus::where('name', 'Available')->value('id');
         $maintenanceStatusId = AssetStatus::where('name', 'Maintenance')->value('id');
         
-        $availableAssets = Asset::where('asset_status_id', $availableStatusId)->sum('quantity');
-        $maintenanceAssets = Asset::where('asset_status_id', $maintenanceStatusId)->sum('quantity');
+        $availableAssets = $assets->where('asset_status_id', $availableStatusId)->sum('quantity');
+        $maintenanceAssets = $assets->where('asset_status_id', $maintenanceStatusId)->sum('quantity');
 
         return [
             Stat::make('Total Assets', number_format($totalAssets))
