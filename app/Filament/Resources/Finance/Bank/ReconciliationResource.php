@@ -67,38 +67,43 @@ class ReconciliationResource extends Resource
                             ->label('Type')
                             ->native(false)
                             ->required()
+                            ->columnSpan(2)
                             ->helperText(fn ($state): string => match ($state) {
-                                'deposit'     => '↑ INCREASES adjusted balance — money you deposited not yet shown on bank statement.',
+                                'deposit'     => '↑ INCREASES adjusted balance — deposited in books, not yet on bank statement.',
                                 'payment'     => '↓ DECREASES adjusted balance — cheque/transfer issued but not yet cleared by bank.',
-                                'bank_charge' => '↓ DECREASES adjusted balance — bank fee shown on statement not yet in your books.',
+                                'bank_charge' => '↓ DECREASES adjusted balance — bank fee on statement, not yet in your books.',
                                 'interest'    => '↓ DECREASES adjusted balance — bank interest/penalty not yet in your books.',
                                 'other'       => '↓ DECREASES adjusted balance — any other item reducing the bank balance.',
                                 default       => 'Select a type to see its effect on the reconciliation.',
                             })
                             ->options([
-                                '── Increases Adjusted Balance ──────' => [],
-                                'deposit'     => '↑  Deposit in Transit  (adds to balance)',
-                                '── Decreases Adjusted Balance ──────' => [],
-                                'payment'     => '↓  Outstanding Cheque / Payment  (subtracts)',
-                                'bank_charge' => '↓  Bank Charge / Fee  (subtracts)',
-                                'interest'    => '↓  Bank Interest / Penalty  (subtracts)',
-                                'other'       => '↓  Other Deduction  (subtracts)',
+                                '↑ Increases Balance' => [
+                                    'deposit'     => '↑  Deposit in Transit',
+                                ],
+                                '↓ Decreases Balance' => [
+                                    'payment'     => '↓  Outstanding Cheque / Payment',
+                                    'bank_charge' => '↓  Bank Charge / Fee',
+                                    'interest'    => '↓  Bank Interest / Penalty',
+                                    'other'       => '↓  Other Deduction',
+                                ],
                             ]),
-                        DatePicker::make('transaction_date')->label('Date')->required(),
-                        TextInput::make('description')->label('Description')->required(),
+                        DatePicker::make('transaction_date')->label('Date')->required()->columnSpan(1),
                         TextInput::make('amount')
                             ->label('Amount')
                             ->numeric()
                             ->required()
                             ->default(0)
-                            ->helperText('Always enter a positive number — the type above determines the direction.'),
-                        TextInput::make('bank_reference')->label('Bank Ref/Cheque #')->nullable(),
+                            ->columnSpan(1)
+                            ->helperText('Enter positive — type sets direction.'),
+                        TextInput::make('description')->label('Description')->required()->columnSpan(2),
+                        TextInput::make('bank_reference')->label('Bank Ref / Cheque #')->nullable()->columnSpan(1),
                         Toggle::make('is_cleared')
                             ->label('Cleared?')
                             ->helperText('Toggle ON once the bank has processed this item.')
                             ->onColor('success')
-                            ->offColor('gray'),
-                    ])->columns(6)->addActionLabel('Add Item')
+                            ->offColor('gray')
+                            ->columnSpan(1),
+                    ])->columns(4)->addActionLabel('Add Item')
                      ->mutateRelationshipDataBeforeCreateUsing(function (array $data) {
                          if ($data['is_cleared'] ?? false) {
                              $data['cleared_date'] = now()->toDateString();
