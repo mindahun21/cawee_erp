@@ -21,6 +21,11 @@ class AssetsTable
     {
         return $table
             ->columns([
+                \Filament\Tables\Columns\ImageColumn::make('image')
+                    ->label('Photo')
+                    ->circular()
+                    ->toggleable(),
+
                 \Filament\Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()

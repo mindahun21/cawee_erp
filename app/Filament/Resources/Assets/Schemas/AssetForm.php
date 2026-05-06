@@ -323,6 +323,8 @@ class AssetForm
                                             ->label('Asset Photo')
                                             ->image()
                                             ->directory('assets')
+                                            ->maxSize(10240)
+                                            ->helperText('Max size: 10MB (Note: PHP limit is currently 2MB).')
                                             ->columnSpanFull(),
                                     ]),
                             ]),
