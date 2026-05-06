@@ -28,10 +28,19 @@ class AssetAssignmentForm
                             ->live(onBlur: true)
                             ->required(),
                         Select::make('asset_id')
-                            ->relationship('asset', 'name', fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('is_fixed_asset', true))
+                            ->relationship('asset', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('asset_tag')->required(),
+                                Select::make('asset_status_id')
+                                    ->relationship('statusRecord', 'name')
+                                    ->required()
+                                    ->preload()
+                                    ->searchable(),
+                            ]),
                         TextInput::make('quantity')
                             ->numeric()
                             ->default(1)
@@ -41,7 +50,12 @@ class AssetAssignmentForm
                             ->relationship('employee', 'first_name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('first_name')->required(),
+                                TextInput::make('last_name')->required(),
+                                TextInput::make('email')->email(),
+                            ]),
                         TextInput::make('purpose')
                             ->label('Purpose / Reason')
                             ->maxLength(255),
@@ -49,17 +63,29 @@ class AssetAssignmentForm
                             ->label('Assigned To Department')
                             ->relationship('department', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('code'),
+                            ]),
                         Select::make('project_id')
                             ->label('Assigned To Project')
                             ->relationship('project', 'project_name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('project_name')->required(),
+                                TextInput::make('project_code')->required(),
+                            ]),
                         Select::make('location_id')
                             ->label('Assigned To Location')
                             ->relationship('location', 'location_name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('location_name')->required(),
+                                TextInput::make('address'),
+                            ]),
                         DatePicker::make('assigned_date')
                             ->default(now())
                             ->required(),
