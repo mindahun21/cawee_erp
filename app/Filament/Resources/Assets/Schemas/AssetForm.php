@@ -256,7 +256,6 @@ class AssetForm
                                             ->label('Acquisition Type')
                                             ->relationship('acquisitionTypeRecord', 'name')
                                             ->live()
-                                            ->required()
                                             ->preload()
                                             ->searchable()
                                             ->columnSpanFull()
@@ -354,9 +353,17 @@ class AssetForm
                                             ->schema([
                                                 Select::make('location_id')
                                                     ->relationship('location', 'location_name')
-                                                    ->required()
                                                     ->searchable()
                                                     ->preload()
+                                                    ->createOptionForm([
+                                                        TextInput::make('location_name')
+                                                            ->required()
+                                                            ->maxLength(255),
+                                                        TextInput::make('address')
+                                                            ->maxLength(255),
+                                                        TextInput::make('type')
+                                                            ->maxLength(255),
+                                                    ])
                                                     ->rules([
                                                         fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
                                                             $stocks = $get('../../stocks') ?? [];
@@ -373,7 +380,15 @@ class AssetForm
                                                     ->relationship('department', 'name')
                                                     ->searchable()
                                                     ->preload()
-                                                    ->live(),
+                                                    ->live()
+                                                    ->createOptionForm([
+                                                        TextInput::make('name')
+                                                            ->required()
+                                                            ->maxLength(255),
+                                                        TextInput::make('code')
+                                                            ->maxLength(255),
+                                                        Textarea::make('description'),
+                                                    ]),
                                                 TextInput::make('quantity')
                                                     ->numeric()
                                                     ->default(1)
