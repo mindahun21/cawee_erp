@@ -6,7 +6,9 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Section;
@@ -134,8 +136,37 @@ class VehicleForm
                         Tab::make('Insurance & Inspection')
                             ->columns(['default' => 2])
                             ->schema([
-                                TextInput::make('general_insurance'),
-                                TextInput::make('third_party_insurance'),
+                                Section::make('Insurance Documentation')
+                                    ->columns(['default' => 2])
+                                    ->schema([
+                                        Select::make('insurance_provider')
+                                            ->label('Insurance Provider')
+                                            ->options([
+                                                'Nyala Insurance' => 'Nyala Insurance',
+                                                'Nile Insurance' => 'Nile Insurance',
+                                                'Awash Insurance' => 'Awash Insurance',
+                                                'United Insurance' => 'United Insurance',
+                                                'Africa Insurance' => 'Africa Insurance',
+                                                'Commercial Bank of Ethiopia' => 'Commercial Bank of Ethiopia',
+                                            ])
+                                            ->searchable()
+                                            ->native(false),
+                                        TextInput::make('insurance_policy_number')
+                                            ->label('Policy Number'),
+                                        FileUpload::make('insurance_certificate')
+                                            ->label('Upload Certificate')
+                                            ->disk('public')
+                                            ->directory('vehicle-insurances')
+                                            ->columnSpanFull(),
+                                        TextInput::make('general_insurance')
+                                            ->label('General Insurance (Legacy Note)')
+                                            ->placeholder('Historical data...')
+                                            ->toggleable(isToggledHiddenByDefault: true),
+                                        TextInput::make('third_party_insurance')
+                                            ->label('Third Party Insurance (Legacy Note)')
+                                            ->placeholder('Historical data...')
+                                            ->toggleable(isToggledHiddenByDefault: true),
+                                    ]),
                                 TextInput::make('trade_license_number'),
                                 Section::make('Technical Inspection')
                                     ->columns(['default' => 2])
@@ -149,12 +180,23 @@ class VehicleForm
                                         DatePicker::make('latest_general_inspection_date'),
                                         DatePicker::make('latest_general_inspection_expiry'),
                                     ]),
-                                DatePicker::make('latest_third_party_inspection_date'),
-                                DatePicker::make('insurance_renewal_date'),
+                                Section::make('Third Party Inspection')
+                                    ->columns(['default' => 2])
+                                    ->schema([
+                                        DatePicker::make('latest_third_party_inspection_date')
+                                            ->label('Latest Date'),
+                                        DatePicker::make('latest_third_party_inspection_expiry')
+                                            ->label('Expiry Date'),
+                                    ]),
+                                DatePicker::make('insurance_renewal_date')
+                                    ->label('Insurance Renewal Date'),
                             ]),
                         Tab::make('Remarks')
                             ->schema([
                                 Textarea::make('remarks')
+                                    ->label('Vehicle Remarks & History')
+                                    ->placeholder('Enter long-form notes, historical details, or special conditions...')
+                                    ->rows(10)
                                     ->columnSpanFull(),
                             ]),
                     ])

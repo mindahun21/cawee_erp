@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::table('vehicles', function (Blueprint $table) {
             $table->foreignId('currency_id')->nullable()->constrained('currencies')->onDelete('set null');
+            $table->string('insurance_provider')->nullable();
+            $table->string('insurance_policy_number')->nullable();
+            $table->string('insurance_certificate')->nullable();
+            $table->date('latest_third_party_inspection_expiry')->nullable();
         });
     }
 
@@ -23,7 +27,7 @@ return new class extends Migration
     {
         Schema::table('vehicles', function (Blueprint $table) {
             $table->dropForeign(['currency_id']);
-            $table->dropColumn('currency_id');
+            $table->dropColumn(['currency_id', 'insurance_provider', 'insurance_policy_number', 'insurance_certificate', 'latest_third_party_inspection_expiry']);
         });
     }
 };
