@@ -24,26 +24,15 @@ class AssetsTable
                 \Filament\Tables\Columns\ImageColumn::make('image')
                     ->label('Photo')
                     ->circular()
+                    ->defaultImageUrl('https://ui-avatars.com/api/?name=Asset&color=7F9CF5&background=EBF4FF')
                     ->toggleable(),
 
                 \Filament\Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn ($record) => new \Illuminate\Support\HtmlString('
-                        <div class="hover-actions-wrapper flex gap-2 pt-1 items-center">
-                            <a href="'.(
-                                str_starts_with($record->asset_tag ?? '', 'VEH-')
-                                ? \App\Filament\Resources\VehicleManagement\Vehicles\VehicleResource::getUrl('edit', ['record' => (int) str_replace('VEH-', '', $record->asset_tag)])
-                                : $resource::getUrl('view', ['record' => $record])
-                            ).'" class="hover-action-link text-gray-400 hover:text-gray-500">View</a>
-                            <span class="text-gray-200">|</span>
-                            <a href="'.(
-                                str_starts_with($record->asset_tag ?? '', 'VEH-')
-                                ? \App\Filament\Resources\VehicleManagement\Vehicles\VehicleResource::getUrl('edit', ['record' => (int) str_replace('VEH-', '', $record->asset_tag)])
-                                : $resource::getUrl('edit', ['record' => $record])
-                            ).'" class="hover-action-link text-primary-600 hover:text-primary-700">Edit</a>
-                        </div>
-                    '), position: 'below'),
+                    ->weight('bold')
+                    ->color('primary')
+                    ->wrap(),
 
                 \Filament\Tables\Columns\TextColumn::make('assetModel.category.name')
                     ->label('Category')
@@ -121,8 +110,25 @@ class AssetsTable
             ])
             ->filtersLayout(FiltersLayout::Modal)
             ->filtersFormColumns(2)
-            ->recordActions([
-                DeleteAction::make(),
+            ->actions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()
+                        ->url(fn ($record) => 
+                            str_starts_with($record->asset_tag ?? '', 'VEH-')
+                            ? \App\Filament\Resources\VehicleManagement\Vehicles\VehicleResource::getUrl('edit', ['record' => (int) str_replace('VEH-', '', $record->asset_tag)])
+                            : $resource::getUrl('view', ['record' => $record])
+                        ),
+                    \Filament\Actions\EditAction::make()
+                        ->url(fn ($record) => 
+                            str_starts_with($record->asset_tag ?? '', 'VEH-')
+                            ? \App\Filament\Resources\VehicleManagement\Vehicles\VehicleResource::getUrl('edit', ['record' => (int) str_replace('VEH-', '', $record->asset_tag)])
+                            : $resource::getUrl('edit', ['record' => $record])
+                        ),
+                    \Filament\Actions\DeleteAction::make(),
+                ])
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->tooltip('Actions')
+                ->color('gray'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

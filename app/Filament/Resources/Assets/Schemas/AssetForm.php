@@ -294,6 +294,10 @@ class AssetForm
 
                                         DatePicker::make('warranty_expiry_date')
                                             ->label('Warranty Expiry')
+                                            ->afterOrEqual('purchase_date')
+                                            ->validationMessages([
+                                                'after_or_equal' => 'The warranty expiry date must be on or after the purchase date.',
+                                            ])
                                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
 
                                         Select::make('supplier_id')
@@ -309,7 +313,11 @@ class AssetForm
                                             ]),
 
                                         DatePicker::make('end_of_life_date')
-                                            ->label('End of Life / Write-off Date'),
+                                            ->label('End of Life / Write-off Date')
+                                            ->afterOrEqual('warranty_expiry_date')
+                                            ->validationMessages([
+                                                'after_or_equal' => 'The end of life date must be on or after the warranty expiry date.',
+                                            ]),
 
                                         Textarea::make('notes')
                                             ->label('Notes')

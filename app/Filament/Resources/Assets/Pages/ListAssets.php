@@ -20,4 +20,11 @@ class ListAssets extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Assets\Widgets\AssetStatsOverview::class,
+        ];
+    }
 }
