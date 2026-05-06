@@ -16,4 +16,11 @@ class ListMaintenances extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Maintenances\Widgets\MaintenanceStatsOverview::class,
+        ];
+    }
 }

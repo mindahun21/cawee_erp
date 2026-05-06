@@ -24,6 +24,8 @@ class MaintenanceResource extends Resource
 
     protected static ?int $navigationSort = 60;
 
+    protected static ?string $navigationLabel = 'Maintenances';
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

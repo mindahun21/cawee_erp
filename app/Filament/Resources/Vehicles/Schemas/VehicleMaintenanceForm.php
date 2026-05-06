@@ -22,7 +22,12 @@ class VehicleMaintenanceForm
                             ->relationship('vehicle', 'plate_number')
                             ->required()
                             ->preload()
-                            ->searchable(),
+                            ->searchable()
+                            ->createOptionForm([
+                                TextInput::make('plate_number')->required()->unique('vehicles', 'plate_number'),
+                                TextInput::make('manufacturer')->required(),
+                                TextInput::make('model')->required(),
+                            ]),
                         Select::make('service_type_id')
                             ->label('Service Type')
                             ->relationship('serviceTypeRecord', 'name')
