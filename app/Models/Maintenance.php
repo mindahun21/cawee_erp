@@ -70,4 +70,41 @@ class Maintenance extends Model
     {
         return $this->belongsTo(Currency::class);
     }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Maintenance $maintenance) {
+            $status = strtolower($maintenance->statusRecord?->name ?? '');
+            $asset = $maintenance->asset;
+            if (!$asset) return;
+
+            if (in_array($status, ['in progress', 'scheduled'])) {
+                // Set asset to Maintenance status
+                $maintStatus = \App\Models\AssetStatus::firstOrCreate(['name' => 'Maintenance']);
+                $asset->update(['asset_status_id' => $maintStatus->id]);
+
+                // If it's a mirrored vehicle, set it to inactive
+                if (str_starts_with($asset->asset_tag ?? '', 'VEH-')) {
+                    $vehicleId = (int) str_replace('VEH-', '', $asset->asset_tag);
+                    \App\Models\Vehicle::where('id', $vehicleId)->update([
+                        'is_active' => false,
+                        'remarks' => "In Maintenance (Reference: {$maintenance->title})"
+                    ]);
+                }
+            } elseif ($status === 'completed') {
+                // Set asset to Available status
+                $availStatus = \App\Models\AssetStatus::firstOrCreate(['name' => 'Available']);
+                $asset->update(['asset_status_id' => $availStatus->id]);
+
+                // If it's a mirrored vehicle, restore to active
+                if (str_starts_with($asset->asset_tag ?? '', 'VEH-')) {
+                    $vehicleId = (int) str_replace('VEH-', '', $asset->asset_tag);
+                    \App\Models\Vehicle::where('id', $vehicleId)->update([
+                        'is_active' => true,
+                        'remarks' => "Maintenance Completed (Reference: {$maintenance->title})"
+                    ]);
+                }
+            }
+        });
+    }
 }

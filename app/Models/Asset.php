@@ -151,6 +151,11 @@ class Asset extends Model
         return $this->hasMany(AssetStock::class);
     }
 
+    public function maintenances()
+    {
+        return $this->hasMany(Maintenance::class);
+    }
+
 
 
 

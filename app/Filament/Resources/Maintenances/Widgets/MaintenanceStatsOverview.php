@@ -14,7 +14,9 @@ class MaintenanceStatsOverview extends BaseWidget
         // Safety measure for low-memory environments
         @ini_set('memory_limit', '256M');
 
-        $totalCost = Maintenance::sum('cost');
+        $totalCostEtb = Maintenance::with('currency')->get()->sum(function ($m) {
+            return (float) $m->cost * (float) ($m->currency?->exchange_rate ?? 1);
+        });
         
         $assetMaintCount = Maintenance::whereHas('asset', function ($query) {
             $query->where('asset_tag', 'not like', 'VEH-%');
@@ -43,8 +45,8 @@ class MaintenanceStatsOverview extends BaseWidget
             Stat::make('Vehicle Maintenances', $vehicleMaintCount)
                 ->description('Fleet service records')
                 ->icon('heroicon-o-truck'),
-            Stat::make('Total Maintenance Cost', 'ETB ' . number_format($totalCost, 2))
-                ->description('Aggregated expenditure')
+            Stat::make('Total Maintenance Cost', 'ETB ' . number_format($totalCostEtb, 2))
+                ->description('Aggregated expenditure (EST to ETB)')
                 ->icon('heroicon-o-banknotes')
                 ->color('success'),
             Stat::make('Out of Service', $outOfServiceCount)
