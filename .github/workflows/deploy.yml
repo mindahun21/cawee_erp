@@ -17,20 +17,17 @@ jobs:
           script: |
             cd /opt/client_zemen_erp
             
-            # Fetch upstream changes
+            git stash
             git fetch upstream deploy
             
-            # Attempt merge
             if git merge --no-commit --no-ff upstream/deploy; then
               git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
-              
-              # Run client-specific update script
+              git stash pop
               bash docker/update.sh
-              
               echo "✅ Zemen deployment successful"
             else
-              # Merge conflict detected
               git merge --abort
+              git stash pop
               echo "❌ Merge conflict detected in Zemen repo"
               exit 1
             fi
@@ -47,14 +44,17 @@ jobs:
           script: |
             cd quickbooks-app
             
+            git stash
             git fetch upstream deploy
             
             if git merge --no-commit --no-ff upstream/deploy; then
               git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
+              git stash pop
               bash update.sh
               echo "✅ Petco deployment successful"
             else
               git merge --abort
+              git stash pop
               echo "❌ Merge conflict detected in Petco repo"
               exit 1
             fi
@@ -71,14 +71,17 @@ jobs:
           script: |
             cd /opt/svo_erp
             
+            git stash
             git fetch upstream deploy
             
             if git merge --no-commit --no-ff upstream/deploy; then
               git commit -m "chore: sync upstream $(date +%Y-%m-%d_%H:%M:%S)" || true
+              git stash pop
               bash docker/update.sh
               echo "✅ SVO deployment successful"
             else
               git merge --abort
+              git stash pop
               echo "❌ Merge conflict detected in SVO repo"
               exit 1
             fi
