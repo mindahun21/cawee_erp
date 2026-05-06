@@ -230,6 +230,28 @@ class Reconcile extends Page implements HasTable
             'ending_date'     => 'required|date',
         ]);
 
+        // Prevent more than one reconciliation per calendar month (industry standard)
+        $endingDate = \Carbon\Carbon::parse($this->ending_date);
+        $alreadyReconciled = BankReconciliation::where('bank_account_id', $this->bank_account_id)
+            ->whereYear('statement_date', $endingDate->year)
+            ->whereMonth('statement_date', $endingDate->month)
+            ->where('status', 'reconciled')
+            ->first();
+
+        if ($alreadyReconciled) {
+            Notification::make()
+                ->danger()
+                ->title('Month Already Reconciled')
+                ->body(
+                    "This bank account was already reconciled for " .
+                    $endingDate->format('F Y') .
+                    " (Ref: {$alreadyReconciled->reference}). " .
+                    "Only one reconciliation per month is allowed."
+                )
+                ->send();
+            return;
+        }
+
         // If an in-progress reconciliation already exists, resume it
         $existing = BankReconciliation::where('bank_account_id', $this->bank_account_id)
             ->where('status', 'in_progress')

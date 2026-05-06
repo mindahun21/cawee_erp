@@ -280,11 +280,10 @@ class ChartOfAccountResource extends Resource
                     }),
 
                 // ── Account Type ──────────────────────────────────────
-                TextColumn::make('accountType.classification')
+                TextColumn::make('accountType.name')
                     ->label('Type')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => ucfirst($state ?? ''))
-                    ->color(fn ($state) => match ($state) {
+                    ->color(fn ($state, $record) => match ($record->accountType?->classification ?? '') {
                         'asset'     => 'success',
                         'liability' => 'danger',
                         'equity'    => 'warning',
