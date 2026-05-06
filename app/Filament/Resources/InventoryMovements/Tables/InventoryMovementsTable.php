@@ -72,43 +72,51 @@ class InventoryMovementsTable
                     ->label('Item')
                     ->relationship('item', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Item::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('reason_id')
                     ->label('Reason')
                     ->relationship('reason', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\InventoryMovementReason::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
                     ->relationship('status', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\InventoryMovementStatus::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('from_warehouse_id')
                     ->label('From Warehouse')
                     ->relationship('fromWarehouse', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Warehouse::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('to_warehouse_id')
                     ->label('To Warehouse')
                     ->relationship('toWarehouse', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Warehouse::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('to_location_id')
                     ->label('To Location')
                     ->relationship('toLocation', 'location_name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Location::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('employee_id')
                     ->label('Handled By')
                     ->relationship('employee', 'first_name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Employee::exists()),
                 \Filament\Tables\Filters\SelectFilter::make('to_department_id')
                     ->label('To Department')
                     ->relationship('toDepartment', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => \App\Models\Department::exists()),
             ])
             ->filtersLayout(FiltersLayout::Modal)
             ->recordActions([

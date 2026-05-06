@@ -235,6 +235,8 @@ class InventoryMovementForm
                         \Filament\Forms\Components\FileUpload::make('attachments')
                             ->multiple()
                             ->directory('movements')
+                            ->maxSize(10240)
+                            ->helperText('Max size: 10MB per file (Note: PHP limit is currently 2MB).')
                             ->columnSpanFull(),
                     ]),
             ]);
