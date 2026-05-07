@@ -22,13 +22,40 @@ class InventoryForm
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('item_code')
+                                    ->default(fn () => \App\Models\PrefixSetting::where('key', 'item_code')->value('next_number'))
+                                    ->required(),
+                                Select::make('unit_id')
+                                    ->relationship('unit', 'name')
+                                    ->required()
+                                    ->preload()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required(),
+                                        TextInput::make('code')->required(),
+                                    ]),
+                            ]),
                         Select::make('warehouse_id')
                             ->relationship('warehouse', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('warehouse_code')
+                                    ->default(fn () => \App\Models\Warehouse::generateUniqueCode())
+                                    ->required(),
+                                TextInput::make('address')
+                                    ->maxLength(255),
+                            ]),
                         TextInput::make('sku')
                             ->label('SKU Number')
                             ->prefix(fn () => \App\Models\PrefixSetting::getPrefix('inventory_sku'))
@@ -50,12 +77,21 @@ class InventoryForm
                             ->relationship('acquisitionType', 'name')
                             ->searchable()
                             ->preload()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                            ]),
                         Select::make('currency_id')
-                            ->relationship('currency', 'name')
+                            ->relationship('currency', 'code')
                             ->searchable()
                             ->preload()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->createOptionForm([
+                                TextInput::make('code')->required()->maxLength(3),
+                                TextInput::make('name')->required(),
+                                TextInput::make('symbol')->required(),
+                                TextInput::make('exchange_rate')->numeric()->required(),
+                            ]),
                         TextInput::make('purchase_cost')
                             ->numeric()
                             ->prefix('$')
@@ -67,13 +103,21 @@ class InventoryForm
                         Select::make('supplier_id')
                             ->relationship('supplier', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('email')->email(),
+                            ]),
                         Select::make('donor_id')
                             ->relationship('donor', 'id')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable()
                             ->preload()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->createOptionForm([
+                                TextInput::make('first_name')->required(),
+                                TextInput::make('last_name')->required(),
+                            ]),
                         TextInput::make('quantity')
                             ->numeric()
                             ->default(0)

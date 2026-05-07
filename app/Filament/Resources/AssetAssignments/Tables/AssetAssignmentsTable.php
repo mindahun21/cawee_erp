@@ -37,7 +37,7 @@ class AssetAssignmentsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('department.name')
-                    ->label('Assigned Dept')
+                    ->label('Assigned Department')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('project.project_name')
@@ -76,10 +76,12 @@ class AssetAssignmentsTable
                 \Filament\Tables\Filters\SelectFilter::make('employee_id')
                     ->label('Staff')
                     ->relationship('employee', 'first_name')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                    ->visible(fn () => \App\Models\AssetAssignment::exists()),
                 \Filament\Tables\Filters\TernaryFilter::make('returned_date')
                     ->label('Returned Status')
                     ->nullable()
+                    ->visible(fn () => \App\Models\AssetAssignment::exists())
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(2)

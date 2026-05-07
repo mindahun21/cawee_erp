@@ -22,10 +22,24 @@ class MaintenanceForm
                     ->columns(2)
                     ->schema([
                         Select::make('asset_id')
+                            ->label('Asset / Vehicle')
                             ->relationship('asset', 'name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->name . ($record->asset_tag ? " ({$record->asset_tag})" : ""))
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('Asset Name / Vehicle Model')
+                                    ->required(),
+                                TextInput::make('asset_tag')
+                                    ->label('Asset Tag / Plate Number')
+                                    ->required()
+                                    ->unique('assets', 'asset_tag')
+                                    ->placeholder('e.g. VEH-123 or AST-001'),
+                                TextInput::make('serial_number')
+                                    ->label('Serial Number (if applicable)'),
+                            ]),
 
                         Select::make('maintenance_type_id')
                             ->relationship('maintenanceType', 'name')
@@ -79,14 +93,22 @@ class MaintenanceForm
                             ->label('Service Provider (External)')
                             ->relationship('supplier', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('email')->email(),
+                            ]),
 
                         Select::make('performed_by_id')
                             ->label('Performed By (Internal Staff)')
                             ->relationship('performedBy', 'first_name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('first_name')->required(),
+                                TextInput::make('last_name')->required(),
+                            ]),
 
                         Toggle::make('is_warranty_improvement')
                             ->label('Warranty Improvement?'),
@@ -98,7 +120,13 @@ class MaintenanceForm
                         Select::make('currency_id')
                             ->relationship('currency', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('code')->required()->maxLength(3),
+                                TextInput::make('name')->required(),
+                                TextInput::make('symbol')->required(),
+                                TextInput::make('exchange_rate')->numeric()->required(),
+                            ]),
 
                         TextInput::make('cost')
                             ->numeric()

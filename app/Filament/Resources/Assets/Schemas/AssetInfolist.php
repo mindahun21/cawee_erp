@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AcquisitionType;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
@@ -38,6 +39,13 @@ class AssetInfolist
                             ->label('RFID Tag')
                             ->visible(fn ($record) => $record->quantity <= 1),
                         TextEntry::make('description')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Asset Photo')
+                    ->schema([
+                        ImageEntry::make('image')
+                            ->hiddenLabel()
                             ->columnSpanFull(),
                     ]),
 

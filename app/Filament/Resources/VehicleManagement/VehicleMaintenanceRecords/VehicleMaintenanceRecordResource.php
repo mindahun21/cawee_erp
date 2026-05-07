@@ -139,10 +139,52 @@ class VehicleMaintenanceRecordResource extends Resource
                     ->color(fn ($state) => $state && now()->diffInDays($state, false) <= 30 ? 'warning' : 'gray'),
             ])
             ->filters([
+                SelectFilter::make('vehicle_id')
+                    ->label('Vehicle')
+                    ->relationship('vehicle', 'plate_number')
+                    ->getOptionLabelFromRecordUsing(fn (\App\Models\Vehicle $record) => $record->plate_number . ' — ' . trim("{$record->manufacturer} {$record->model}"))
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('service_type_option_id')
                     ->label('Service Type')
-                    ->options(VehicleSetting::optionsFor('vehicle_service_type')),
+                    ->options(VehicleSetting::optionsFor('vehicle_service_type'))
+                    ->searchable()
+                    ->preload(),
+                \Filament\Tables\Filters\Filter::make('service_date')
+                    ->form([
+                        DatePicker::make('from'),
+                        DatePicker::make('until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('service_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('service_date', '<=', $date),
+                            );
+                    }),
+                \Filament\Tables\Filters\Filter::make('cost')
+                    ->form([
+                        TextInput::make('min_cost')->numeric()->label('Min Cost (ETB)'),
+                        TextInput::make('max_cost')->numeric()->label('Max Cost (ETB)'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_cost'],
+                                fn (Builder $query, $cost): Builder => $query->where('cost', '>=', $cost),
+                            )
+                            ->when(
+                                $data['max_cost'],
+                                fn (Builder $query, $cost): Builder => $query->where('cost', '<=', $cost),
+                            );
+                    }),
             ])
+            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::Modal)
+            ->filtersFormColumns(2)
             ->defaultSort('service_date', 'desc')
             ->recordActions([EditAction::make(), DeleteAction::make()])
             ->bulkActions([DeleteBulkAction::make()]);

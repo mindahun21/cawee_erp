@@ -21,11 +21,11 @@ class VehicleMaintenanceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Inventory and Asset';
+    protected static string|\UnitEnum|null $navigationGroup = 'Vehicles';
 
     protected static ?int $navigationSort = 130;
 
-    protected static ?string $navigationLabel = 'Maintenances';
+    protected static ?string $navigationLabel = 'Vehicle Maintenances';
 
     public static function form(Schema $schema): Schema
     {

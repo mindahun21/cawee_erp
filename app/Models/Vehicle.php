@@ -47,6 +47,11 @@ class Vehicle extends Model
         'current_location_id',
         'remarks',
         'is_active',
+        'currency_id',
+        'insurance_provider',
+        'insurance_policy_number',
+        'insurance_certificate',
+        'latest_third_party_inspection_expiry',
     ];
 
     protected $casts = [
@@ -56,6 +61,7 @@ class Vehicle extends Model
         'latest_general_inspection_date' => 'date',
         'latest_general_inspection_expiry' => 'date',
         'latest_third_party_inspection_date' => 'date',
+        'latest_third_party_inspection_expiry' => 'date',
         'insurance_renewal_date' => 'date',
         'is_active' => 'boolean',
         'kms_driven_at_purchase' => 'decimal:2',
@@ -147,6 +153,11 @@ class Vehicle extends Model
     public function fuelLogs()
     {
         return $this->hasMany(VehicleFuelLog::class);
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function getNameAttribute(): string

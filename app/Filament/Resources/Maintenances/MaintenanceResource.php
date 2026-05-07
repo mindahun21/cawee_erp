@@ -8,6 +8,7 @@ use App\Filament\Resources\Maintenances\Pages\ListMaintenances;
 use App\Filament\Resources\Maintenances\Schemas\MaintenanceForm;
 use App\Filament\Resources\Maintenances\Tables\MaintenancesTable;
 use App\Models\Maintenance;
+use Illuminate\Database\Eloquent\Builder;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -24,6 +25,12 @@ class MaintenanceResource extends Resource
 
     protected static ?int $navigationSort = 60;
 
+    protected static ?string $navigationLabel = 'Maintenances';
+
+    protected static ?string $pluralModelLabel = 'Maintenances';
+
+    protected static ?string $modelLabel = 'Maintenance';
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema
@@ -34,6 +41,16 @@ class MaintenanceResource extends Resource
     public static function table(Table $table): Table
     {
         return MaintenancesTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereIn('id', function ($query) {
+                $query->selectRaw('MAX(id)')
+                    ->from('maintenances')
+                    ->groupBy('asset_id');
+            });
     }
 
     public static function getRelations(): array
@@ -49,6 +66,7 @@ class MaintenanceResource extends Resource
             'index' => ListMaintenances::route('/'),
             'create' => CreateMaintenance::route('/create'),
             'edit' => EditMaintenance::route('/{record}/edit'),
+            'history' => \App\Filament\Resources\Maintenances\Pages\AssetMaintenanceHistory::route('/{assetId}/history'),
         ];
     }
 }
