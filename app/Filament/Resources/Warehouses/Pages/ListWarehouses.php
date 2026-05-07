@@ -16,4 +16,11 @@ class ListWarehouses extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Warehouses\Widgets\WarehouseStatsOverview::class,
+        ];
+    }
 }

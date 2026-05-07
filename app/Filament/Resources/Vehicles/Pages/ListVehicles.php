@@ -16,4 +16,11 @@ class ListVehicles extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Vehicles\Widgets\VehicleStatsOverview::class,
+        ];
+    }
 }

@@ -39,7 +39,24 @@ class InventoryMovementForm
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->live(),
+                            ->live()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('item_code')
+                                    ->default(fn () => \App\Models\PrefixSetting::where('key', 'item_code')->value('next_number'))
+                                    ->required(),
+                                Select::make('unit_id')
+                                    ->relationship('unit', 'name')
+                                    ->required()
+                                    ->preload()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required(),
+                                        TextInput::make('code')->required(),
+                                    ]),
+                            ]),
                         
                         Select::make('from_warehouse_id')
                             ->label('From Warehouse')
@@ -120,7 +137,13 @@ class InventoryMovementForm
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('first_name')->required(),
+                                TextInput::make('last_name')->required(),
+                                TextInput::make('email')->email(),
+                                TextInput::make('position')->maxLength(255),
+                            ]),
 
                         Select::make('approved_by_id')
                             ->label('Approved By')
@@ -173,7 +196,13 @@ class InventoryMovementForm
                             ->searchable()
                             ->preload()
                             ->visible(fn (Get $get) => $get('destination_type') === 'warehouse')
-                            ->required(fn (Get $get) => $get('destination_type') === 'warehouse'),
+                            ->required(fn (Get $get) => $get('destination_type') === 'warehouse')
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('warehouse_code')
+                                    ->default(fn () => \App\Models\Warehouse::generateUniqueCode())
+                                    ->required(),
+                            ]),
 
                         Select::make('to_location_id')
                             ->label('To Location')
@@ -181,14 +210,22 @@ class InventoryMovementForm
                             ->searchable()
                             ->preload()
                             ->visible(fn (Get $get) => $get('destination_type') === 'location_department')
-                            ->required(fn (Get $get) => $get('destination_type') === 'location_department'),
+                            ->required(fn (Get $get) => $get('destination_type') === 'location_department')
+                            ->createOptionForm([
+                                TextInput::make('location_name')->required(),
+                                TextInput::make('address'),
+                            ]),
 
                         Select::make('to_department_id')
                             ->label('To Department')
                             ->relationship('toDepartment', 'name')
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Get $get) => $get('destination_type') === 'location_department'),
+                            ->visible(fn (Get $get) => $get('destination_type') === 'location_department')
+                            ->createOptionForm([
+                                TextInput::make('name')->required(),
+                                TextInput::make('code'),
+                            ]),
                     ]),
 
                 Section::make('Remarks & Attachments')
@@ -198,6 +235,8 @@ class InventoryMovementForm
                         \Filament\Forms\Components\FileUpload::make('attachments')
                             ->multiple()
                             ->directory('movements')
+                            ->maxSize(10240)
+                            ->helperText('Max size: 10MB per file (Note: PHP limit is currently 2MB).')
                             ->columnSpanFull(),
                     ]),
             ]);

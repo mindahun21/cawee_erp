@@ -256,7 +256,6 @@ class AssetForm
                                             ->label('Acquisition Type')
                                             ->relationship('acquisitionTypeRecord', 'name')
                                             ->live()
-                                            ->required()
                                             ->preload()
                                             ->searchable()
                                             ->columnSpanFull()
@@ -291,10 +290,16 @@ class AssetForm
                                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
 
                                         DatePicker::make('purchase_date')
+                                            ->live()
                                             ->hidden(fn (Get $get) => AcquisitionType::find($get('acquisition_type_id'))?->name === 'Donation'),
 
                                         DatePicker::make('warranty_expiry_date')
                                             ->label('Warranty Expiry')
+                                            ->afterOrEqual('purchase_date')
+                                            ->live()
+                                            ->validationMessages([
+                                                'after_or_equal' => 'The warranty expiry date must be on or after the purchase date.',
+                                            ])
                                             ->hidden(fn (Get $get) => $get('acquisition_type') === 'Donation'),
 
                                         Select::make('supplier_id')
@@ -310,7 +315,12 @@ class AssetForm
                                             ]),
 
                                         DatePicker::make('end_of_life_date')
-                                            ->label('End of Life / Write-off Date'),
+                                            ->label('End of Life / Write-off Date')
+                                            ->afterOrEqual('warranty_expiry_date')
+                                            ->live()
+                                            ->validationMessages([
+                                                'after_or_equal' => 'The end of life date must be on or after the warranty expiry date.',
+                                            ]),
 
                                         Textarea::make('notes')
                                             ->label('Notes')
@@ -324,6 +334,8 @@ class AssetForm
                                             ->label('Asset Photo')
                                             ->image()
                                             ->directory('assets')
+                                            ->maxSize(10240)
+                                            ->helperText('Max size: 10MB (Note: PHP limit is currently 2MB).')
                                             ->columnSpanFull(),
                                     ]),
                             ]),
@@ -354,9 +366,17 @@ class AssetForm
                                             ->schema([
                                                 Select::make('location_id')
                                                     ->relationship('location', 'location_name')
-                                                    ->required()
                                                     ->searchable()
                                                     ->preload()
+                                                    ->createOptionForm([
+                                                        TextInput::make('location_name')
+                                                            ->required()
+                                                            ->maxLength(255),
+                                                        TextInput::make('address')
+                                                            ->maxLength(255),
+                                                        TextInput::make('type')
+                                                            ->maxLength(255),
+                                                    ])
                                                     ->rules([
                                                         fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
                                                             $stocks = $get('../../stocks') ?? [];
@@ -373,7 +393,15 @@ class AssetForm
                                                     ->relationship('department', 'name')
                                                     ->searchable()
                                                     ->preload()
-                                                    ->live(),
+                                                    ->live()
+                                                    ->createOptionForm([
+                                                        TextInput::make('name')
+                                                            ->required()
+                                                            ->maxLength(255),
+                                                        TextInput::make('code')
+                                                            ->maxLength(255),
+                                                        Textarea::make('description'),
+                                                    ]),
                                                 TextInput::make('quantity')
                                                     ->numeric()
                                                     ->default(1)
@@ -419,6 +447,7 @@ class AssetForm
 
                                 Section::make('Disposal & Retirement')
                                     ->description('Optional: record if this asset is being retired')
+                                    ->visibleOn('edit')
                                     ->collapsed()
                                     ->columns(['default' => 2])
                                     ->schema([

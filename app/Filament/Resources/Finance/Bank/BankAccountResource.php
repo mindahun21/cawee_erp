@@ -119,21 +119,34 @@ class BankAccountResource extends Resource
                         ->options(Currency::pluck('code', 'id')->toArray())
                         ->required()
                         ->native(false)
-                        ->searchable(),
+                        ->searchable()
+                        ->live(),          // triggers CoA dropdown to refresh
 
                     Select::make('chart_of_account_id')
                         ->label('GL Account (Control Account)')
-                        ->options(fn () => ChartOfAccount::where('is_active', true)
-                            ->where('is_control_account', 'bank')
-                            ->orderBy('code')
-                            ->get()
-                            ->mapWithKeys(fn ($a) => [$a->id => "[{$a->code}] {$a->name}"])
-                            ->toArray()
-                        )
+                        ->options(function ($get) {
+                            $currencyId = $get('currency_id');
+
+                            return ChartOfAccount::where('is_active', true)
+                                ->where('is_control_account', 'bank')
+                                ->when(
+                                    $currencyId,
+                                    // If a currency is selected, match it exactly
+                                    // (currency_id = selected) OR (currency_id is null = ETB default)
+                                    fn ($q) => $q->where(function ($q2) use ($currencyId) {
+                                        $q2->where('currency_id', $currencyId)
+                                           ->orWhereNull('currency_id');
+                                    })
+                                )
+                                ->orderBy('code')
+                                ->get()
+                                ->mapWithKeys(fn ($a) => [$a->id => "[{$a->code}] {$a->name}"])
+                                ->toArray();
+                        })
                         ->native(false)
                         ->searchable()
                         ->nullable()
-                        ->helperText('The CoA account marked as Bank control account that this maps to.'),
+                        ->helperText('Only Bank control accounts matching the selected currency are shown.'),
 
                     Select::make('cost_center_id')
                         ->label('Cost Center')

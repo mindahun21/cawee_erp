@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Warehouses\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -34,7 +36,22 @@ class WarehouseForm
                                     ->relationship('manager', 'first_name')
                                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('first_name')->required()->maxLength(100),
+                                                TextInput::make('last_name')->required()->maxLength(100),
+                                                TextInput::make('email')->email()->required()->maxLength(150),
+                                                Select::make('gender')
+                                                    ->options(['M' => 'Male', 'F' => 'Female'])
+                                                    ->required()
+                                                    ->native(false),
+                                                DatePicker::make('date_of_employment')
+                                                    ->default(now())
+                                                    ->required(),
+                                            ]),
+                                    ]),
                                 Select::make('warehouse_type_id')
                                     ->label('Warehouse Type')
                                     ->relationship('warehouseType', 'name')
@@ -44,10 +61,10 @@ class WarehouseForm
                                     ->createOptionForm([
                                         TextInput::make('name')->required()->unique('warehouse_types', 'name'),
                                     ]),
-                                \Filament\Forms\Components\Toggle::make('is_active')
-                                    ->label('Is Active?')
-                                    ->default(true)
-                                    ->columnSpanFull(),
+                                 Toggle::make('is_active')
+                                     ->label('Is Active?')
+                                     ->default(true)
+                                     ->columnSpanFull(),
                             ]),
                         Grid::make(2)
                             ->schema([
@@ -60,7 +77,22 @@ class WarehouseForm
                                     ->multiple()
                                     ->preload()
                                     ->searchable()
-                                    ->label('Assign to Staff'),
+                                    ->label('Assign to Staff')
+                                    ->createOptionForm([
+                                        Grid::make(2)
+                                            ->schema([
+                                                TextInput::make('first_name')->required()->maxLength(100),
+                                                TextInput::make('last_name')->required()->maxLength(100),
+                                                TextInput::make('email')->email()->required()->maxLength(150),
+                                                Select::make('gender')
+                                                    ->options(['M' => 'Male', 'F' => 'Female'])
+                                                    ->required()
+                                                    ->native(false),
+                                                DatePicker::make('date_of_employment')
+                                                    ->default(now())
+                                                    ->required(),
+                                            ]),
+                                    ]),
                             ]),
                     ]),
                 Section::make('Address Details')
