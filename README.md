@@ -1,4 +1,4 @@
-# Elisoft ERP
+# Cawee ERP
 
 A modern Enterprise Resource Planning (ERP) solution built with the latest Laravel ecosystem.
 

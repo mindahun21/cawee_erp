@@ -33,7 +33,7 @@ class FinanceReportService
             'records'   => $trialBalanceData,
             'generatedAt' => now()->format('Y-m-d H:i:s'),
             'generatedBy' => auth()->user()?->name ?? 'System',
-            'companyName' => 'Elisoft NGO', // Can be pulled from settings
+            'companyName' => 'Cawee', // Can be pulled from settings
         ];
 
         // Ensure the view exists or use a fallback simple template

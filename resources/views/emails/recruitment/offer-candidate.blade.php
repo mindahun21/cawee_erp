@@ -5,7 +5,7 @@
 <style>
   body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f6f8;margin:0;padding:40px 0;}
   .wrap{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
-  .header{background:#003366;padding:40px 48px;color:#fff;}
+  .header{background:#362A72;padding:40px 48px;color:#fff;}
   .header-logo{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:12px;}
   .header h1{font-size:26px;font-weight:800;line-height:1.2;margin:0;}
   .strip{height:5px;background:#f59e0b;}
@@ -16,7 +16,7 @@
   .detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;}
   .detail-row:last-child{border-bottom:none;}
   .detail-label{color:#6b7a90;font-weight:500;}
-  .detail-value{font-weight:700;color:#003366;}
+  .detail-value{font-weight:700;color:#362A72;}
   .highlight-box{background:#fef9ec;border:2px solid #f59e0b;border-radius:8px;padding:20px 24px;margin:24px 0;text-align:center;}
   .highlight-box h3{font-size:18px;font-weight:800;color:#92400e;margin:0 0 8px;}
   .highlight-box p{color:#78350f;margin:0;font-size:14px;}
@@ -26,7 +26,7 @@
 <body>
 <div class="wrap">
   <div class="header">
-    <div class="header-logo">EliSOFT ERP — Recruitment</div>
+    <div class="header-logo">Cawee ERP — Recruitment</div>
     <h1>Congratulations! You Have a Job Offer</h1>
   </div>
   <div class="strip"></div>
@@ -87,19 +87,19 @@
     @endif
 
     <div style="text-align:center;margin:24px 0 16px;">
-      <a href="{{ $loginUrl }}" style="display:inline-block;background:#003366;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:.02em;">View My Offer →</a>
+      <a href="{{ $loginUrl }}" style="display:inline-block;background:#362A72;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:.02em;">View My Offer →</a>
     </div>
 
     <p style="font-size:13px;color:#6b7a90;text-align:center;">
       If the button does not work, copy and paste this link into your browser:<br>
-      <a href="{{ $loginUrl }}" style="color:#003366;word-break:break-all;">{{ $loginUrl }}</a>
+      <a href="{{ $loginUrl }}" style="color:#362A72;word-break:break-all;">{{ $loginUrl }}</a>
     </p>
 
     <p>We look forward to welcoming you to our team!</p>
     <p>Warm regards,<br><strong>The HR Team</strong></p>
   </div>
   <div class="footer">
-    This email was sent by EliSOFT ERP Recruitment System. &copy; {{ date('Y') }} All rights reserved.
+    This email was sent by Cawee ERP Recruitment System. &copy; {{ date('Y') }} All rights reserved.
   </div>
 </div>
 </body>

@@ -55,7 +55,7 @@
     </table>
 
     <div class="footer">
-        &copy; {{ date('Y') }} ELISOFT ERP SOLUTION &bull; Page <span class="page-number"></span>
+        &copy; {{ date('Y') }} CAWEE ERP &bull; Page <span class="page-number"></span>
     </div>
 </body>
 </html>

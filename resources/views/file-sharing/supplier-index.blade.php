@@ -1,7 +1,7 @@
 @extends('supplier.layouts.portal')
 
 @section('title', 'Shared Documents')
-@section('description', 'Documents shared with your company account through EliSOFT ERP.')
+@section('description', 'Documents shared with your company account through Cawee ERP.')
 
 @section('content')
 <div class="sp-page">
@@ -26,9 +26,9 @@
             <div class="sp-stat-value" style="color:#b45309;">{{ $shares->getCollection()->where('access_level', 'view')->count() }}</div>
             <div class="sp-stat-sub">Preview allowed, download blocked</div>
         </div>
-        <div class="sp-stat" style="border-left-color:#003366;">
+        <div class="sp-stat" style="border-left-color:#362A72;">
             <div class="sp-stat-label">Downloads Allowed</div>
-            <div class="sp-stat-value" style="color:#003366;">{{ $shares->getCollection()->filter(fn ($share) => $share->allowsDownload())->count() }}</div>
+            <div class="sp-stat-value" style="color:#362A72;">{{ $shares->getCollection()->filter(fn ($share) => $share->allowsDownload())->count() }}</div>
             <div class="sp-stat-sub">Files you can download</div>
         </div>
     </div>

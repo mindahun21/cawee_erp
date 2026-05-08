@@ -22,7 +22,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">ELISOFT SOLUTION</div>
+            <div class="logo">CAWEE</div>
             <div class="receipt-title">Official Donation Receipt</div>
         </div>
 
@@ -70,7 +70,7 @@
 
         <div class="footer">
             <p>This is an official receipt for your donation.</p>
-            <p>ELISOFT SOLUTION &bull; 123 Business Way, Suite 100 &bull; contact@elisoft.com</p>
+            <p>CAWEE &bull; contact@cawee-ethiopia.org</p>
         </div>
     </div>
 </body>

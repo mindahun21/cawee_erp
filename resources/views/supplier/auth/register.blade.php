@@ -9,16 +9,16 @@
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;background:#f4f6f8;min-height:100vh;}
-        .reg-header{background:#003366;color:#fff;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;}
+        .reg-header{background:#362A72;color:#fff;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;}
         .reg-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:#fff;}
-        .reg-logo-mark{width:34px;height:34px;background:#00A3E0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;}
+        .reg-logo-mark{width:34px;height:34px;background:#6C5CE7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;}
         .reg-logo-text{font-size:.9rem;font-weight:600;}
         .reg-header-links{display:flex;gap:1rem;}
         .reg-header-links a{color:rgba(255,255,255,.75);text-decoration:none;font-size:.875rem;}
         .reg-header-links a:hover{color:#fff;}
-        .reg-strip{background:#00A3E0;height:4px;}
+        .reg-strip{background:#6C5CE7;height:4px;}
 
-        .reg-hero{background:linear-gradient(135deg,#003366 60%,#00264d);color:#fff;text-align:center;padding:3rem 1.5rem;}
+        .reg-hero{background:linear-gradient(135deg,#362A72 60%,#2a2058);color:#fff;text-align:center;padding:3rem 1.5rem;}
         .reg-hero h1{font-size:2rem;font-weight:800;margin-bottom:.5rem;}
         .reg-hero p{color:rgba(255,255,255,.75);font-size:1rem;max-width:560px;margin:0 auto;}
         .reg-steps{display:flex;gap:2rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;}
@@ -28,7 +28,7 @@
         .reg-body{max-width:900px;margin:2.5rem auto;padding:0 1.5rem 4rem;}
 
         .reg-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 1px 6px rgba(0,0,0,.04);}
-        .reg-card-title{font-size:1rem;font-weight:700;color:#003366;padding-bottom:.875rem;border-bottom:2px solid #f0f4f8;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;}
+        .reg-card-title{font-size:1rem;font-weight:700;color:#362A72;padding-bottom:.875rem;border-bottom:2px solid #f0f4f8;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;}
         .reg-card-title .section-icon{width:28px;height:28px;background:#e0f4fc;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
 
         .form-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
@@ -39,10 +39,10 @@
         .form-group.span2{grid-column:span 2;}
         .form-group.span3{grid-column:span 3;}
         @media(max-width:640px){.form-group.span2,.form-group.span3{grid-column:span 1;}}
-        .form-group label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#003366;margin-bottom:.4rem;}
+        .form-group label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#362A72;margin-bottom:.4rem;}
         .form-group label .req{color:#c0392b;margin-left:2px;}
         .form-group input,.form-group select,.form-group textarea{width:100%;padding:.6rem .875rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;font-family:inherit;transition:border-color .15s,box-shadow .15s;color:#1a2332;background:#fff;}
-        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#00A3E0;box-shadow:0 0 0 3px rgba(0,163,224,.15);}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#6C5CE7;box-shadow:0 0 0 3px rgba(54,42,114,.15);}
         .form-group input.err,.form-group select.err,.form-group textarea.err{border-color:#c0392b!important;}
         .err-msg{font-size:.75rem;color:#c0392b;margin-top:.25rem;}
         .hint{font-size:.75rem;color:#6b7a90;margin-top:.25rem;}
@@ -53,16 +53,16 @@
         .alert-error{background:#fde8e6;border:1px solid #f5b7b1;color:#8b1a1a;}
 
         .agreement{display:flex;align-items:flex-start;gap:.6rem;padding:1.25rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-top:.5rem;}
-        .agreement input{width:16px;height:16px;margin-top:2px;accent-color:#00A3E0;flex-shrink:0;}
+        .agreement input{width:16px;height:16px;margin-top:2px;accent-color:#6C5CE7;flex-shrink:0;}
         .agreement label{font-size:.85rem;color:#374151;cursor:pointer;}
-        .agreement a{color:#00A3E0;text-decoration:none;}
+        .agreement a{color:#6C5CE7;text-decoration:none;}
 
         .form-actions{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #e2e8f0;}
-        .btn-submit{padding:.8rem 2.5rem;background:#003366;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s;}
-        .btn-submit:hover{background:#00264d;}
+        .btn-submit{padding:.8rem 2.5rem;background:#362A72;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s;}
+        .btn-submit:hover{background:#2a2058;}
         .btn-submit:disabled{opacity:.5;cursor:not-allowed;}
         .form-actions a{color:#6b7a90;text-decoration:none;font-size:.875rem;}
-        .form-actions a:hover{color:#003366;text-decoration:underline;}
+        .form-actions a:hover{color:#362A72;text-decoration:underline;}
 
         .pw-rules{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.75rem;margin-top:.4rem;font-size:.75rem;color:#6b7a90;list-style:none;}
         .pw-rules li{padding:.1rem 0;}
@@ -73,8 +73,8 @@
 
 <header class="reg-header">
     <a href="{{ route('supplier.home') }}" class="reg-logo">
-        <div class="reg-logo-mark">EP</div>
-        <div class="reg-logo-text">EliSOFT ERP — Supplier Portal</div>
+        <div class="reg-logo-mark">CE</div>
+        <div class="reg-logo-text">Cawee ERP — Supplier Portal</div>
     </a>
     <div class="reg-header-links">
         <a href="{{ route('supplier.public.tenders') }}">Browse Tenders</a>

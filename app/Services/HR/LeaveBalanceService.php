@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 /**
  * LeaveBalanceService
  *
- * The authoritative leave balance computation engine for the ELiSoft ERP.
+ * The authoritative leave balance computation engine for the Cawee ERP.
  *
  * Key concepts (mirroring the existing Java/Vert.x leave system):
  *

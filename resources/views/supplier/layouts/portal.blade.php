@@ -13,10 +13,10 @@
 
     <style>
         :root {
-            --navy:   #003366;
-            --navy2:  #00264d;
-            --cyan:   #00A3E0;
-            --cyan2:  #0088c7;
+            --navy:   #362A72;
+            --navy2:  #2a2058;
+            --cyan:   #6C5CE7;
+            --cyan2:  #5a4bd1;
             --silver: #f4f6f8;
             --border: #e2e8f0;
             --text:   #1a2332;
@@ -235,9 +235,9 @@
 <header class="sp-header">
     <div class="sp-header-inner">
         <a href="{{ route('supplier.home') }}" class="sp-logo">
-            <div class="sp-logo-mark">EP</div>
+            <div class="sp-logo-mark">CE</div>
             <div>
-                <div class="sp-logo-text">EliSOFT ERP</div>
+                <div class="sp-logo-text">Cawee ERP</div>
                 <div class="sp-logo-sub">Supplier Portal</div>
             </div>
         </a>
@@ -276,7 +276,7 @@
 </main>
 
 <footer class="sp-footer">
-    &copy; {{ date('Y') }} EliSOFT ERP &mdash; Procurement Portal &nbsp;|&nbsp;
+    &copy; {{ date('Y') }} Cawee ERP &mdash; Procurement Portal &nbsp;|&nbsp;
     All bid submissions are subject to our <a href="#">terms and conditions</a>.
 </footer>
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Careers') — EliSOFT ERP</title>
+    <title>@yield('title', 'Careers') — Cawee ERP</title>
     <meta name="description" content="@yield('description', 'Browse open positions and apply to join our team.')">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,10 +12,10 @@
 
     <style>
         :root {
-            --navy:   #003366;
-            --navy2:  #00264d;
-            --teal:   #0d9488;
-            --teal2:  #0f766e;
+            --navy:   #362A72;
+            --navy2:  #2a2058;
+            --teal:   #6C5CE7;
+            --teal2:  #5a4bd1;
             --silver: #f4f6f8;
             --border: #e2e8f0;
             --text:   #1a2332;
@@ -85,7 +85,7 @@
 
         /* ── Badges ── */
         .badge { display: inline-flex; align-items: center; padding: .2rem .6rem; border-radius: 20px; font-size: .72rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
-        .badge-teal   { background: #ccfbf1; color: var(--teal2); }
+        .badge-teal   { background: #ede9ff; color: var(--teal2); }
         .badge-navy   { background: #e8eef5; color: var(--navy); }
         .badge-gray   { background: #f1f3f6; color: #64748b; }
 
@@ -107,9 +107,9 @@
 <header class="rp-header">
     <div class="rp-header-inner">
         <a href="{{ route('candidate.home') }}" class="rp-logo">
-            <div class="rp-logo-mark">EP</div>
+            <div class="rp-logo-mark">CE</div>
             <div>
-                <div class="rp-logo-text">EliSOFT ERP</div>
+                <div class="rp-logo-text">Cawee ERP</div>
                 <div class="rp-logo-sub">Careers Portal</div>
             </div>
         </a>
@@ -142,7 +142,7 @@
 </main>
 
 <footer class="rp-footer">
-    &copy; {{ date('Y') }} EliSOFT ERP &mdash; Careers Portal &nbsp;|&nbsp;
+    &copy; {{ date('Y') }} Cawee ERP &mdash; Careers Portal &nbsp;|&nbsp;
     We are an equal opportunity employer.
 </footer>
 

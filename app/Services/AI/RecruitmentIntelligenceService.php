@@ -98,7 +98,7 @@ class RecruitmentIntelligenceService
         $liveData = $this->preloader->snapshot();
 
         return <<<PROMPT
-You are a senior Recruitment Analytics Expert embedded inside the Elisoft ERP system.
+You are a senior Recruitment Analytics Expert embedded inside the Cawee ERP system.
 Your role is to analyze recruitment data and produce a structured report dashboard.
 
 ═══════════════════════════════════════════════════

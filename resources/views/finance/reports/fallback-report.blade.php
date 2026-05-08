@@ -17,7 +17,7 @@
     </style>
 </head>
 <body>
-    <h1>{{ $companyName ?? 'Elisoft NGO' }}</h1>
+    <h1>{{ $companyName ?? 'Cawee' }}</h1>
     <h2>{{ $statement->title }}</h2>
     <p>Reference: {{ $statement->reference }} | As Of: {{ $statement->as_of_date?->format('d M Y') }}</p>
 
@@ -59,7 +59,7 @@
     @endif
 
     <div class="footer">
-        Confidential Financial Report - Elisoft ERP System
+        Confidential Financial Report - Cawee ERP System
     </div>
 </body>
 </html>

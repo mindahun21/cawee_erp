@@ -30,10 +30,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('ELISOFT ERP')
+            ->brandName('Cawee ERP')
+            ->brandLogo(asset('images/logo_cawee.png'))
+            ->darkModeBrandLogo(asset('images/logo_cawee.png'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(asset('images/favicon.png'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#362A72'),
             ])
             // Full width content — no more scrolling through narrow tables
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
